@@ -1,0 +1,68 @@
+# Builds the web version and publishes it to GitHub Pages.
+#
+# This runs on GitHub's computers, not yours. Every time you push to the
+# main branch, GitHub installs the project, builds the browser version,
+# and puts the result online. You never run these steps yourself.
+
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  # Lets you also trigger it by hand from the Actions tab
+  workflow_dispatch:
+
+# Permissions this job needs in order to publish a site
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# If you push twice quickly, let the newer build win
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get the code
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build the web version
+        run: npx expo export --platform web
+
+      # GitHub Pages ignores folders starting with an underscore unless
+      # this file exists. Expo puts the app's JavaScript in _expo/,
+      # so without this the site loads blank.
+      - name: Add .nojekyll
+        run: touch dist/.nojekyll
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload the built site
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Publish to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
