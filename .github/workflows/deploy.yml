@@ -39,8 +39,29 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # data/bodies.js is generated from data/bodies.csv. Rebuilding it here
+      # means the deployed site can never be built from a stale copy, however
+      # the CSV was edited.
+      - name: Rebuild body data from the CSV
+        run: npm run data
+
+      # If that produced a different file, the committed one was out of date.
+      # Say so loudly rather than let the repo and the live site disagree.
+      - name: Fail if the committed data was stale
+        run: |
+          if ! git diff --quiet -- data/bodies.js; then
+            echo "::error::data/bodies.js is out of date with data/bodies.csv."
+            echo "Run 'npm run data' and commit the result."
+            git diff --stat -- data/bodies.js
+            exit 1
+          fi
+          echo "data/bodies.js is up to date."
+
+      - name: Check the matching engine still works
+        run: npm run verify
+
       - name: Build the web version
-        run: npx expo export --platform web
+        run: npm run build:web
 
       # GitHub Pages ignores folders starting with an underscore unless
       # this file exists. Expo puts the app's JavaScript in _expo/,
