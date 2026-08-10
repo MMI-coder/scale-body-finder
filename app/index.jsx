@@ -191,6 +191,7 @@ export default function Index() {
 
                     <Spacer height={18} />
 
+                    <ThemedText style={styles.controlName}>Priority</ThemedText>
                     <ThemedText style={[styles.label, { color: theme.muted }]}>
                         Choose which measurement field is most important to you and your project. This helps
                         sort the results list.
@@ -211,6 +212,7 @@ export default function Index() {
                     </View>
 
                     <Spacer height={18} />
+                    <ThemedText style={styles.controlName}>Comparison Scale</ThemedText>
                     <ThemedText style={[styles.label, { color: theme.muted }]}>
                         Use this to compare your character's 1:1 measurements to the physical
                         measurements of the available bodies on the market. 1:6th scale is the default.
@@ -344,6 +346,7 @@ const styles = StyleSheet.create({
     lede: { fontSize: 17, lineHeight: 24, marginTop: 8, maxWidth: 720 },
     sub: { fontSize: 14, lineHeight: 20, marginTop: 6, maxWidth: 900 },
     label: { fontSize: 12, marginBottom: 6, fontWeight: '600' },
+    controlName: { fontSize: 15, fontWeight: '700', marginBottom: 3 },
 
     step: { flexDirection: 'row', gap: 10, marginBottom: 8 },
     stepNum: { fontSize: 14, fontWeight: '800', width: 16 },

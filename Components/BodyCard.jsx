@@ -106,7 +106,7 @@ const BodyCard = ({ result, unit, expanded, onToggle }) => {
                         </ThemedText>
                         {closest ? (
                             <ThemedText style={[styles.scaleLabel, { color: theme.muted }]}>
-                                ×{closest.multiplier.toFixed(5)}
+                                Multiplier ×{closest.multiplier.toFixed(5)}
                             </ThemedText>
                         ) : null}
                     </View>

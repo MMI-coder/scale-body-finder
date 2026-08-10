@@ -15,7 +15,7 @@ These are the ones a user meets on a data card or a control and can't guess.
 
 ### Comparison Scale
 *Currently:* the scale everything is compared at. Dropdown, 1:5 1/2 to 1:6 1/2 in 1/64 steps, 1:6 default. **This control has no name on screen yet — naming it here names it in the app.**
-**Definition:**
+**Definition:** Defaults to 1:6th scale. This scale selector allows you to compare your character's measurements to various seamless bodies on the market.
 
 ### Priority
 *Currently:* which measurement the results are sorted on. Doesn't filter or exclude anything. **Also unnamed on screen — only described by a sentence.**
