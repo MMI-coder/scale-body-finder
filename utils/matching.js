@@ -1,207 +1,201 @@
 /**
  * utils/matching.js
  *
- * The matching engine.
+ * Everything is compared at ONE scale - the working scale, 1:6 by default.
  *
- * The idea that makes this work: scale is an OUTPUT, not an input. You don't
- * shrink a character to 1:6 and look for something that fits - you ask what
- * scale each body would have to be for it to fit, and report that.
+ * An earlier version anchored each body on the priority measurement, deriving a
+ * different scale for every body so that measurement always matched exactly.
+ * That turned out to hide the thing the app exists to show: forcing the bust to
+ * match absorbs the entire size difference into the scale, so a body 17mm too
+ * small scores about the same as one that's 0.3mm out. Comparing every body
+ * against the character at a single scale makes cards comparable to each other
+ * and puts the real gap on screen.
  *
- * The chosen priority is the anchor:
- *
- *     scale = body[priority] / character[priority]
- *
- * At that scale the priority measurement matches exactly by construction, and
- * the other two are the test of whether it holds up. Closeness is just how far
- * those two land from the body.
- *
- * Selection is not a ranking. It picks which few bodies to put in front of the
- * user; it does not claim one is better than another. Hand-measured bodies
- * carry +/-1mm, which is wider than most of the gaps involved.
+ * "Closest scale" survives as a per-body readout - the scale at which that
+ * body's priority measurement would land exactly. It's what you'd build props
+ * and clothing to. It no longer decides anything.
  */
 
 import { BODIES } from '../data/bodies'
-import { SIXTH, scaleInRange, scaleName, snapDivisor } from './scaleUtils'
+import { DEFAULT_WORKING_SCALE, scaleInRange, scaleName, snapDivisor } from './scaleUtils'
 
-export const PRIORITIES = ['bust', 'waist', 'hips', 'height']
+export const PRIORITIES = ['height', 'bust', 'waist', 'hips']
 
-/** The measurements that decide closeness. Height is never one of them. */
-export const SCORED = ['bust', 'waist', 'hips']
+/** Everything that counts toward overall fit. Height included, by request. */
+export const SCORED = ['height', 'bust', 'waist', 'hips']
 
-/** Shown, but never used for selection. */
-export const DISPLAY_ONLY = ['underbust', 'shoulder', 'arm', 'inseam']
+export const SORTS = ['least', 'greatest']
 
-/**
- * The height a body is anchored to: its shortest known figure.
- *
- * For a body measured with a custom head that's the minimum for whichever head
- * sculpt is in play - the hip joint can always be extended, never shortened
- * past this. For a manufacturer-head body it's their single published figure,
- * which is the only height genuinely known for it.
- *
- * Returns null for a body with no height at all, which the matcher skips.
- */
-export function heightAnchor(body, headSize = null) {
-  if (body.heightsByHead) {
-    const key = headSize ?? body.headSize
-    const entry = body.heightsByHead[key] ?? body.heightsByHead[body.headSize]
-    return entry ? entry.min : null
-  }
-  return body.manufacturerHeight ?? null
-}
-
-/**
- * A character's measurements at true 1:6. This is the reference figure the
- * user is given - it is not a target the app checks anything against.
- */
-export function atSixth(character) {
-  return scaleCharacter(character, SIXTH)
-}
-
-/** A character's measurements at an arbitrary multiplier. */
-export function scaleCharacter(character, multiplier) {
+/** A character's measurements at a given scale divisor. */
+export function scaleCharacter(character, divisor) {
   const out = {}
   for (const k of ['height', 'bust', 'waist', 'hips']) {
-    out[k] = character[k] == null ? null : character[k] * multiplier
+    out[k] = character[k] == null ? null : character[k] / divisor
   }
   return out
 }
 
-/**
- * Find the bodies closest to a character.
- *
- * @param character  measurements in mm: { height, bust, waist, hips }
- * @param priority   'bust' | 'waist' | 'hips' - the anchor
- * @param count      how many to return (3 or 5)
- * @param bodies     defaults to the bundled set
- * @returns array of matches, closest first, with no rank attached
- */
-export function findMatches(character, priority, count = 3, bodies = BODIES) {
-  if (!PRIORITIES.includes(priority)) {
-    throw new Error(`priority must be one of ${PRIORITIES.join(', ')}`)
+/** The character at true 1:6, for the reference panel. */
+export function atSixth(character) {
+  return scaleCharacter(character, 6)
+}
+
+/** The height range a body can actually be posed to, for its default head. */
+export function heightRange(body) {
+  if (body.heightsByHead) {
+    const r = body.heightsByHead[body.headSize]
+    if (r) return { min: r.min, max: r.max }
   }
+  if (body.manufacturerHeight != null) {
+    return { min: body.manufacturerHeight, max: body.manufacturerHeight }
+  }
+  return null
+}
 
-  const charAnchor = character[priority]
-  if (!charAnchor) return { matches: [], excluded: [], considered: 0 }
+/**
+ * The height this body would sit at when trying to match a target.
+ *
+ * The hip joint gives real travel, so a body whose range contains the target
+ * can simply be posed to it - that's a match, not a near miss. Outside the
+ * range, the body is pinned to whichever end is closest and the shortfall is
+ * what's left over.
+ */
+export function heightAgainst(body, targetHeight) {
+  const r = heightRange(body)
+  if (!r || targetHeight == null) return null
+  if (targetHeight < r.min) return r.min
+  if (targetHeight > r.max) return r.max
+  return targetHeight
+}
 
-  // Anchoring on height leaves all three of bust/waist/hips free to miss, so
-  // they all count toward closeness. Anchoring on one of them leaves two.
-  const others = SCORED.filter(k => k !== priority)
-  const matches = []
+/** The shortest height genuinely known for a body. Used for its closest scale. */
+export function heightAnchor(body) {
+  const r = heightRange(body)
+  return r ? r.min : null
+}
+
+/**
+ * Compare every body against a character at one scale.
+ *
+ * @param character     measurements in mm: { height, bust, waist, hips }
+ * @param opts.workingScale  scale divisor, e.g. 6 for 1:6
+ * @param opts.priority      'height' | 'bust' | 'waist' | 'hips' - what to sort on
+ * @param opts.sort          'least' | 'greatest' difference in that measurement
+ * @param opts.count         how many to return, or null for all
+ */
+export function compareBodies(character, opts = {}) {
+  const {
+    workingScale = DEFAULT_WORKING_SCALE,
+    priority = 'bust',
+    sort = 'least',
+    count = null,
+    bodies = BODIES,
+  } = opts
+
+  if (!PRIORITIES.includes(priority)) throw new Error(`bad priority: ${priority}`)
+
+  const scaled = scaleCharacter(character, workingScale)
+  const usable = SCORED.filter(k => scaled[k] != null)
+  if (!usable.length) return { results: [], scaled, considered: 0, excluded: [] }
+
+  const results = []
   const excluded = []
 
   for (const body of bodies) {
-    // A body without all three scored measurements can't be placed.
-    if (SCORED.some(k => body[k] == null)) {
+    if (['bust', 'waist', 'hips'].some(k => body[k] == null)) {
       excluded.push({ body, reason: 'incomplete measurements' })
       continue
     }
 
-    const bodyAnchor = priority === 'height' ? heightAnchor(body) : body[priority]
-    if (bodyAnchor == null) {
-      excluded.push({ body, reason: 'no known height' })
-      continue
-    }
-
-    const multiplier = bodyAnchor / charAnchor
-    const divisor = 1 / multiplier
-
-    if (!scaleInRange(divisor)) {
-      excluded.push({ body, reason: `implied scale 1:${divisor.toFixed(2)} is outside 1:4-1:8` })
-      continue
-    }
-
-    // The character at this body's scale, and how far the body sits from it.
-    const scaled = scaleCharacter(character, multiplier)
     const deltas = {}
     let totalOff = 0
-    for (const k of SCORED) {
-      deltas[k] = body[k] - scaled[k]     // positive = body is larger
-      if (k !== priority) totalOff += Math.abs(deltas[k])
+    for (const k of usable) {
+      const bodyVal = k === 'height' ? heightAgainst(body, scaled.height) : body[k]
+      if (bodyVal == null) { deltas[k] = null; continue }
+      deltas[k] = bodyVal - scaled[k]     // positive = body is larger
+      totalOff += Math.abs(deltas[k])
     }
-    // Height is shown alongside the rest whatever the priority is; it just
-    // never contributes to closeness.
-    const bodyHeight = heightAnchor(body)
-    deltas.height =
-      bodyHeight != null && scaled.height != null ? bodyHeight - scaled.height : null
 
-    matches.push({
+    // Closest scale: where this body's priority measurement would land exactly.
+    // Reference only - it doesn't affect the comparison above.
+    const bodyPriority = priority === 'height' ? heightAnchor(body) : body[priority]
+    const charPriority = character[priority]
+    let closest = null
+    if (bodyPriority != null && charPriority) {
+      const divisor = charPriority / bodyPriority
+      closest = {
+        divisor,
+        snapped: snapDivisor(divisor),
+        name: scaleName(divisor),
+        multiplier: 1 / divisor,
+        inRange: scaleInRange(divisor),
+      }
+    }
+
+    results.push({
       body,
       priority,
-      multiplier,
-      divisor,
-      snappedDivisor: snapDivisor(divisor),
-      scaleName: scaleName(divisor),
-      scaled,          // character at this body's scale
-      deltas,          // body minus character, per measurement
-      totalOff,        // sum of |delta| across the non-anchor scored measurements
-      otherKeys: others,
-      bodyHeight,      // the shortest known height, i.e. what height anchors to
-      uncertain: body.handMeasured,
+      workingScale,
+      scaled,                                   // character at the working scale
+      deltas,                                   // body minus that, per measurement
+      totalOff,                                 // sum of |delta| across all scored
+      heightUsed: heightAgainst(body, scaled.height),
+      heightRange: heightRange(body),
+      closest,
     })
   }
 
-  matches.sort((a, b) => a.totalOff - b.totalOff)
-  return { matches: matches.slice(0, count), excluded, considered: matches.length }
+  const key = m => (m.deltas[priority] == null ? Infinity : Math.abs(m.deltas[priority]))
+  results.sort((a, b) => (sort === 'greatest' ? key(b) - key(a) : key(a) - key(b)))
+
+  return {
+    results: count ? results.slice(0, count) : results,
+    scaled,
+    considered: results.length,
+    excluded,
+  }
 }
 
-/**
- * Rows for the CSV export. Mirrors what's on screen, including the fact that
- * the results are a set of options rather than a ranked list.
- */
-export function buildExportRows(character, priority, unitLabel, result) {
-  const sixth = atSixth(character)
+/** Rows for the CSV export - mirrors what's on screen. */
+export function buildExportRows(character, opts, outcome) {
+  const { workingScale, priority, sort } = opts
   const mm = v => (v == null ? '' : parseFloat(v.toFixed(2)))
+  const s = outcome.scaled
 
   const rows = [
     ['Scale Body Finder - results'],
     ['Character', character.name || '(unnamed)'],
+    ['Compared at', scaleName(workingScale)],
     ['Priority', priority],
-    ['Display unit', unitLabel],
+    ['Sorted by', `${sort} difference in ${priority}`],
     [],
     ['Character 1:1 (mm)', 'Height', mm(character.height), 'Bust', mm(character.bust), 'Waist', mm(character.waist), 'Hips', mm(character.hips)],
-    ['Character at true 1:6 (mm)', 'Height', mm(sixth.height), 'Bust', mm(sixth.bust), 'Waist', mm(sixth.waist), 'Hips', mm(sixth.hips)],
+    [`Character at ${scaleName(workingScale)} (mm)`, 'Height', mm(s.height), 'Bust', mm(s.bust), 'Waist', mm(s.waist), 'Hips', mm(s.hips)],
     [],
-    ['Closest bodies - listed as options, not ranked'],
     [
-      'Manufacturer', 'Product', 'Material', 'Scale', 'Multiplier',
-      'Bust (mm)', 'Bust diff (mm)',
-      'Waist (mm)', 'Waist diff (mm)',
-      'Hips (mm)', 'Hips diff (mm)',
-      'Underbust (mm)', 'Shoulder (mm)', 'Arm (mm)', 'Inseam (mm)',
-      'Height source', 'Height anchored on (mm)', 'Height diff (mm)',
-      'Head 37.5mm (mm)', 'Head 38mm (mm)', 'Head 38.5mm (mm)', 'Head measured with',
-      'Feet', 'Hand measured', 'Notes',
+      'Manufacturer', 'Product', 'Material', 'Closest scale',
+      'Height (mm)', 'Height diff', 'Height range low', 'Height range high',
+      'Bust (mm)', 'Bust diff', 'Waist (mm)', 'Waist diff', 'Hips (mm)', 'Hips diff',
+      'Total diff (mm)',
+      'Underbust (mm)', 'Shoulder (mm)', 'Arm (mm)', 'Inseam (mm)', 'Feet', 'Notes',
     ],
   ]
 
-  const SOURCE_LABEL = {
-    measured: 'Owner measured',
-    manufacturer: "Manufacturer figure, maker's own head",
-    estimated: 'Estimated',
-  }
-  const range = (b, size) => {
-    const r = b.heightsByHead?.[size]
-    return r ? (r.min === r.max ? `${r.min}` : `${r.min}-${r.max}`) : ''
-  }
-
-  for (const m of result.matches) {
-    const b = m.body
-    let source = SOURCE_LABEL[b.heightSource] || ''
-    if (b.heightSource === 'estimated') source += ` from ${b.heightEstimatedFrom}`
+  for (const r of outcome.results) {
+    const b = r.body
     rows.push([
       b.manufacturer || '', b.name || b.code, b.material || '',
-      m.scaleName, parseFloat(m.multiplier.toFixed(6)),
-      mm(b.bust), mm(m.deltas.bust),
-      mm(b.waist), mm(m.deltas.waist),
-      mm(b.hips), mm(m.deltas.hips),
+      r.closest ? r.closest.name : '',
+      mm(r.heightUsed), mm(r.deltas.height),
+      mm(r.heightRange?.min), mm(r.heightRange?.max),
+      mm(b.bust), mm(r.deltas.bust),
+      mm(b.waist), mm(r.deltas.waist),
+      mm(b.hips), mm(r.deltas.hips),
+      mm(r.totalOff),
       mm(b.underbust), mm(b.shoulder), mm(b.arm), mm(b.inseam),
-      source, mm(m.bodyHeight), mm(m.deltas.height),
-      range(b, 37.5), range(b, 38), range(b, 38.5), b.headSize ? `${b.headSize}mm` : '',
-      b.feet || '', b.handMeasured ? 'Yes (+/-1mm)' : 'No', b.notes || '',
+      b.feet || '', b.notes || '',
     ])
   }
-
   return rows
 }
 

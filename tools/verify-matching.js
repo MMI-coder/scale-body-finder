@@ -3,15 +3,14 @@
  *
  *     node tools/verify-matching.js
  *
- * Sanity check on the engine, run against the real source in utils/ rather
- * than a copy of it. The app modules are ES modules and this is plain Node,
- * so their import/export lines are stripped and the bodies evaluated together
- * in one scope - crude, but it means this tests the shipped code and not a
- * reimplementation of it.
+ * Checks the engine against the real source in utils/ rather than a copy of it.
+ * Those are ES modules and this is plain Node, so their import/export lines are
+ * stripped and the bodies evaluated in one scope - crude, but it means this
+ * tests the shipped code and not a reimplementation of it.
  *
- * Kasumi is the known-good case: the user built her figure on a TBLeague S07C
- * and independently arrived at a x0.172 multiplier, i.e. 1:5 13/16. If bust
- * priority doesn't surface that, the maths is wrong.
+ * The case that matters: comparing every body at one scale has to show the gap
+ * that per-body anchoring was hiding. S07C and S24A scored almost identically
+ * under anchoring (5.14 vs 5.35) despite S24A being 17mm narrower in the bust.
  */
 
 const fs = require('fs')
@@ -20,7 +19,6 @@ const { loadBodies } = require('./build-body-data')
 
 const ROOT = path.join(__dirname, '..')
 
-// --- load the real modules -------------------------------------------------
 const strip = src =>
   src
     .replace(/^\s*import[\s\S]*?from\s+['"][^'"]+['"]\s*$/gm, '')
@@ -28,147 +26,124 @@ const strip = src =>
     .replace(/^\s*export\s+/gm, '')
 
 const { bodies } = loadBodies()
-const sandbox = { BODIES: bodies, console }
 const src = [
   strip(fs.readFileSync(path.join(ROOT, 'utils', 'scaleUtils.js'), 'utf8')),
   strip(fs.readFileSync(path.join(ROOT, 'utils', 'matching.js'), 'utf8')),
-  'return { findMatches, atSixth, scaleName, snapDivisor, scaleInRange, buildExportRows, rowsToCsv, heightAnchor, SIXTH }',
+  `return { compareBodies, scaleCharacter, atSixth, heightRange, heightAgainst, heightAnchor,
+            scaleName, snapDivisor, scaleInRange, buildExportRows, rowsToCsv,
+            WORKING_SCALES, DEFAULT_WORKING_SCALE, PRIORITIES, SCORED }`,
 ].join('\n')
 
 const api = new Function('BODIES', 'console', src)(bodies, console)
+const byCode = Object.fromEntries(bodies.map(b => [b.code, b]))
 
-// --- helpers ---------------------------------------------------------------
 let failures = 0
 function check(label, actual, expected, tol = 0) {
   const ok = typeof expected === 'number' ? Math.abs(actual - expected) <= tol : actual === expected
   if (!ok) failures++
   console.log(`  ${ok ? 'PASS' : 'FAIL'}  ${label}: ${actual}${ok ? '' : `   (expected ${expected})`}`)
 }
+const r2 = n => Math.round(n * 100) / 100
 
 // --- scale naming ----------------------------------------------------------
 console.log('\nScale naming')
 check('1/0.172 -> name', api.scaleName(1 / 0.172), '1:5 13/16')
 check('6 -> name', api.scaleName(6), '1:6')
-check('4.015625 -> name', api.scaleName(4.015625), '1:4 1/64')
-check('5.8125 -> name', api.scaleName(5.8125), '1:5 13/16')
-check('7.984375 -> name', api.scaleName(7.984375), '1:7 63/64')
-check('1:4 in range', api.scaleInRange(4), true)
-check('1:8 out of range', api.scaleInRange(8), false)
+check('5.5 -> name', api.scaleName(5.5), '1:5 1/2')
+check('working scales are all in range', api.WORKING_SCALES.every(api.scaleInRange), true)
+check('default working scale', api.DEFAULT_WORKING_SCALE, 6)
 
-// --- Kasumi ----------------------------------------------------------------
-const kasumi = { name: 'Kasumi', height: 1580, bust: 890, waist: 540, hips: 840 }
+// --- the Example character, the case from the screenshots -------------------
+const example = { name: 'Example', height: 1650, bust: 920, waist: 580, hips: 870 }
 
-console.log('\nKasumi at true 1:6 (mm)')
-const sixth = api.atSixth(kasumi)
-check('height', +sixth.height.toFixed(2), 263.33, 0.01)
-check('bust', +sixth.bust.toFixed(2), 148.33, 0.01)
-check('waist', +sixth.waist.toFixed(2), 90.0, 0.01)
-check('hips', +sixth.hips.toFixed(2), 140.0, 0.01)
+console.log('\nExample at 1:6 (mm)')
+const at6 = api.scaleCharacter(example, 6)
+check('height', r2(at6.height), 275)
+check('bust', r2(at6.bust), 153.33)
+check('waist', r2(at6.waist), 96.67)
+check('hips', r2(at6.hips), 145)
 
-console.log('\nKasumi, bust priority - closest 3')
-const res = api.findMatches(kasumi, 'bust', 3, bodies)
-res.matches.forEach(m => {
+console.log('\nComparing at 1:6 - the gap anchoring was hiding')
+const out6 = api.compareBodies(example, { workingScale: 6, priority: 'bust', sort: 'least', bodies })
+const find = (o, code) => o.results.find(r => r.body.code === code)
+const s07c = find(out6, 'S07C')
+const s24a = find(out6, 'S24A')
+for (const [code, m] of [['S07C', s07c], ['S24A', s24a]]) {
   const d = m.deltas
   console.log(
-    `  ${(m.body.code + '        ').slice(0, 9)} ${m.scaleName.padEnd(12)}` +
-    ` x${m.multiplier.toFixed(5)}` +
-    `  bust ${d.bust.toFixed(2).padStart(7)}  waist ${d.waist.toFixed(2).padStart(7)}` +
-    `  hips ${d.hips.toFixed(2).padStart(7)}   off ${m.totalOff.toFixed(2)}` +
-    (m.uncertain ? '  +/-1mm' : '')
+    `  ${code.padEnd(6)} height ${r2(d.height).toString().padStart(7)}` +
+    `  bust ${r2(d.bust).toString().padStart(7)}  waist ${r2(d.waist).toString().padStart(7)}` +
+    `  hips ${r2(d.hips).toString().padStart(7)}   total ${r2(m.totalOff)}`
   )
-})
+}
+check('S07C bust diff', r2(s07c.deltas.bust), -0.33)
+check('S07C waist diff', r2(s07c.deltas.waist), -3.67)
+check('S07C hips diff', r2(s07c.deltas.hips), -2)
+check('S24A bust diff', r2(s24a.deltas.bust), -17.33)
+check('S24A hips diff', r2(s24a.deltas.hips), -20)
+check('S24A is far worse than S07C', s24a.totalOff > s07c.totalOff * 5, true)
+check('nothing is forced to zero by the priority',
+  out6.results.every(r => r.deltas.bust !== 0 || r.body.bust === at6.bust), true)
 
-const first = res.matches[0]
-check('closest body is S07C', first.body.code, 'S07C')
-check('S07C scale name', first.scaleName, '1:5 13/16')
-check('S07C multiplier ~0.172', +first.multiplier.toFixed(4), 0.1719, 0.0002)
-check('anchor (bust) is exact', +first.deltas.bust.toFixed(6), 0)
-check('considered all 23 bodies', res.considered, 23)
-check('excluded none', res.excluded.length, 0)
+// --- height range: inside the range is a match, not a near miss -------------
+console.log('\nHeight range handling')
+const s07cRange = api.heightRange(byCode.S07C)
+check('S07C range low', s07cRange.min, 274)
+check('S07C range high', s07cRange.max, 280)
+check('target 275 sits inside it', api.heightAgainst(byCode.S07C, 275), 275)
+check('  so the diff is zero', r2(s07c.deltas.height), 0)
+check('target 270 is below it -> pinned to 274', api.heightAgainst(byCode.S07C, 270), 274)
+check('target 290 is above it -> pinned to 280', api.heightAgainst(byCode.S07C, 290), 280)
+check('S24A cannot reach 275, tops out at 267', api.heightAgainst(byCode.S24A, 275), 267)
+check('  so its height diff is -8', r2(s24a.deltas.height), -8)
+const mfr = api.heightRange(byCode['SR-AD01'])
+check('a manufacturer body has no span', mfr.min === mfr.max, true)
+check('  and uses their figure', mfr.min, 310)
 
-console.log('\nKasumi, other priorities')
-for (const p of ['waist', 'hips']) {
-  const r = api.findMatches(kasumi, p, 3, bodies)
-  const anchorExact = r.matches.every(m => Math.abs(m.deltas[p]) < 1e-9)
-  console.log(`  ${p.padEnd(6)} -> ${r.matches.map(m => `${m.body.code} (${m.scaleName})`).join(', ')}`)
-  check(`  ${p} anchor exact on every match`, anchorExact, true)
+// --- sorting ---------------------------------------------------------------
+console.log('\nSorting by difference in the chosen measurement')
+for (const priority of api.PRIORITIES) {
+  const asc = api.compareBodies(example, { workingScale: 6, priority, sort: 'least', bodies })
+  const desc = api.compareBodies(example, { workingScale: 6, priority, sort: 'greatest', bodies })
+  const key = r => Math.abs(r.deltas[priority])
+  const ascOk = asc.results.every((r, i, a) => i === 0 || key(a[i - 1]) <= key(r))
+  const descOk = desc.results.every((r, i, a) => i === 0 || key(a[i - 1]) >= key(r))
+  console.log(
+    `  ${priority.padEnd(6)} least -> ${asc.results[0].body.code.padEnd(8)}` +
+    `(${r2(key(asc.results[0]))}mm)   greatest -> ${desc.results[0].body.code.padEnd(8)}` +
+    `(${r2(key(desc.results[0]))}mm)`
+  )
+  check(`  ${priority} ascending is ordered`, ascOk, true)
+  check(`  ${priority} descending is ordered`, descOk, true)
 }
 
-// --- Honoka: the stress case ----------------------------------------------
-console.log('\nHonoka (990 bust on 1500 height) - the hard one')
-const honoka = { name: 'Honoka', height: 1500, bust: 990, waist: 580, hips: 890 }
-const h = api.findMatches(honoka, 'bust', 3, bodies)
-h.matches.forEach(m => {
-  console.log(
-    `  ${(m.body.code + '        ').slice(0, 9)} ${m.scaleName.padEnd(12)}` +
-    `  waist ${m.deltas.waist.toFixed(2).padStart(7)}  hips ${m.deltas.hips.toFixed(2).padStart(7)}` +
-    `   off ${m.totalOff.toFixed(2)}`
-  )
-})
-check('Honoka still returns options', h.matches.length, 3)
-check('Honoka fits worse than Kasumi', h.matches[0].totalOff > first.totalOff, true)
+// --- working scale changes the answer --------------------------------------
+console.log('\nChanging the working scale re-sorts')
+const seen = {}
+for (const s of [5.5, 6, 6.75]) {
+  const o = api.compareBodies(example, { workingScale: s, priority: 'bust', sort: 'least', bodies })
+  seen[s] = o.results[0].body.code
+  console.log(`  at ${api.scaleName(s).padEnd(10)} closest on bust -> ${o.results[0].body.code}`)
+}
+check('different scales pick different bodies', new Set(Object.values(seen)).size > 1, true)
 
-// --- height as a priority ---------------------------------------------------
-console.log('\nHeight data')
-const byCode = Object.fromEntries(bodies.map(b => [b.code, b]))
-const s07c = byCode.S07C
-check('S07C measured with 38mm', s07c.headSize, 38)
-check('S07C @37.5 min', s07c.heightsByHead['37.5'].min, 273.5)
-check('S07C @37.5 max', s07c.heightsByHead['37.5'].max, 279.5)
-check('S07C @38   min/max', `${s07c.heightsByHead['38'].min}/${s07c.heightsByHead['38'].max}`, '274/280')
-check('S07C @38.5 min', s07c.heightsByHead['38.5'].min, 274.5)
-check('S07C @38.5 max', s07c.heightsByHead['38.5'].max, 280.5)
-
-check('SR-AD01 source', byCode['SR-AD01'].heightSource, 'manufacturer')
-check('SR-AD01 uses the manufacturer figure', byCode['SR-AD01'].manufacturerHeight, 310)
-check('SR-AD01 has no head options', byCode['SR-AD01'].heightsByHead, null)
-check('N-1A uses the manufacturer figure', byCode['N-1A'].manufacturerHeight, 285)
-
-check('VCD-06 source', byCode['VCD-06'].heightSource, 'estimated')
-check('VCD-06 borrowed from', byCode['VCD-06'].heightEstimatedFrom, 'S07C')
-check('VCD-06 range matches S07C',
-  `${byCode['VCD-06'].heightsByHead['38'].min}/${byCode['VCD-06'].heightsByHead['38'].max}`, '274/280')
-check('VCD-03 kept its own measurement', byCode['VCD-03'].heightSource, 'measured')
-check('every body has a height source', bodies.every(b => b.heightSource != null), true)
-
-console.log('\nAnchor is the shortest known height')
-check('S07C anchors on its 38mm minimum', api.heightAnchor(s07c), 274)
-check('SR-AD01 anchors on the manufacturer figure', api.heightAnchor(byCode['SR-AD01']), 310)
-check('S24A anchors on its 37.5mm minimum', api.heightAnchor(byCode.S24A), 262)
-
-console.log('\nKasumi, height priority - closest 3')
-const hp = api.findMatches(kasumi, 'height', 3, bodies)
-hp.matches.forEach(m => {
-  const d = m.deltas
-  console.log(
-    `  ${(m.body.code + '        ').slice(0, 9)} ${m.scaleName.padEnd(12)}` +
-    ` h ${String(m.bodyHeight).padStart(5)}` +
-    `  bust ${d.bust.toFixed(2).padStart(7)}  waist ${d.waist.toFixed(2).padStart(7)}` +
-    `  hips ${d.hips.toFixed(2).padStart(7)}   off ${m.totalOff.toFixed(2)}`
-  )
-})
-check('height anchor is exact on every match',
-  hp.matches.every(m => Math.abs(m.deltas.height) < 1e-9), true)
-check('all three of b/w/h count toward closeness',
-  hp.matches.every(m => Math.abs(
-    m.totalOff - (Math.abs(m.deltas.bust) + Math.abs(m.deltas.waist) + Math.abs(m.deltas.hips))
-  ) < 1e-9), true)
-check('nothing excluded for want of a height', hp.excluded.length, 0)
-check('height priority differs from bust priority',
-  hp.matches[0].body.code !== res.matches[0].body.code ||
-  Math.abs(hp.matches[0].multiplier - res.matches[0].multiplier) > 1e-9, true)
-
-// Height is reported under every priority, but never scores.
-check('bust priority still reports a height diff',
-  typeof res.matches[0].deltas.height === 'number', true)
+// --- counts and closest scale ----------------------------------------------
+console.log('\nResult counts and closest scale')
+check('all bodies when count is null', out6.results.length, 23)
+check('3 when asked for 3',
+  api.compareBodies(example, { workingScale: 6, priority: 'bust', count: 3, bodies }).results.length, 3)
+check('S07C closest scale on bust', s07c.closest.name, '1:6 1/64')
+check('S24A closest scale on bust', s24a.closest.name, '1:6 49/64')
+check('closest scale is reference only - both compared at 1:6',
+  s07c.scaled.bust === s24a.scaled.bust, true)
 
 // --- export ----------------------------------------------------------------
 console.log('\nCSV export')
-const csv = api.rowsToCsv(api.buildExportRows(kasumi, 'bust', 'cm', res))
-check('has a header row', csv.includes('Manufacturer'), true)
-check('names the closest body', csv.includes('S07C'), true)
-check('says not ranked', csv.includes('not ranked'), true)
+const csv = api.rowsToCsv(api.buildExportRows(example,
+  { workingScale: 6, priority: 'bust', sort: 'least' }, out6))
+check('states the comparison scale', csv.includes('Compared at'), true)
+check('carries the total', csv.includes('Total diff (mm)'), true)
+check('names a body', csv.includes('S07C'), true)
 
-// --- result ----------------------------------------------------------------
 console.log(failures === 0 ? '\nAll checks passed.\n' : `\n${failures} CHECK(S) FAILED.\n`)
 process.exitCode = failures === 0 ? 0 : 1

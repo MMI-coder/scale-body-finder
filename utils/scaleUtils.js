@@ -89,8 +89,19 @@ export function scaleInRange(divisor) {
   return Number.isFinite(divisor) && divisor >= SCALE_MIN && divisor < SCALE_MAX
 }
 
-/** True 1:6 multiplier - the reference figure, not a target to hit. */
+/** True 1:6 multiplier. */
 export const SIXTH = 1 / 6
+
+/**
+ * The scales a user can compare at, as divisors.
+ *
+ * A fixed list rather than free entry: everything downstream assumes a sane
+ * scale, and there's no reason to let someone type 1:0.3 and get nonsense.
+ * Quarter steps from 1:5 to 1:7 covers the range these bodies actually live in
+ * and keeps the arithmetic easy for the rest of a build.
+ */
+export const WORKING_SCALES = [5, 5.25, 5.5, 5.75, 6, 6.25, 6.5, 6.75, 7]
+export const DEFAULT_WORKING_SCALE = 6
 
 // ---------------------------------------------------------------------------
 // Misc
