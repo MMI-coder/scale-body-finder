@@ -23,7 +23,7 @@ import { atSixth, findMatches } from '../utils/matching'
 import { DEFAULT_UNIT, UNITS, fmtMM, fromMM, toMM } from '../utils/scaleUtils'
 
 const FIELDS = [
-    { key: 'height', label: 'Height', hint: 'optional' },
+    { key: 'height', label: 'Height' },
     { key: 'bust', label: 'Bust' },
     { key: 'waist', label: 'Waist' },
     { key: 'hips', label: 'Hips' },
@@ -33,6 +33,7 @@ const PRIORITY_OPTIONS = [
     { value: 'bust', label: 'Bust' },
     { value: 'waist', label: 'Waist' },
     { value: 'hips', label: 'Hips' },
+    { value: 'height', label: 'Height' },
 ]
 
 const emptyValues = { height: '', bust: '', waist: '', hips: '' }
@@ -79,7 +80,10 @@ export default function Index() {
         return { name: name.trim(), ...mm }
     }, [values, unit, name])
 
-    const ready = character.bust && character.waist && character.hips
+    // Height is optional unless it's the thing being anchored on.
+    const ready =
+        character.bust && character.waist && character.hips &&
+        (priority !== 'height' || character.height)
     const result = useMemo(
         () => (ready ? findMatches(character, priority, count, BODIES) : null),
         [character, priority, count, ready]
@@ -135,7 +139,7 @@ export default function Index() {
                         {FIELDS.map((f) => (
                             <View key={f.key} style={styles.measureField}>
                                 <ThemedText style={[styles.label, { color: theme.muted }]}>
-                                    {f.label} ({unit}){f.hint ? ` · ${f.hint}` : ''}
+                                    {f.label} ({unit}){f.key === 'height' ? (priority === 'height' ? ' · required' : ' · optional') : ''}
                                 </ThemedText>
                                 <ThemedTextInput
                                     value={values[f.key]}
@@ -177,8 +181,9 @@ export default function Index() {
                 {!ready ? (
                     <ThemedCard>
                         <ThemedText style={{ color: theme.muted }}>
-                            Enter a bust, waist and hips measurement to see matches. Height is
-                            optional — it's shown for reference but never used to pick bodies.
+                            {priority === 'height'
+                                ? 'Enter a height, bust, waist and hips measurement to see matches. Height is the anchor here, so it is required.'
+                                : "Enter a bust, waist and hips measurement to see matches. Height is optional — it's shown for reference, and only decides which bodies come back if you make it the priority."}
                         </ThemedText>
                     </ThemedCard>
                 ) : (
