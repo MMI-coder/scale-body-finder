@@ -65,6 +65,38 @@ function jpegSize(file) {
   return null
 }
 
+/**
+ * The three head sculpts the owner measures with, in mm (chin to scalp, squared
+ * off, no hair).
+ */
+const HEAD_SIZES = [37.5, 38, 38.5]
+
+/**
+ * Height for each head option, derived from the one that was actually measured.
+ *
+ * The peg socket depth is fixed by the sculpt, so a head 0.5mm taller puts the
+ * scalp 0.5mm higher and nothing else moves - the offset is 1:1. That makes the
+ * other two options arithmetic rather than data entry, which is worth doing:
+ * six hand-kept columns per body would be six more things to drift.
+ */
+function heightsByHead(measuredHead, min, max) {
+  if (measuredHead == null || min == null || max == null) return null
+  const round = n => Math.round(n * 100) / 100
+  const out = {}
+  for (const size of HEAD_SIZES) {
+    const delta = size - measuredHead
+    out[size] = { min: round(min + delta), max: round(max + delta) }
+  }
+  return out
+}
+
+/** Pull the head size out of a free-text "Head Used" cell. */
+function parseHeadSize(text) {
+  if (!text) return null
+  const m = /(\d+(?:\.\d+)?)\s*mm/i.exec(text)
+  return m ? Number(m[1]) : null
+}
+
 const blank = v => v == null || v.trim() === '' || v.trim().toUpperCase() === 'N/A'
 const str = v => (blank(v) ? null : v.trim())
 const num = v => {
@@ -137,6 +169,16 @@ rows.slice(1).forEach((r, i) => {
     handMeasured: (str(r[C.hand]) || '').toLowerCase() === 'yes',
   }
 
+  // Heights per head option, for bodies measured with one of the custom sculpts.
+  body.headSize = parseHeadSize(body.head)
+  body.heightsByHead = heightsByHead(body.headSize, body.heightMin, body.heightMax)
+  if (body.headSize != null && !HEAD_SIZES.includes(body.headSize)) {
+    problems.push(`${code}: head size ${body.headSize}mm is not one of ${HEAD_SIZES.join('/')}`)
+  }
+  if (body.headSize != null && body.heightsByHead == null) {
+    problems.push(`${code}: has head size ${body.headSize}mm but no measured height range`)
+  }
+
   // Bust/waist/hips are what selection runs on - a row without them is unusable.
   for (const k of ['bust', 'waist', 'hips']) {
     if (body[k] == null) problems.push(`${code}: missing ${k}`)
@@ -177,7 +219,15 @@ const out = `/**
  * shows a dash rather than inventing one.
  *
  * handMeasured rows were measured by hand and carry a +/-1mm margin.
+ *
+ * heightsByHead gives the total height for each of the three custom head
+ * sculpts, keyed by head size in mm. Only the size in headSize was actually
+ * measured; the others are that measurement shifted by the difference in head
+ * height, which is 1:1 because the peg socket depth doesn't change. Bodies
+ * shipped with a manufacturer head have headSize null and heightsByHead null.
  */
+
+export const HEAD_SIZES = ${JSON.stringify(HEAD_SIZES)}
 
 const IMAGES = {
 ${imgMap}

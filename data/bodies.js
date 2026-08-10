@@ -6,7 +6,15 @@
  * shows a dash rather than inventing one.
  *
  * handMeasured rows were measured by hand and carry a +/-1mm margin.
+ *
+ * heightsByHead gives the total height for each of the three custom head
+ * sculpts, keyed by head size in mm. Only the size in headSize was actually
+ * measured; the others are that measurement shifted by the difference in head
+ * height, which is 1:1 because the peg socket depth doesn't change. Bodies
+ * shipped with a manufacturer head have headSize null and heightsByHead null.
  */
+
+export const HEAD_SIZES = [37.5,38,38.5]
 
 const IMAGES = {
   "N-1A.jpg": require("../images/N-1A.jpg"),
@@ -62,6 +70,21 @@ export const BODIES = [
     "image": "S07 Family.jpg",
     "notes": "Model line includes: S07C, S07D, S09C and S09D",
     "handMeasured": true,
+    "headSize": 38,
+    "heightsByHead": {
+      "38": {
+        "min": 274,
+        "max": 280
+      },
+      "37.5": {
+        "min": 273.5,
+        "max": 279.5
+      },
+      "38.5": {
+        "min": 274.5,
+        "max": 280.5
+      }
+    },
     "imageW": 3839,
     "imageH": 1961
   },
@@ -87,6 +110,21 @@ export const BODIES = [
     "image": "S10 Family.jpg",
     "notes": "Model line includes: S10D, S10E, S12D and S12E",
     "handMeasured": true,
+    "headSize": 38,
+    "heightsByHead": {
+      "38": {
+        "min": 277,
+        "max": 283
+      },
+      "37.5": {
+        "min": 276.5,
+        "max": 282.5
+      },
+      "38.5": {
+        "min": 277.5,
+        "max": 283.5
+      }
+    },
     "imageW": 3835,
     "imageH": 1970
   },
@@ -112,6 +150,21 @@ export const BODIES = [
     "image": "S16 Family.jpg",
     "notes": "Model line includes: S16A, S16B, S17B, and S17C",
     "handMeasured": true,
+    "headSize": 38,
+    "heightsByHead": {
+      "38": {
+        "min": 280,
+        "max": 283
+      },
+      "37.5": {
+        "min": 279.5,
+        "max": 282.5
+      },
+      "38.5": {
+        "min": 280.5,
+        "max": 283.5
+      }
+    },
     "imageW": 3839,
     "imageH": 1969
   },
@@ -137,6 +190,21 @@ export const BODIES = [
     "image": "S20 Family.jpg",
     "notes": "Model line includes: S20A, S20B, S21B, and S21C",
     "handMeasured": true,
+    "headSize": 38,
+    "heightsByHead": {
+      "38": {
+        "min": 280,
+        "max": 284
+      },
+      "37.5": {
+        "min": 279.5,
+        "max": 283.5
+      },
+      "38.5": {
+        "min": 280.5,
+        "max": 284.5
+      }
+    },
     "imageW": 3839,
     "imageH": 1968
   },
@@ -162,6 +230,21 @@ export const BODIES = [
     "image": "S22 Family.jpg",
     "notes": "Model line includes: S22A, S22B, S23B, and S23C",
     "handMeasured": true,
+    "headSize": 38,
+    "heightsByHead": {
+      "38": {
+        "min": 278,
+        "max": 282
+      },
+      "37.5": {
+        "min": 277.5,
+        "max": 281.5
+      },
+      "38.5": {
+        "min": 278.5,
+        "max": 282.5
+      }
+    },
     "imageW": 3839,
     "imageH": 1965
   },
@@ -187,6 +270,21 @@ export const BODIES = [
     "image": "S24 Family.jpg",
     "notes": "Model line includes: S24A, S24B, S25B, and S25C",
     "handMeasured": true,
+    "headSize": 37.5,
+    "heightsByHead": {
+      "38": {
+        "min": 262.5,
+        "max": 267.5
+      },
+      "37.5": {
+        "min": 262,
+        "max": 267
+      },
+      "38.5": {
+        "min": 263,
+        "max": 268
+      }
+    },
     "imageW": 3839,
     "imageH": 1967
   },
@@ -212,6 +310,21 @@ export const BODIES = [
     "image": "S38 Family.jpg",
     "notes": "Model line includes: S38A, S38B, S39A, and S39B",
     "handMeasured": true,
+    "headSize": 38.5,
+    "heightsByHead": {
+      "38": {
+        "min": 263.5,
+        "max": 269.5
+      },
+      "37.5": {
+        "min": 263,
+        "max": 269
+      },
+      "38.5": {
+        "min": 264,
+        "max": 270
+      }
+    },
     "imageW": 3839,
     "imageH": 1971
   },
@@ -237,6 +350,21 @@ export const BODIES = [
     "image": "S42 Family.jpg",
     "notes": "Model line includes: S42A, S42B, S43A, and S43B",
     "handMeasured": true,
+    "headSize": 38.5,
+    "heightsByHead": {
+      "38": {
+        "min": 291.5,
+        "max": 297.5
+      },
+      "37.5": {
+        "min": 291,
+        "max": 297
+      },
+      "38.5": {
+        "min": 292,
+        "max": 298
+      }
+    },
     "imageW": 3839,
     "imageH": 1970
   },
@@ -262,6 +390,21 @@ export const BODIES = [
     "image": "S44 Family.jpg",
     "notes": "Model line includes: S44A, S44B, S45A, and S45B",
     "handMeasured": true,
+    "headSize": 37.5,
+    "heightsByHead": {
+      "38": {
+        "min": 260.5,
+        "max": 268.5
+      },
+      "37.5": {
+        "min": 260,
+        "max": 268
+      },
+      "38.5": {
+        "min": 261,
+        "max": 269
+      }
+    },
     "imageW": 3839,
     "imageH": 1964
   },
@@ -287,6 +430,21 @@ export const BODIES = [
     "image": "S48 Family.jpg",
     "notes": "Model line includes: S48A, S48B, S49A, and S49B",
     "handMeasured": true,
+    "headSize": 37.5,
+    "heightsByHead": {
+      "38": {
+        "min": 278.5,
+        "max": 284.5
+      },
+      "37.5": {
+        "min": 278,
+        "max": 284
+      },
+      "38.5": {
+        "min": 279,
+        "max": 285
+      }
+    },
     "imageW": 3839,
     "imageH": 1968
   },
@@ -312,6 +470,21 @@ export const BODIES = [
     "image": "S52 Family.jpg",
     "notes": "Model line includes: S52A, S52B, S53A, and S53B",
     "handMeasured": true,
+    "headSize": 38.5,
+    "heightsByHead": {
+      "38": {
+        "min": 291.5,
+        "max": 297.5
+      },
+      "37.5": {
+        "min": 291,
+        "max": 297
+      },
+      "38.5": {
+        "min": 292,
+        "max": 298
+      }
+    },
     "imageW": 3839,
     "imageH": 1967
   },
@@ -337,6 +510,8 @@ export const BODIES = [
     "image": "TBLeague SR-AD01.jpg",
     "notes": "There are versions where a head sculpt is included. It adds \"(H)\" to the Product Name/Code",
     "handMeasured": false,
+    "headSize": null,
+    "heightsByHead": null,
     "imageW": 1200,
     "imageH": 1800
   },
@@ -362,6 +537,8 @@ export const BODIES = [
     "image": "TBLeague SR-BD01.jpg",
     "notes": "There are versions where a head sculpt is included. It adds \"(H)\" to the Product Name/Code",
     "handMeasured": false,
+    "headSize": null,
+    "heightsByHead": null,
     "imageW": 1200,
     "imageH": 1600
   },
@@ -387,6 +564,8 @@ export const BODIES = [
     "image": "TBLeague SR-CD01.jpg",
     "notes": "There are versions where a head sculpt is included. It adds \"(H)\" to the Product Name/Code",
     "handMeasured": false,
+    "headSize": null,
+    "heightsByHead": null,
     "imageW": 1200,
     "imageH": 1600
   },
@@ -412,6 +591,8 @@ export const BODIES = [
     "image": "TBLeague SR-DD01.jpg",
     "notes": "There are versions where a head sculpt is included. It adds \"(H)\" to the Product Name/Code",
     "handMeasured": false,
+    "headSize": null,
+    "heightsByHead": null,
     "imageW": 1200,
     "imageH": 1600
   },
@@ -437,6 +618,8 @@ export const BODIES = [
     "image": "TBLeague TB-DF01.jpg",
     "notes": "There are versions where a head sculpt is included. It adds \"(H)\" to the Product Name/Code",
     "handMeasured": false,
+    "headSize": null,
+    "heightsByHead": null,
     "imageW": 1500,
     "imageH": 2250
   },
@@ -462,6 +645,8 @@ export const BODIES = [
     "image": "N-1A.jpg",
     "notes": null,
     "handMeasured": false,
+    "headSize": null,
+    "heightsByHead": null,
     "imageW": 1200,
     "imageH": 1600
   },
@@ -487,6 +672,8 @@ export const BODIES = [
     "image": "VeryCool VCD-01.jpg",
     "notes": null,
     "handMeasured": false,
+    "headSize": null,
+    "heightsByHead": null,
     "imageW": 1500,
     "imageH": 2304
   },
@@ -512,6 +699,8 @@ export const BODIES = [
     "image": "VeryCool VCD-02.jpg",
     "notes": null,
     "handMeasured": false,
+    "headSize": null,
+    "heightsByHead": null,
     "imageW": 1500,
     "imageH": 2304
   },
@@ -537,6 +726,21 @@ export const BODIES = [
     "image": "VeryCool VCD-03.jpg",
     "notes": null,
     "handMeasured": true,
+    "headSize": 38,
+    "heightsByHead": {
+      "38": {
+        "min": 278,
+        "max": 284
+      },
+      "37.5": {
+        "min": 277.5,
+        "max": 283.5
+      },
+      "38.5": {
+        "min": 278.5,
+        "max": 284.5
+      }
+    },
     "imageW": 1500,
     "imageH": 2304
   },
@@ -562,6 +766,21 @@ export const BODIES = [
     "image": "VeryCool VCD-05.jpg",
     "notes": null,
     "handMeasured": true,
+    "headSize": 38,
+    "heightsByHead": {
+      "38": {
+        "min": 284,
+        "max": 290
+      },
+      "37.5": {
+        "min": 283.5,
+        "max": 289.5
+      },
+      "38.5": {
+        "min": 284.5,
+        "max": 290.5
+      }
+    },
     "imageW": 2266,
     "imageH": 1697
   },
@@ -587,6 +806,8 @@ export const BODIES = [
     "image": "VeryCool VCD-06.jpg",
     "notes": "This is an attached foot version of the VCD-07",
     "handMeasured": false,
+    "headSize": null,
+    "heightsByHead": null,
     "imageW": 1134,
     "imageH": 1701
   },
@@ -612,6 +833,8 @@ export const BODIES = [
     "image": "VeryCool VCD-07.jpg",
     "notes": "This is a detachable foot version of the VCD-06",
     "handMeasured": false,
+    "headSize": null,
+    "heightsByHead": null,
     "imageW": 2998,
     "imageH": 2233
   }
