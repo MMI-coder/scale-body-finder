@@ -12,8 +12,8 @@ import * as Sharing from 'expo-sharing'
 import { buildExportRows, rowsToCsv } from './matching'
 import { safeFileName } from './scaleUtils'
 
-export async function exportResults(character, priority, unit, result) {
-  const csv = rowsToCsv(buildExportRows(character, priority, unit, result))
+export async function exportResults(character, opts, outcome) {
+  const csv = rowsToCsv(buildExportRows(character, opts, outcome))
   const name = `${safeFileName(character.name)}_bodies.csv`
   const fileUri = FileSystem.cacheDirectory + name
 

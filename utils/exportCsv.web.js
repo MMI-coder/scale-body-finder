@@ -10,8 +10,8 @@
 import { buildExportRows, rowsToCsv } from './matching'
 import { safeFileName } from './scaleUtils'
 
-export async function exportResults(character, priority, unit, result) {
-  const csv = rowsToCsv(buildExportRows(character, priority, unit, result))
+export async function exportResults(character, opts, outcome) {
+  const csv = rowsToCsv(buildExportRows(character, opts, outcome))
 
   // The ﻿ prefix is a byte-order mark. It tells Excel the file is UTF-8,
   // otherwise Excel mangles any non-ASCII characters.
