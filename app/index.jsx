@@ -10,6 +10,7 @@ import {
 } from 'react-native'
 
 import BodyCard from '../Components/BodyCard'
+import Dropdown from '../Components/Dropdown'
 import SegmentedControl from '../Components/SegmentedControl'
 import Spacer from '../Components/Spacer'
 import ThemedButton from '../Components/ThemedButton'
@@ -46,8 +47,8 @@ const PRIORITY_OPTIONS = [
 ]
 
 const SORT_OPTIONS = [
-    { value: 'least', label: 'Least diff' },
-    { value: 'greatest', label: 'Greatest diff' },
+    { value: 'least', label: 'Least difference' },
+    { value: 'greatest', label: 'Greatest difference' },
 ]
 
 const COUNT_OPTIONS = [
@@ -191,7 +192,8 @@ export default function Index() {
                     <Spacer height={18} />
 
                     <ThemedText style={[styles.label, { color: theme.muted }]}>
-                        Choose which measurement field is most important to you and your project.
+                        Choose which measurement field is most important to you and your project. This helps
+                        sort the results list.
                     </ThemedText>
                     <SegmentedControl options={PRIORITY_OPTIONS} value={priority} onChange={setPriority} />
 
@@ -209,29 +211,16 @@ export default function Index() {
                     </View>
 
                     <Spacer height={18} />
-
                     <ThemedText style={[styles.label, { color: theme.muted }]}>
-                        Compare everything at this scale
+                        Use this to compare your character's 1:1 measurements to the physical
+                        measurements of the available bodies on the market. 1:6th scale is the default.
                     </ThemedText>
-                    <View style={styles.scaleChips}>
-                        {WORKING_SCALES.map((s) => {
-                            const active = s === workingScale
-                            return (
-                                <ThemedButton
-                                    key={s}
-                                    onPress={() => setWorkingScale(s)}
-                                    style={[
-                                        styles.chip,
-                                        { backgroundColor: active ? Colors.primary : theme.uiBackground },
-                                    ]}
-                                >
-                                    <ThemedText style={[styles.chipText, active && { color: '#ffffff' }]}>
-                                        {scaleName(s)}
-                                    </ThemedText>
-                                </ThemedButton>
-                            )
-                        })}
-                    </View>
+                    <Dropdown
+                        options={WORKING_SCALES.map((v) => ({ value: v, label: scaleName(v) }))}
+                        value={workingScale}
+                        onChange={setWorkingScale}
+                        width={190}
+                    />
                 </ThemedCard>
 
                 <Spacer height={22} />

@@ -174,10 +174,9 @@ export function buildExportRows(character, opts, outcome) {
     [],
     [
       'Manufacturer', 'Product', 'Material', 'Closest scale',
-      'Height (mm)', 'Height diff', 'Height range low', 'Height range high',
-      'Bust (mm)', 'Bust diff', 'Waist (mm)', 'Waist diff', 'Hips (mm)', 'Hips diff',
-      'Total diff (mm)',
-      'Underbust (mm)', 'Shoulder (mm)', 'Arm (mm)', 'Inseam (mm)', 'Feet', 'Notes',
+      'Height (mm)', 'Height difference', 'Height range low', 'Height range high',
+      'Bust (mm)', 'Bust difference', 'Waist (mm)', 'Waist difference', 'Hips (mm)', 'Hips difference',
+      'Underbust (mm)', 'Shoulder Width (mm)', 'Arm Length (mm)', 'Leg Inseam (mm)', 'Feet', 'Notes',
     ],
   ]
 
@@ -191,7 +190,6 @@ export function buildExportRows(character, opts, outcome) {
       mm(b.bust), mm(r.deltas.bust),
       mm(b.waist), mm(r.deltas.waist),
       mm(b.hips), mm(r.deltas.hips),
-      mm(r.totalOff),
       mm(b.underbust), mm(b.shoulder), mm(b.arm), mm(b.inseam),
       b.feet || '', b.notes || '',
     ])
