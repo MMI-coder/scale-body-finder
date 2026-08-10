@@ -97,6 +97,23 @@ function parseHeadSize(text) {
   return m ? Number(m[1]) : null
 }
 
+/**
+ * Bodies with no height of their own that borrow another body's range.
+ *
+ * VCD-01/02/06/07 publish a 260mm neck peg and nothing else. That is exactly
+ * the S07C's measured minimum, so the S07C's range stands in for them. It is an
+ * estimate and is labelled as one everywhere it appears.
+ *
+ * Add a body here only when its published peg genuinely matches the reference's
+ * measured minimum - otherwise the estimate is just a guess wearing a number.
+ */
+const HEIGHT_ESTIMATED_FROM = {
+  'VCD-01': 'S07C',
+  'VCD-02': 'S07C',
+  'VCD-06': 'S07C',
+  'VCD-07': 'S07C',
+}
+
 const blank = v => v == null || v.trim() === '' || v.trim().toUpperCase() === 'N/A'
 const str = v => (blank(v) ? null : v.trim())
 const num = v => {
@@ -169,14 +186,32 @@ rows.slice(1).forEach((r, i) => {
     handMeasured: (str(r[C.hand]) || '').toLowerCase() === 'yes',
   }
 
-  // Heights per head option, for bodies measured with one of the custom sculpts.
+  // --- height -------------------------------------------------------------
+  // Three cases, and the app says which is which rather than presenting them
+  // as equally solid:
+  //   measured      - owner measured it with one of the custom head sculpts,
+  //                   so all three head options can be derived
+  //   manufacturer  - the maker's own figure with their own head. One number,
+  //                   no range and no head options; the min in the CSV is an
+  //                   owner-added hip-travel allowance, not a published figure
+  //   estimated     - borrowed from a reference body, see HEIGHT_ESTIMATED_FROM
   body.headSize = parseHeadSize(body.head)
-  body.heightsByHead = heightsByHead(body.headSize, body.heightMin, body.heightMax)
-  if (body.headSize != null && !HEAD_SIZES.includes(body.headSize)) {
-    problems.push(`${code}: head size ${body.headSize}mm is not one of ${HEAD_SIZES.join('/')}`)
-  }
-  if (body.headSize != null && body.heightsByHead == null) {
-    problems.push(`${code}: has head size ${body.headSize}mm but no measured height range`)
+  if (body.headSize != null) {
+    body.heightSource = 'measured'
+    body.heightsByHead = heightsByHead(body.headSize, body.heightMin, body.heightMax)
+    if (!HEAD_SIZES.includes(body.headSize)) {
+      problems.push(`${code}: head size ${body.headSize}mm is not one of ${HEAD_SIZES.join('/')}`)
+    }
+    if (body.heightsByHead == null) {
+      problems.push(`${code}: has head size ${body.headSize}mm but no measured height range`)
+    }
+  } else if (body.heightMax != null) {
+    body.heightSource = 'manufacturer'
+    body.manufacturerHeight = body.heightMax
+    body.heightsByHead = null
+  } else {
+    body.heightSource = null
+    body.heightsByHead = null
   }
 
   // Bust/waist/hips are what selection runs on - a row without them is unusable.
@@ -200,6 +235,29 @@ rows.slice(1).forEach((r, i) => {
   }
   bodies.push(body)
 })
+
+  // Second pass: bodies that borrow a reference body's height range.
+  for (const [code, refCode] of Object.entries(HEIGHT_ESTIMATED_FROM)) {
+    const body = bodies.find(b => b.code === code)
+    if (!body) { problems.push(`height estimate names unknown body ${code}`); continue }
+    const ref = bodies.find(b => b.code === refCode)
+    if (!ref || !ref.heightsByHead) {
+      problems.push(`${code}: reference body ${refCode} has no height range to borrow`)
+      continue
+    }
+    if (body.heightSource === 'measured') {
+      problems.push(`${code}: has its own measurements, remove it from HEIGHT_ESTIMATED_FROM`)
+      continue
+    }
+    body.heightSource = 'estimated'
+    body.heightEstimatedFrom = refCode
+    body.headSize = ref.headSize
+    body.heightsByHead = JSON.parse(JSON.stringify(ref.heightsByHead))
+    body.manufacturerHeight = null
+  }
+
+  const noHeight = bodies.filter(b => b.heightSource == null).map(b => b.code)
+  if (noHeight.length) problems.push(`no height at all: ${noHeight.join(', ')}`)
 
   return { bodies, images: [...images].sort(), problems }
 }

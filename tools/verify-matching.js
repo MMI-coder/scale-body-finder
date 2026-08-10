@@ -32,7 +32,7 @@ const sandbox = { BODIES: bodies, console }
 const src = [
   strip(fs.readFileSync(path.join(ROOT, 'utils', 'scaleUtils.js'), 'utf8')),
   strip(fs.readFileSync(path.join(ROOT, 'utils', 'matching.js'), 'utf8')),
-  'return { findMatches, atSixth, scaleName, snapDivisor, scaleInRange, buildExportRows, rowsToCsv, SIXTH }',
+  'return { findMatches, atSixth, scaleName, snapDivisor, scaleInRange, buildExportRows, rowsToCsv, heightAnchor, SIXTH }',
 ].join('\n')
 
 const api = new Function('BODIES', 'console', src)(bodies, console)
@@ -107,6 +107,60 @@ h.matches.forEach(m => {
 })
 check('Honoka still returns options', h.matches.length, 3)
 check('Honoka fits worse than Kasumi', h.matches[0].totalOff > first.totalOff, true)
+
+// --- height as a priority ---------------------------------------------------
+console.log('\nHeight data')
+const byCode = Object.fromEntries(bodies.map(b => [b.code, b]))
+const s07c = byCode.S07C
+check('S07C measured with 38mm', s07c.headSize, 38)
+check('S07C @37.5 min', s07c.heightsByHead['37.5'].min, 273.5)
+check('S07C @37.5 max', s07c.heightsByHead['37.5'].max, 279.5)
+check('S07C @38   min/max', `${s07c.heightsByHead['38'].min}/${s07c.heightsByHead['38'].max}`, '274/280')
+check('S07C @38.5 min', s07c.heightsByHead['38.5'].min, 274.5)
+check('S07C @38.5 max', s07c.heightsByHead['38.5'].max, 280.5)
+
+check('SR-AD01 source', byCode['SR-AD01'].heightSource, 'manufacturer')
+check('SR-AD01 uses the manufacturer figure', byCode['SR-AD01'].manufacturerHeight, 310)
+check('SR-AD01 has no head options', byCode['SR-AD01'].heightsByHead, null)
+check('N-1A uses the manufacturer figure', byCode['N-1A'].manufacturerHeight, 285)
+
+check('VCD-06 source', byCode['VCD-06'].heightSource, 'estimated')
+check('VCD-06 borrowed from', byCode['VCD-06'].heightEstimatedFrom, 'S07C')
+check('VCD-06 range matches S07C',
+  `${byCode['VCD-06'].heightsByHead['38'].min}/${byCode['VCD-06'].heightsByHead['38'].max}`, '274/280')
+check('VCD-03 kept its own measurement', byCode['VCD-03'].heightSource, 'measured')
+check('every body has a height source', bodies.every(b => b.heightSource != null), true)
+
+console.log('\nAnchor is the shortest known height')
+check('S07C anchors on its 38mm minimum', api.heightAnchor(s07c), 274)
+check('SR-AD01 anchors on the manufacturer figure', api.heightAnchor(byCode['SR-AD01']), 310)
+check('S24A anchors on its 37.5mm minimum', api.heightAnchor(byCode.S24A), 262)
+
+console.log('\nKasumi, height priority - closest 3')
+const hp = api.findMatches(kasumi, 'height', 3, bodies)
+hp.matches.forEach(m => {
+  const d = m.deltas
+  console.log(
+    `  ${(m.body.code + '        ').slice(0, 9)} ${m.scaleName.padEnd(12)}` +
+    ` h ${String(m.bodyHeight).padStart(5)}` +
+    `  bust ${d.bust.toFixed(2).padStart(7)}  waist ${d.waist.toFixed(2).padStart(7)}` +
+    `  hips ${d.hips.toFixed(2).padStart(7)}   off ${m.totalOff.toFixed(2)}`
+  )
+})
+check('height anchor is exact on every match',
+  hp.matches.every(m => Math.abs(m.deltas.height) < 1e-9), true)
+check('all three of b/w/h count toward closeness',
+  hp.matches.every(m => Math.abs(
+    m.totalOff - (Math.abs(m.deltas.bust) + Math.abs(m.deltas.waist) + Math.abs(m.deltas.hips))
+  ) < 1e-9), true)
+check('nothing excluded for want of a height', hp.excluded.length, 0)
+check('height priority differs from bust priority',
+  hp.matches[0].body.code !== res.matches[0].body.code ||
+  Math.abs(hp.matches[0].multiplier - res.matches[0].multiplier) > 1e-9, true)
+
+// Height is reported under every priority, but never scores.
+check('bust priority still reports a height diff',
+  typeof res.matches[0].deltas.height === 'number', true)
 
 // --- export ----------------------------------------------------------------
 console.log('\nCSV export')

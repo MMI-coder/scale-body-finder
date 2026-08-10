@@ -71,6 +71,7 @@ export const BODIES = [
     "notes": "Model line includes: S07C, S07D, S09C and S09D",
     "handMeasured": true,
     "headSize": 38,
+    "heightSource": "measured",
     "heightsByHead": {
       "38": {
         "min": 274,
@@ -111,6 +112,7 @@ export const BODIES = [
     "notes": "Model line includes: S10D, S10E, S12D and S12E",
     "handMeasured": true,
     "headSize": 38,
+    "heightSource": "measured",
     "heightsByHead": {
       "38": {
         "min": 277,
@@ -151,6 +153,7 @@ export const BODIES = [
     "notes": "Model line includes: S16A, S16B, S17B, and S17C",
     "handMeasured": true,
     "headSize": 38,
+    "heightSource": "measured",
     "heightsByHead": {
       "38": {
         "min": 280,
@@ -191,6 +194,7 @@ export const BODIES = [
     "notes": "Model line includes: S20A, S20B, S21B, and S21C",
     "handMeasured": true,
     "headSize": 38,
+    "heightSource": "measured",
     "heightsByHead": {
       "38": {
         "min": 280,
@@ -231,6 +235,7 @@ export const BODIES = [
     "notes": "Model line includes: S22A, S22B, S23B, and S23C",
     "handMeasured": true,
     "headSize": 38,
+    "heightSource": "measured",
     "heightsByHead": {
       "38": {
         "min": 278,
@@ -271,6 +276,7 @@ export const BODIES = [
     "notes": "Model line includes: S24A, S24B, S25B, and S25C",
     "handMeasured": true,
     "headSize": 37.5,
+    "heightSource": "measured",
     "heightsByHead": {
       "38": {
         "min": 262.5,
@@ -311,6 +317,7 @@ export const BODIES = [
     "notes": "Model line includes: S38A, S38B, S39A, and S39B",
     "handMeasured": true,
     "headSize": 38.5,
+    "heightSource": "measured",
     "heightsByHead": {
       "38": {
         "min": 263.5,
@@ -351,6 +358,7 @@ export const BODIES = [
     "notes": "Model line includes: S42A, S42B, S43A, and S43B",
     "handMeasured": true,
     "headSize": 38.5,
+    "heightSource": "measured",
     "heightsByHead": {
       "38": {
         "min": 291.5,
@@ -391,6 +399,7 @@ export const BODIES = [
     "notes": "Model line includes: S44A, S44B, S45A, and S45B",
     "handMeasured": true,
     "headSize": 37.5,
+    "heightSource": "measured",
     "heightsByHead": {
       "38": {
         "min": 260.5,
@@ -431,6 +440,7 @@ export const BODIES = [
     "notes": "Model line includes: S48A, S48B, S49A, and S49B",
     "handMeasured": true,
     "headSize": 37.5,
+    "heightSource": "measured",
     "heightsByHead": {
       "38": {
         "min": 278.5,
@@ -471,6 +481,7 @@ export const BODIES = [
     "notes": "Model line includes: S52A, S52B, S53A, and S53B",
     "handMeasured": true,
     "headSize": 38.5,
+    "heightSource": "measured",
     "heightsByHead": {
       "38": {
         "min": 291.5,
@@ -511,6 +522,8 @@ export const BODIES = [
     "notes": "There are versions where a head sculpt is included. It adds \"(H)\" to the Product Name/Code",
     "handMeasured": false,
     "headSize": null,
+    "heightSource": "manufacturer",
+    "manufacturerHeight": 310,
     "heightsByHead": null,
     "imageW": 1200,
     "imageH": 1800
@@ -538,6 +551,8 @@ export const BODIES = [
     "notes": "There are versions where a head sculpt is included. It adds \"(H)\" to the Product Name/Code",
     "handMeasured": false,
     "headSize": null,
+    "heightSource": "manufacturer",
+    "manufacturerHeight": 295,
     "heightsByHead": null,
     "imageW": 1200,
     "imageH": 1600
@@ -565,6 +580,8 @@ export const BODIES = [
     "notes": "There are versions where a head sculpt is included. It adds \"(H)\" to the Product Name/Code",
     "handMeasured": false,
     "headSize": null,
+    "heightSource": "manufacturer",
+    "manufacturerHeight": 283,
     "heightsByHead": null,
     "imageW": 1200,
     "imageH": 1600
@@ -592,6 +609,8 @@ export const BODIES = [
     "notes": "There are versions where a head sculpt is included. It adds \"(H)\" to the Product Name/Code",
     "handMeasured": false,
     "headSize": null,
+    "heightSource": "manufacturer",
+    "manufacturerHeight": 283,
     "heightsByHead": null,
     "imageW": 1200,
     "imageH": 1600
@@ -619,6 +638,8 @@ export const BODIES = [
     "notes": "There are versions where a head sculpt is included. It adds \"(H)\" to the Product Name/Code",
     "handMeasured": false,
     "headSize": null,
+    "heightSource": "manufacturer",
+    "manufacturerHeight": 295,
     "heightsByHead": null,
     "imageW": 1500,
     "imageH": 2250
@@ -646,6 +667,8 @@ export const BODIES = [
     "notes": null,
     "handMeasured": false,
     "headSize": null,
+    "heightSource": "manufacturer",
+    "manufacturerHeight": 285,
     "heightsByHead": null,
     "imageW": 1200,
     "imageH": 1600
@@ -672,10 +695,26 @@ export const BODIES = [
     "image": "VeryCool VCD-01.jpg",
     "notes": null,
     "handMeasured": false,
-    "headSize": null,
-    "heightsByHead": null,
+    "headSize": 38,
+    "heightSource": "estimated",
+    "heightsByHead": {
+      "38": {
+        "min": 274,
+        "max": 280
+      },
+      "37.5": {
+        "min": 273.5,
+        "max": 279.5
+      },
+      "38.5": {
+        "min": 274.5,
+        "max": 280.5
+      }
+    },
     "imageW": 1500,
-    "imageH": 2304
+    "imageH": 2304,
+    "heightEstimatedFrom": "S07C",
+    "manufacturerHeight": null
   },
   {
     "code": "VCD-02",
@@ -699,10 +738,26 @@ export const BODIES = [
     "image": "VeryCool VCD-02.jpg",
     "notes": null,
     "handMeasured": false,
-    "headSize": null,
-    "heightsByHead": null,
+    "headSize": 38,
+    "heightSource": "estimated",
+    "heightsByHead": {
+      "38": {
+        "min": 274,
+        "max": 280
+      },
+      "37.5": {
+        "min": 273.5,
+        "max": 279.5
+      },
+      "38.5": {
+        "min": 274.5,
+        "max": 280.5
+      }
+    },
     "imageW": 1500,
-    "imageH": 2304
+    "imageH": 2304,
+    "heightEstimatedFrom": "S07C",
+    "manufacturerHeight": null
   },
   {
     "code": "VCD-03",
@@ -727,6 +782,7 @@ export const BODIES = [
     "notes": null,
     "handMeasured": true,
     "headSize": 38,
+    "heightSource": "measured",
     "heightsByHead": {
       "38": {
         "min": 278,
@@ -767,6 +823,7 @@ export const BODIES = [
     "notes": null,
     "handMeasured": true,
     "headSize": 38,
+    "heightSource": "measured",
     "heightsByHead": {
       "38": {
         "min": 284,
@@ -806,10 +863,26 @@ export const BODIES = [
     "image": "VeryCool VCD-06.jpg",
     "notes": "This is an attached foot version of the VCD-07",
     "handMeasured": false,
-    "headSize": null,
-    "heightsByHead": null,
+    "headSize": 38,
+    "heightSource": "estimated",
+    "heightsByHead": {
+      "38": {
+        "min": 274,
+        "max": 280
+      },
+      "37.5": {
+        "min": 273.5,
+        "max": 279.5
+      },
+      "38.5": {
+        "min": 274.5,
+        "max": 280.5
+      }
+    },
     "imageW": 1134,
-    "imageH": 1701
+    "imageH": 1701,
+    "heightEstimatedFrom": "S07C",
+    "manufacturerHeight": null
   },
   {
     "code": "VCD-07",
@@ -833,10 +906,26 @@ export const BODIES = [
     "image": "VeryCool VCD-07.jpg",
     "notes": "This is a detachable foot version of the VCD-06",
     "handMeasured": false,
-    "headSize": null,
-    "heightsByHead": null,
+    "headSize": 38,
+    "heightSource": "estimated",
+    "heightsByHead": {
+      "38": {
+        "min": 274,
+        "max": 280
+      },
+      "37.5": {
+        "min": 273.5,
+        "max": 279.5
+      },
+      "38.5": {
+        "min": 274.5,
+        "max": 280.5
+      }
+    },
     "imageW": 2998,
-    "imageH": 2233
+    "imageH": 2233,
+    "heightEstimatedFrom": "S07C",
+    "manufacturerHeight": null
   }
 ]
 

@@ -5,7 +5,74 @@ import { fmtDelta, fmtMM } from '../utils/scaleUtils'
 import ThemedCard from './ThemedCard'
 import ThemedText from './ThemedText'
 
-const LABELS = { bust: 'Bust', waist: 'Waist', hips: 'Hips' }
+const LABELS = { bust: 'Bust', waist: 'Waist', hips: 'Hips', height: 'Height' }
+
+/**
+ * The height block.
+ *
+ * Three cases, kept visibly distinct so a manufacturer's claim never looks like
+ * something that was actually measured:
+ *   measured     - all three head options, the one it was measured with first,
+ *                  then the other two smallest-first
+ *   manufacturer - one figure, their head, no range and no options
+ *   estimated    - as measured, but borrowed from another body and labelled
+ */
+const HeightBlock = ({ body, unit, theme }) => {
+    if (!body.heightSource) return null
+
+    if (body.heightSource === 'manufacturer') {
+        return (
+            <View style={[styles.heights, { borderColor: theme.cardBorder }]}>
+                <ThemedText style={[styles.extraLabel, { color: theme.muted }]}>
+                    Height with head
+                </ThemedText>
+                <View style={styles.heightRow}>
+                    <ThemedText style={styles.heightPrimary}>
+                        {fmtMM(body.manufacturerHeight, unit)}{unit}
+                    </ThemedText>
+                </View>
+                <ThemedText style={[styles.heightNote, { color: theme.muted }]}>
+                    Manufacturer's figure, measured with their own head sculpt. No range given.
+                </ThemedText>
+            </View>
+        )
+    }
+
+    const def = body.headSize
+    const rest = Object.keys(body.heightsByHead)
+        .map(Number)
+        .filter((s) => s !== def)
+        .sort((a, b) => a - b)
+    const show = (size) => {
+        const r = body.heightsByHead[size]
+        return r.min === r.max
+            ? `${fmtMM(r.min, unit)}${unit}`
+            : `${fmtMM(r.min, unit)}–${fmtMM(r.max, unit)}${unit}`
+    }
+
+    return (
+        <View style={[styles.heights, { borderColor: theme.cardBorder }]}>
+            <ThemedText style={[styles.extraLabel, { color: theme.muted }]}>
+                Height with head
+            </ThemedText>
+            <View style={styles.heightRow}>
+                <ThemedText style={[styles.heightHead, { color: theme.muted }]}>{def}mm</ThemedText>
+                <ThemedText style={styles.heightPrimary}>{show(def)}</ThemedText>
+            </View>
+            {rest.map((size) => (
+                <View key={size} style={styles.heightRow}>
+                    <ThemedText style={[styles.heightHead, { color: theme.muted }]}>{size}mm</ThemedText>
+                    <ThemedText style={[styles.heightAlt, { color: theme.muted }]}>{show(size)}</ThemedText>
+                </View>
+            ))}
+            <ThemedText style={[styles.heightNote, { color: theme.muted }]}>
+                {body.heightSource === 'estimated'
+                    ? `Estimated — this body publishes only a neck peg height, which matches the ${body.heightEstimatedFrom}'s measured minimum, so its range stands in.`
+                    : `Measured with the ${def}mm head; the other two are that measurement shifted by the difference in head height.`}
+            </ThemedText>
+        </View>
+    )
+}
 
 /**
  * One body, presented as an option rather than a placing. There is deliberately
@@ -30,13 +97,6 @@ const BodyCard = ({ match, unit }) => {
         ['Arm', body.arm],
         ['Inseam', body.inseam],
     ].filter(([, v]) => v != null)
-
-    const heightRange =
-        body.heightMin != null && body.heightMax != null
-            ? body.heightMin === body.heightMax
-                ? `${fmtMM(body.heightMin, unit)}${unit}`
-                : `${fmtMM(body.heightMin, unit)}–${fmtMM(body.heightMax, unit)}${unit}`
-            : null
 
     const pegRange =
         body.pegMin != null && body.pegMax != null
@@ -82,15 +142,17 @@ const BodyCard = ({ match, unit }) => {
                     <ThemedText style={[styles.th, { color: theme.muted }]}>Character</ThemedText>
                     <ThemedText style={[styles.th, { color: theme.muted }]}>Diff</ThemedText>
                 </View>
-                {['bust', 'waist', 'hips'].map((k) => {
+                {['height', 'bust', 'waist', 'hips'].map((k) => {
                     const isAnchor = k === priority
+                    const bodyVal = k === 'height' ? match.bodyHeight : body[k]
+                    if (bodyVal == null && scaled[k] == null) return null
                     return (
                         <View key={k} style={[styles.tr, { borderColor: theme.cardBorder }]}>
                             <ThemedText style={[styles.td, styles.colName, isAnchor && styles.anchor]}>
                                 {LABELS[k]}
                                 {isAnchor ? '  ⚓' : ''}
                             </ThemedText>
-                            <ThemedText style={styles.td}>{fmtMM(body[k], unit)}</ThemedText>
+                            <ThemedText style={styles.td}>{fmtMM(bodyVal, unit)}</ThemedText>
                             <ThemedText style={[styles.td, { color: theme.muted }]}>
                                 {fmtMM(scaled[k], unit)}
                             </ThemedText>
@@ -104,9 +166,13 @@ const BodyCard = ({ match, unit }) => {
             <ThemedText style={[styles.footnote, { color: theme.muted }]}>
                 Anchored on {LABELS[priority].toLowerCase()}, so it matches exactly. Diff is the body
                 minus your character at this scale — positive means the body is larger.
+                {'\n'}Height compares against the body's shortest known figure; it never affects
+                which bodies are picked.
             </ThemedText>
 
-            {extras.length || heightRange || pegRange ? (
+            <HeightBlock body={body} unit={unit} theme={theme} />
+
+            {extras.length || pegRange ? (
                 <View style={[styles.extras, { borderColor: theme.cardBorder }]}>
                     {extras.map(([label, v]) => (
                         <View key={label} style={styles.extraItem}>
@@ -117,12 +183,6 @@ const BodyCard = ({ match, unit }) => {
                             </ThemedText>
                         </View>
                     ))}
-                    {heightRange ? (
-                        <View style={styles.extraItem}>
-                            <ThemedText style={[styles.extraLabel, { color: theme.muted }]}>Height w/ head</ThemedText>
-                            <ThemedText style={styles.extraValue}>{heightRange}</ThemedText>
-                        </View>
-                    ) : null}
                     {pegRange ? (
                         <View style={styles.extraItem}>
                             <ThemedText style={[styles.extraLabel, { color: theme.muted }]}>Neck peg</ThemedText>
@@ -173,6 +233,13 @@ const styles = StyleSheet.create({
     diff: { fontWeight: '700' },
 
     footnote: { fontSize: 12, lineHeight: 17 },
+
+    heights: { borderTopWidth: 1, paddingTop: 12, gap: 3 },
+    heightRow: { flexDirection: 'row', alignItems: 'baseline', gap: 10 },
+    heightHead: { fontSize: 12, width: 46, fontVariant: ['tabular-nums'] },
+    heightPrimary: { fontSize: 18, fontWeight: '700', fontVariant: ['tabular-nums'] },
+    heightAlt: { fontSize: 14, fontVariant: ['tabular-nums'] },
+    heightNote: { fontSize: 11, lineHeight: 16, marginTop: 4 },
 
     extras: { flexDirection: 'row', flexWrap: 'wrap', gap: 16, borderTopWidth: 1, paddingTop: 12 },
     extraItem: { minWidth: 84 },
