@@ -97,10 +97,18 @@ export const SIXTH = 1 / 6
  *
  * A fixed list rather than free entry: everything downstream assumes a sane
  * scale, and there's no reason to let someone type 1:0.3 and get nonsense.
- * Quarter steps from 1:5 to 1:7 covers the range these bodies actually live in
- * and keeps the arithmetic easy for the rest of a build.
+ * 1/64 steps between 1:5 1/2 and 1:6 1/2 - the same fractions as the scale
+ * chart, narrowed to the band these bodies actually land in.
  */
-export const WORKING_SCALES = [5, 5.25, 5.5, 5.75, 6, 6.25, 6.5, 6.75, 7]
+export const WORKING_SCALE_MIN = 5.5
+export const WORKING_SCALE_MAX = 6.5
+export const WORKING_SCALES = (() => {
+  const out = []
+  for (let n = WORKING_SCALE_MIN * SCALE_STEPS; n <= WORKING_SCALE_MAX * SCALE_STEPS; n++) {
+    out.push(n / SCALE_STEPS)
+  }
+  return out
+})()
 export const DEFAULT_WORKING_SCALE = 6
 
 // ---------------------------------------------------------------------------

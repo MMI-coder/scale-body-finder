@@ -52,6 +52,10 @@ check('6 -> name', api.scaleName(6), '1:6')
 check('5.5 -> name', api.scaleName(5.5), '1:5 1/2')
 check('working scales are all in range', api.WORKING_SCALES.every(api.scaleInRange), true)
 check('default working scale', api.DEFAULT_WORKING_SCALE, 6)
+check('scale list starts at 1:5 1/2', api.scaleName(api.WORKING_SCALES[0]), '1:5 1/2')
+check('scale list ends at 1:6 1/2', api.scaleName(api.WORKING_SCALES[api.WORKING_SCALES.length - 1]), '1:6 1/2')
+check('scale list is 1/64 steps', api.WORKING_SCALES.length, 65)
+check('1:6 is in the list', api.WORKING_SCALES.includes(6), true)
 
 // --- the Example character, the case from the screenshots -------------------
 const example = { name: 'Example', height: 1650, bust: 920, waist: 580, hips: 870 }
@@ -142,7 +146,7 @@ console.log('\nCSV export')
 const csv = api.rowsToCsv(api.buildExportRows(example,
   { workingScale: 6, priority: 'bust', sort: 'least' }, out6))
 check('states the comparison scale', csv.includes('Compared at'), true)
-check('carries the total', csv.includes('Total diff (mm)'), true)
+check('no total column', csv.includes('Total diff'), false)
 check('names a body', csv.includes('S07C'), true)
 
 console.log(failures === 0 ? '\nAll checks passed.\n' : `\n${failures} CHECK(S) FAILED.\n`)

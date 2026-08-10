@@ -32,15 +32,15 @@ const BodyCard = ({ result, unit, expanded, onToggle }) => {
     const { width, height: winH } = useWindowDimensions()
     const [lightbox, setLightbox] = useState(false)
 
-    const { body, priority, scaled, deltas, totalOff, heightRange, heightUsed, closest } = result
+    const { body, priority, scaled, deltas, heightRange, heightUsed, closest } = result
     const src = bodyImage(body.image)
     const ratio = body.imageW && body.imageH ? body.imageW / body.imageH : 0.75
 
     const extras = [
         ['Underbust', body.underbust],
-        ['Shoulder', body.shoulder],
-        ['Arm', body.arm],
-        ['Inseam', body.inseam],
+        ['Shoulder Width', body.shoulder],
+        ['Arm Length', body.arm],
+        ['Leg Inseam', body.inseam],
     ].filter(([, v]) => v != null)
 
     const rangeText = heightRange
@@ -116,7 +116,7 @@ const BodyCard = ({ result, unit, expanded, onToggle }) => {
                             <ThemedText style={[styles.th, styles.colName, { color: theme.muted }]}> </ThemedText>
                             <ThemedText style={[styles.th, { color: theme.muted }]}>Body{'\n'}Measurements</ThemedText>
                             <ThemedText style={[styles.th, { color: theme.muted }]}>Character{'\n'}Measurements</ThemedText>
-                            <ThemedText style={[styles.th, { color: theme.muted }]}>Diff</ThemedText>
+                            <ThemedText style={[styles.th, { color: theme.muted }]}>Difference</ThemedText>
                         </View>
                         {ROWS.map((k) => {
                             const bodyVal = k === 'height' ? heightUsed : body[k]
@@ -137,21 +137,11 @@ const BodyCard = ({ result, unit, expanded, onToggle }) => {
                                 </View>
                             )
                         })}
-                        <View style={[styles.tr, styles.totalRow, { borderColor: theme.cardBorder }]}>
-                            <ThemedText style={[styles.td, styles.colName, { color: theme.muted }]}>Total</ThemedText>
-                            <ThemedText style={styles.td} />
-                            <ThemedText style={styles.td} />
-                            {/* A sum of absolute differences, so it has no direction -
-                                showing it signed would imply one. */}
-                            <ThemedText style={[styles.td, styles.diff, { color: theme.muted }]}>
-                                {totalOff == null ? '—' : `${parseFloat(totalOff.toFixed(2))}mm`}
-                            </ThemedText>
-                        </View>
                     </View>
 
                     {heightMet ? (
                         <ThemedText style={[styles.metNote, { color: Colors.primary }]}>
-                            This body can be posed to your character's exact height.
+                            This body can potentially match your character's scaled height.
                         </ThemedText>
                     ) : null}
 
@@ -254,7 +244,6 @@ const styles = StyleSheet.create({
     colName: { flex: 1.1, textAlign: 'left' },
     priority: { fontWeight: '800' },
     diff: { fontWeight: '700' },
-    totalRow: { borderBottomWidth: 0 },
 
     metNote: { fontSize: 12, fontWeight: '600', lineHeight: 17 },
 
