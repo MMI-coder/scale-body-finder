@@ -42,20 +42,20 @@ jobs:
       # data/bodies.js is generated from data/bodies.csv. Rebuilding it here
       # means the deployed site can never be built from a stale copy, however
       # the CSV was edited.
-      - name: Rebuild body data from the CSV
+      - name: Rebuild generated data
         run: npm run data
 
       # If that produced a different file, the committed one was out of date.
       # Say so loudly rather than let the repo and the live site disagree.
       - name: Fail if the committed data was stale
         run: |
-          if ! git diff --quiet -- data/bodies.js; then
-            echo "::error::data/bodies.js is out of date with data/bodies.csv."
+          if ! git diff --quiet -- data/bodies.js data/glossary.js; then
+            echo "::error::Generated data is out of date with its source."
             echo "Run 'npm run data' and commit the result."
-            git diff --stat -- data/bodies.js
+            git diff --stat -- data/bodies.js data/glossary.js
             exit 1
           fi
-          echo "data/bodies.js is up to date."
+          echo "Generated data is up to date."
 
       - name: Check the matching engine still works
         run: npm run verify

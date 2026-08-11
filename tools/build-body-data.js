@@ -153,7 +153,6 @@ const C = {
   feet: col('Feet'),
   image: col('Image'),
   notes: col('Notes'),
-  hand: col('Hand Measured?'),
 }
 
 const bodies = []
@@ -183,7 +182,6 @@ rows.slice(1).forEach((r, i) => {
     feet: str(r[C.feet]),
     image: str(r[C.image]),
     notes: str(r[C.notes]),
-    handMeasured: (str(r[C.hand]) || '').toLowerCase() === 'yes',
   }
 
   // --- height -------------------------------------------------------------
@@ -276,7 +274,6 @@ const out = `/**
  * Measurements are millimetres. null means the figure isn't known, and the UI
  * shows a dash rather than inventing one.
  *
- * handMeasured rows were measured by hand and carry a +/-1mm margin.
  *
  * heightsByHead gives the total height for each of the three custom head
  * sculpts, keyed by head size in mm. Only the size in headSize was actually
@@ -305,7 +302,6 @@ fs.writeFileSync(OUT, out)
 
 console.log(`bodies: ${bodies.length}`)
 console.log(`images referenced: ${imgList.length}`)
-console.log(`hand measured (+/-1mm): ${bodies.filter(b => b.handMeasured).length}`)
 if (problems.length) {
   console.log(`\nPROBLEMS (${problems.length}):`)
   problems.forEach(p => console.log('  ' + p))
