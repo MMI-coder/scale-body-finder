@@ -160,14 +160,16 @@ export function compareBodies(character, opts = {}) {
 export function buildExportRows(character, opts, outcome) {
   const { workingScale, priority, sort } = opts
   const mm = v => (v == null ? '' : parseFloat(v.toFixed(2)))
+  const cap = w => (w ? w.charAt(0).toUpperCase() + w.slice(1) : w)
   const s = outcome.scaled
 
   const rows = [
     ['Scale Body Finder - results'],
     ['Character', character.name || '(unnamed)'],
     ['Compared at', scaleName(workingScale)],
-    ['Priority', priority],
-    ['Sorted by', `${sort} difference in ${priority}`],
+    // Capitalised to match the on-screen labels and the exported filename.
+    ['Measurement Priority Field', cap(priority)],
+    ['Sorted by', `${cap(sort)} difference in ${cap(priority)}`],
     [],
     ['Character 1:1 (mm)', 'Height', mm(character.height), 'Bust', mm(character.bust), 'Waist', mm(character.waist), 'Hips', mm(character.hips)],
     [`Character at ${scaleName(workingScale)} (mm)`, 'Height', mm(s.height), 'Bust', mm(s.bust), 'Waist', mm(s.waist), 'Hips', mm(s.hips)],

@@ -118,7 +118,22 @@ export const DEFAULT_WORKING_SCALE = 6
 /** Margin of error on a hand-measured body, in millimetres. */
 export const HAND_MARGIN_MM = 1
 
-export function safeFileName(name, fallback = 'character') {
-  const base = (name || '').trim().replace(/[^a-zA-Z0-9]+/g, '_').replace(/^_|_$/g, '')
+export function safeFileName(name, fallback = 'Character') {
+  // Keep letters and digits from any alphabet - plenty of these characters have
+  // accents or aren't Latin at all, and dropping them turns Léon into L_on.
+  // Only punctuation and whitespace become underscores.
+  const base = (name || '').trim().replace(/[^\p{L}\p{N}]+/gu, '_').replace(/^_|_$/g, '')
   return base || fallback
+}
+
+/**
+ * Name for an exported results file: CharacterName_Results_PriorityChosen.csv
+ *
+ * Kept here rather than in either export module so the browser and native
+ * versions can't drift apart on it.
+ */
+export function exportFileName(characterName, priority) {
+  const who = safeFileName(characterName)
+  const what = priority ? priority.charAt(0).toUpperCase() + priority.slice(1) : null
+  return [who, 'Results', what].filter(Boolean).join('_') + '.csv'
 }

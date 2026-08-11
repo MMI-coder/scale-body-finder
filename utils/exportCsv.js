@@ -10,11 +10,11 @@ import * as FileSystem from 'expo-file-system/legacy'
 import * as Sharing from 'expo-sharing'
 
 import { buildExportRows, rowsToCsv } from './matching'
-import { safeFileName } from './scaleUtils'
+import { exportFileName } from './scaleUtils'
 
 export async function exportResults(character, opts, outcome) {
   const csv = rowsToCsv(buildExportRows(character, opts, outcome))
-  const name = `${safeFileName(character.name)}_bodies.csv`
+  const name = exportFileName(character.name, opts.priority)
   const fileUri = FileSystem.cacheDirectory + name
 
   await FileSystem.writeAsStringAsync(fileUri, csv, {

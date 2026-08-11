@@ -8,7 +8,7 @@
  */
 
 import { buildExportRows, rowsToCsv } from './matching'
-import { safeFileName } from './scaleUtils'
+import { exportFileName } from './scaleUtils'
 
 export async function exportResults(character, opts, outcome) {
   const csv = rowsToCsv(buildExportRows(character, opts, outcome))
@@ -20,7 +20,7 @@ export async function exportResults(character, opts, outcome) {
 
   const link = document.createElement('a')
   link.href = url
-  link.download = `${safeFileName(character.name)}_bodies.csv`
+  link.download = exportFileName(character.name, opts.priority)
   document.body.appendChild(link)
   link.click()
   document.body.removeChild(link)
