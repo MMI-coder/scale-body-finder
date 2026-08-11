@@ -166,19 +166,25 @@ export function buildExportRows(character, opts, outcome) {
   const rows = [
     ['Scale Body Finder - results'],
     ['Character', character.name || '(unnamed)'],
-    ['Compared at', scaleName(workingScale)],
-    // Capitalised to match the on-screen labels and the exported filename.
+    // Every label below is a term the app also uses on screen, capitalised the
+    // same way. A spreadsheet opened a week later should read like the page it
+    // came from.
+    ['Scale Reference Selector', scaleName(workingScale)],
     ['Measurement Priority Field', cap(priority)],
-    ['Sorted by', `${cap(sort)} difference in ${cap(priority)}`],
+    ['Sort by', `${cap(sort)} difference in ${cap(priority)}`],
     [],
-    ['Character 1:1 (mm)', 'Height', mm(character.height), 'Bust', mm(character.bust), 'Waist', mm(character.waist), 'Hips', mm(character.hips)],
-    [`Character at ${scaleName(workingScale)} (mm)`, 'Height', mm(s.height), 'Bust', mm(s.bust), 'Waist', mm(s.waist), 'Hips', mm(s.hips)],
+    ['Character Measurements (1:1)', 'Height', mm(character.height), 'Bust', mm(character.bust), 'Waist', mm(character.waist), 'Hips', mm(character.hips)],
+    [`Character Measurements (${scaleName(workingScale)})`, 'Height', mm(s.height), 'Bust', mm(s.bust), 'Waist', mm(s.waist), 'Hips', mm(s.hips)],
     [],
     [
-      'Manufacturer', 'Product', 'Material', 'Actual Body Scale',
-      'Height (mm)', 'Height difference', 'Height range low', 'Height range high',
-      'Bust (mm)', 'Bust difference', 'Waist (mm)', 'Waist difference', 'Hips (mm)', 'Hips difference',
-      'Underbust (mm)', 'Shoulder Width (mm)', 'Arm Length (mm)', 'Leg Inseam (mm)', 'Feet Type', 'Notes',
+      'Manufacturer', 'Product Name', 'Material', 'Actual Body Scale', 'Scale Multiplier',
+      'Height - Body Measurement (mm)', 'Height - Difference (mm)',
+      'Height Range Low (mm)', 'Height Range High (mm)',
+      'Bust - Body Measurement (mm)', 'Bust - Difference (mm)',
+      'Waist - Body Measurement (mm)', 'Waist - Difference (mm)',
+      'Hips - Body Measurement (mm)', 'Hips - Difference (mm)',
+      'Underbust (mm)', 'Shoulder Width (mm)', 'Arm Length (mm)', 'Leg Inseam (mm)',
+      'Feet Type', 'Notes',
     ],
   ]
 
@@ -187,6 +193,7 @@ export function buildExportRows(character, opts, outcome) {
     rows.push([
       b.manufacturer || '', b.name || b.code, b.material || '',
       r.closest ? r.closest.name : '',
+      r.closest ? parseFloat(r.closest.multiplier.toFixed(5)) : '',
       mm(r.heightUsed), mm(r.deltas.height),
       mm(r.heightRange?.min), mm(r.heightRange?.max),
       mm(b.bust), mm(r.deltas.bust),

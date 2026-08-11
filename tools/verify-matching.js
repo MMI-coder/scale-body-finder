@@ -145,9 +145,50 @@ check('closest scale is reference only - both compared at 1:6',
 console.log('\nCSV export')
 const csv = api.rowsToCsv(api.buildExportRows(example,
   { workingScale: 6, priority: 'bust', sort: 'least' }, out6))
-check('states the comparison scale', csv.includes('Compared at'), true)
+check('states the comparison scale', csv.includes('Scale Reference Selector'), true)
 check('no total column', csv.includes('Total diff'), false)
 check('names a body', csv.includes('S07C'), true)
+
+// --- the CSV and the app have to use the same words ---------------------------
+// Every label in the export should be a term the app defines, or one of a few
+// structural labels the glossary has no reason to carry. Catches the CSV
+// drifting away from the page when something gets renamed.
+console.log('\nCSV wording matches the app')
+const glossaryTerms = [
+  ...fs.readFileSync(path.join(ROOT, 'data', 'glossary.js'), 'utf8')
+    .matchAll(/"term": "([^"]+)"/g),
+].map(m => m[1])
+
+const STRUCTURAL = [
+  'Scale Body Finder - results', 'Character', 'Character Measurements', 'Notes', 'Sort by',
+]
+const normalise = l =>
+  l.replace(/\s*\((?:mm|1:[^)]*)\)$/, '')       // trailing unit or scale
+   .replace(/\s*-\s*(?:Body Measurement|Difference)$/, '')
+   .replace(/\s+(?:Low|High)$/, '')
+   .trim()
+
+const csvLabels = [...new Set(
+  [...csv.matchAll(/"([A-Z][^"]*)"/g)].map(m => m[1])
+)].filter(l => !/^\d|^1:|^S\d|^VCD|^SR-|^TB-|^N-1A/.test(l))
+  // values, not labels: the character's own name, manufacturers, materials,
+  // feet types, the measurement names used as inline keys, and the sort summary
+  .filter(l => ![example.name, 'TBLeague', 'VeryCool', 'Novan Studio', 'TPE', 'Silicone',
+                 'Attached', 'Removable', 'Bust', 'Waist', 'Hips', 'Height',
+                 'Least difference in Bust'].includes(l))
+  .filter(l => !l.startsWith('There are versions') && !l.startsWith('Model line')
+            && !l.startsWith('This is a') && !l.startsWith('This is an'))
+
+const unknown = csvLabels.filter(l => {
+  const base = normalise(l)
+  return !glossaryTerms.includes(base) && !STRUCTURAL.includes(base)
+})
+csvLabels.forEach(l => {
+  const base = normalise(l)
+  const ok = glossaryTerms.includes(base) || STRUCTURAL.includes(base)
+  if (!ok) console.log(`    unrecognised: "${l}" (normalises to "${base}")`)
+})
+check(`all ${csvLabels.length} CSV labels are app terms`, unknown.length, 0)
 
 console.log(failures === 0 ? '\nAll checks passed.\n' : `\n${failures} CHECK(S) FAILED.\n`)
 process.exitCode = failures === 0 ? 0 : 1
