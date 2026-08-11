@@ -292,24 +292,25 @@ export default function Index() {
                         <ThemedButton onPress={onExport} style={styles.exportBtn}>
                             <ThemedText style={styles.exportText}>Save results as CSV</ThemedText>
                         </ThemedButton>
-
-                        <Spacer height={30} />
-
-                        {/* ---------------- glossary ---------------- */}
-                        <ThemedCard>
-                            <ThemedText style={styles.h2}>Data Card Glossary</ThemedText>
-                            <Spacer height={10} />
-                            {GLOSSARY.map(({ term, definition }) => (
-                                <View key={term} style={styles.glossItem}>
-                                    <ThemedText style={styles.glossTerm}>{term}</ThemedText>
-                                    <ThemedText style={[styles.glossDef, { color: theme.muted }]}>
-                                        {definition}
-                                    </ThemedText>
-                                </View>
-                            ))}
-                        </ThemedCard>
                     </>
                 )}
+
+                {/* Outside the results branch on purpose - the glossary explains the
+                    controls as much as the cards, so it has to be readable before
+                    anything has been entered. */}
+                <Spacer height={30} />
+                <ThemedCard>
+                    <ThemedText style={styles.h2}>Scale Body Finder - Glossary</ThemedText>
+                    <Spacer height={10} />
+                    {GLOSSARY.map(({ term, definition }) => (
+                        <View key={term} style={styles.glossItem}>
+                            <ThemedText style={styles.glossTerm}>{term}</ThemedText>
+                            <ThemedText style={[styles.glossDef, { color: theme.muted }]}>
+                                {definition}
+                            </ThemedText>
+                        </View>
+                    ))}
+                </ThemedCard>
 
                 <Spacer height={30} />
                 <ThemedText style={[styles.credit, { color: theme.muted }]}>
