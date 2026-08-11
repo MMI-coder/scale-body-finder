@@ -60,6 +60,9 @@ const COUNT_OPTIONS = [
 
 const emptyValues = { height: '', bust: '', waist: '', hips: '' }
 
+/** Defined terms keep their capital in prose, so the page and the CSV agree. */
+const cap = (w) => (w ? w.charAt(0).toUpperCase() + w.slice(1) : w)
+
 export default function Index() {
     const colorScheme = useColorScheme()
     const theme = Colors[colorScheme] ?? Colors.light
@@ -270,7 +273,7 @@ export default function Index() {
                         <ThemedText style={[styles.sub, { color: theme.muted }]}>
                             {outcome.results.length} result{outcome.results.length === 1 ? '' : 's'} based on the data
                             you provided, compared at {scaleLabel} and sorted by{' '}
-                            {sort === 'least' ? 'least' : 'greatest'} difference in {priority}.
+                            {cap(sort)} difference in {cap(priority)}.
                         </ThemedText>
 
                         <Spacer height={16} />
