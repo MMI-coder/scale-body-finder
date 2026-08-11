@@ -19,6 +19,7 @@ import ThemedText from '../Components/ThemedText'
 import ThemedTextInput from '../Components/ThemedTextInput'
 import { Colors } from '../Constants/Colors'
 import { BODIES } from '../data/bodies'
+import { GLOSSARY } from '../data/glossary'
 import { exportResults } from '../utils/exportCsv'
 import { compareBodies } from '../utils/matching'
 import {
@@ -191,7 +192,7 @@ export default function Index() {
 
                     <Spacer height={18} />
 
-                    <ThemedText style={styles.controlName}>Priority</ThemedText>
+                    <ThemedText style={styles.controlName}>Measurement Priority Field</ThemedText>
                     <ThemedText style={[styles.label, { color: theme.muted }]}>
                         Choose which measurement field is most important to you and your project. This helps
                         sort the results list.
@@ -212,7 +213,7 @@ export default function Index() {
                     </View>
 
                     <Spacer height={18} />
-                    <ThemedText style={styles.controlName}>Comparison Scale</ThemedText>
+                    <ThemedText style={styles.controlName}>Scale Reference Selector</ThemedText>
                     <ThemedText style={[styles.label, { color: theme.muted }]}>
                         Use this to compare your character's 1:1 measurements to the physical
                         measurements of the available bodies on the market. 1:6th scale is the default.
@@ -298,28 +299,12 @@ export default function Index() {
                         <ThemedCard>
                             <ThemedText style={styles.h2}>Data Card Glossary</ThemedText>
                             <Spacer height={10} />
-                            {[
-                                ['Body Measurements', "The body's own measurements."],
-                                [
-                                    'Character Measurements',
-                                    `Your character's measurements, scaled to ${scaleLabel} — the scale everything on this page is compared at.`,
-                                ],
-                                [
-                                    'Diff',
-                                    'Body Measurements minus Character Measurements. Positive means the body is larger than your character at this scale.',
-                                ],
-                                [
-                                    'Closest Scale',
-                                    `The scale at which this body's ${priority} would match your character exactly. Reference only — it does not affect the results.`,
-                                ],
-                                [
-                                    'Height Range',
-                                    'The span this body can be posed between. If your character\'s height falls inside it, the body can be set to match exactly.',
-                                ],
-                            ].map(([term, def]) => (
+                            {GLOSSARY.map(({ term, definition }) => (
                                 <View key={term} style={styles.glossItem}>
                                     <ThemedText style={styles.glossTerm}>{term}</ThemedText>
-                                    <ThemedText style={[styles.glossDef, { color: theme.muted }]}>{def}</ThemedText>
+                                    <ThemedText style={[styles.glossDef, { color: theme.muted }]}>
+                                        {definition}
+                                    </ThemedText>
                                 </View>
                             ))}
                         </ThemedCard>

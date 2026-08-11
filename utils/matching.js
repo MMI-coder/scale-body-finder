@@ -173,10 +173,10 @@ export function buildExportRows(character, opts, outcome) {
     [`Character at ${scaleName(workingScale)} (mm)`, 'Height', mm(s.height), 'Bust', mm(s.bust), 'Waist', mm(s.waist), 'Hips', mm(s.hips)],
     [],
     [
-      'Manufacturer', 'Product', 'Material', 'Closest scale',
+      'Manufacturer', 'Product', 'Material', 'Actual Body Scale',
       'Height (mm)', 'Height difference', 'Height range low', 'Height range high',
       'Bust (mm)', 'Bust difference', 'Waist (mm)', 'Waist difference', 'Hips (mm)', 'Hips difference',
-      'Underbust (mm)', 'Shoulder Width (mm)', 'Arm Length (mm)', 'Leg Inseam (mm)', 'Feet', 'Notes',
+      'Underbust (mm)', 'Shoulder Width (mm)', 'Arm Length (mm)', 'Leg Inseam (mm)', 'Feet Type', 'Notes',
     ],
   ]
 

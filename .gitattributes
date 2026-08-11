@@ -2,6 +2,7 @@
 # committed copy. That check compares bytes, so these two files must not have
 # their line endings rewritten differently on Windows and Linux.
 data/bodies.js text eol=lf
+data/glossary.js text eol=lf
 data/bodies.csv text eol=lf
 
 # Never touch the product photos.

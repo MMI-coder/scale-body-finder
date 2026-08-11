@@ -97,7 +97,7 @@ const BodyCard = ({ result, unit, expanded, onToggle }) => {
                 <>
                     <View style={[styles.scaleBox, { borderColor: theme.cardBorder }]}>
                         <InfoBubble
-                            label="Closest Scale"
+                            label="Actual Body Scale"
                             text={SCALE_INFO}
                             labelStyle={[styles.scaleLabel, { color: theme.muted }]}
                         />
@@ -106,7 +106,7 @@ const BodyCard = ({ result, unit, expanded, onToggle }) => {
                         </ThemedText>
                         {closest ? (
                             <ThemedText style={[styles.scaleLabel, { color: theme.muted }]}>
-                                Multiplier ×{closest.multiplier.toFixed(5)}
+                                Scale Multiplier ×{closest.multiplier.toFixed(5)}
                             </ThemedText>
                         ) : null}
                     </View>
@@ -184,7 +184,7 @@ const BodyCard = ({ result, unit, expanded, onToggle }) => {
                             ))}
                             {body.feet ? (
                                 <View style={styles.extraItem}>
-                                    <ThemedText style={[styles.extraLabel, { color: theme.muted }]}>Feet</ThemedText>
+                                    <ThemedText style={[styles.extraLabel, { color: theme.muted }]}>Feet Type</ThemedText>
                                     <ThemedText style={styles.extraValue}>{body.feet}</ThemedText>
                                 </View>
                             ) : null}
