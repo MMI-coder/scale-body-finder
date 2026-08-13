@@ -34,7 +34,7 @@ const src = [
             scaleName, snapDivisor, scaleInRange, buildExportRows, rowsToCsv,
             WORKING_SCALES, DEFAULT_WORKING_SCALE, PRIORITIES, SCORED,
             parseCharacterCsv, runBatch, templateCsv, parseScaleName,
-            TEMPLATE_HEADERS, BATCH_HEADERS }`,
+            TEMPLATE_HEADERS }`,
 ].join('\n')
 
 const api = new Function('BODIES', 'console', src)(bodies, console)
@@ -246,29 +246,34 @@ check('out-of-range scale named', mixed.errors.some(e => /outside the scales/.te
 check('bad priority named', mixed.errors.some(e => /not one of Height, Bust, Waist, Hips/.test(e)), true)
 mixed.errors.forEach(e => console.log('    ' + e))
 
-console.log('\nBatch: different scales really do give different results')
+console.log('\nBatch: one block per character, same layout as a manual export')
 const out = api.runBatch(good.jobs, bodies)
-check('one header row plus results', out.rows[0][0], 'Character')
+const firstCell = out.rows.map(r => (r[0] == null ? '' : String(r[0])))
+check('file title', out.rows[0][0], 'Scale Body Finder - batch results')
 check('three characters processed', out.characters, 3)
-check('3 + 5 + 23 result rows', out.resultRows, 31)
-const bodyCol = api.BATCH_HEADERS.indexOf('Product Name')
-const charCol = api.BATCH_HEADERS.indexOf('Character')
-const scaleCol = api.BATCH_HEADERS.indexOf('Scale Reference Selector')
-const forChar = n => out.rows.slice(1).filter(r => r[charCol] === n)
-console.log('    Kasumi @ ' + forChar('Kasumi')[0][scaleCol] + ' -> ' + forChar('Kasumi').map(r => r[bodyCol]).join(', '))
-console.log('    Honoka @ ' + forChar('Honoka')[0][scaleCol] + ' -> ' + forChar('Honoka').map(r => r[bodyCol]).join(', '))
-check('each row carries its own scale',
-  `${forChar('Kasumi')[0][scaleCol]}|${forChar('Honoka')[0][scaleCol]}|${forChar('Ayane')[0][scaleCol]}`,
-  '1:6|1:5 3/4|1:6 1/4')
+check('3 + 5 + 23 results', out.resultRows, 31)
+check('a block per character', firstCell.filter(c => c === 'Scale Body Finder - results').length, 3)
+check('each block names its character', firstCell.filter(c => c === 'Character').length, 3)
+
+// The thing that was missing before: the character at their own chosen scale.
+// "(1:1)" is the unscaled row, so it has to be excluded explicitly.
+const scaledRows = out.rows.filter(r => /^Character Measurements \((?!1:1\))1:/.test(String(r[0] || '')))
+check('a 1:1 row per character', out.rows.filter(r => r[0] === 'Character Measurements (1:1)').length, 3)
+check('a scaled row per character', scaledRows.length, 3)
+scaledRows.forEach(r => console.log('    ' + r[0] + '   ' + r.slice(1).join(' ')))
+check('each block uses that character\'s own scale',
+  scaledRows.map(r => r[0]).join(' | '),
+  'Character Measurements (1:6) | Character Measurements (1:5 3/4) | Character Measurements (1:6 1/4)')
+
+const batchCsv = api.rowsToCsv(out.rows)
+check('scaled values reach the file', batchCsv.includes('"263.33"'), true)
+check('per-character priority is stated', batchCsv.includes('"Least difference in Height"'), true)
 
 console.log('\nBatch: wording matches the app')
-const batchUnknown = api.BATCH_HEADERS.filter(l => {
-  const base = normalise(l).replace(/\s*\(1:1\)$/, '')
-  return !glossaryTerms.includes(base) && !STRUCTURAL.includes(base) &&
-         !['Character Measurement'].includes(base)
-})
-batchUnknown.forEach(l => console.log(`    unrecognised: "${l}"`))
-check(`all ${api.BATCH_HEADERS.length} batch labels are app terms`, batchUnknown.length, 0)
+// The batch reuses buildExportRows, so its labels are the single export's
+// labels - already checked above. This guards the two file-level rows.
+const batchOnly = ['Scale Body Finder - batch results', 'Characters']
+check('batch-only labels are structural', batchOnly.every(l => firstCell.includes(l)), true)
 
 console.log(failures === 0 ? '\nAll checks passed.\n' : `\n${failures} CHECK(S) FAILED.\n`)
 process.exitCode = failures === 0 ? 0 : 1

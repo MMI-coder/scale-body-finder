@@ -15,7 +15,7 @@
  */
 
 import { BODIES } from '../data/bodies'
-import { compareBodies, PRIORITIES } from './matching'
+import { buildExportRows, compareBodies, PRIORITIES } from './matching'
 import { SCALE_STEPS, WORKING_SCALES, scaleName } from './scaleUtils'
 
 export const TEMPLATE_HEADERS = [
@@ -224,57 +224,38 @@ export function parseCharacterCsv(text) {
 // Run + CSV out
 // ---------------------------------------------------------------------------
 
-const cap = w => (w ? w.charAt(0).toUpperCase() + w.slice(1) : w)
-
-export const BATCH_HEADERS = [
-  'Character',
-  'Scale Reference Selector',
-  'Measurement Priority Field',
-  'Height (1:1) (mm)', 'Bust (1:1) (mm)', 'Waist (1:1) (mm)', 'Hips (1:1) (mm)',
-  'Manufacturer', 'Product Name', 'Material', 'Actual Body Scale', 'Scale Multiplier',
-  'Height - Body Measurement (mm)', 'Height - Character Measurement (mm)', 'Height - Difference (mm)',
-  'Height Range Low (mm)', 'Height Range High (mm)',
-  'Bust - Body Measurement (mm)', 'Bust - Character Measurement (mm)', 'Bust - Difference (mm)',
-  'Waist - Body Measurement (mm)', 'Waist - Character Measurement (mm)', 'Waist - Difference (mm)',
-  'Hips - Body Measurement (mm)', 'Hips - Character Measurement (mm)', 'Hips - Difference (mm)',
-  'Underbust (mm)', 'Shoulder Width (mm)', 'Arm Length (mm)', 'Leg Inseam (mm)',
-  'Feet Type', 'Notes',
-]
-
-/** One row per character per body, flat enough to sort and pivot. */
+/**
+ * One block per character, each identical to what a single manual export
+ * produces - header, the character at 1:1, the character at their chosen scale,
+ * then their results.
+ *
+ * An earlier version was one flat table with a Character column. It was neater
+ * to pivot but buried the scaled measurements in the middle of thirty-odd
+ * columns, where nobody found them. Reusing buildExportRows means the two
+ * exports can't drift apart: change the manual layout and the batch follows.
+ */
 export function runBatch(jobs, bodies = BODIES) {
-  const rows = [BATCH_HEADERS]
-  const mm = v => (v == null ? '' : parseFloat(v.toFixed(2)))
+  const rows = [
+    ['Scale Body Finder - batch results'],
+    ['Characters', jobs.length],
+    [],
+  ]
   let characters = 0
+  let resultRows = 0
 
   for (const job of jobs) {
     const { character, workingScale, priority, count } = job
-    const outcome = compareBodies(character, { workingScale, priority, sort: 'least', count, bodies })
+    const opts = { workingScale, priority, sort: 'least', count, bodies }
+    const outcome = compareBodies(character, opts)
     if (!outcome.results.length) continue
-    characters++
 
-    for (const r of outcome.results) {
-      const b = r.body
-      rows.push([
-        character.name,
-        scaleName(workingScale),
-        cap(priority),
-        mm(character.height), mm(character.bust), mm(character.waist), mm(character.hips),
-        b.manufacturer || '', b.name || b.code, b.material || '',
-        r.closest ? r.closest.name : '',
-        r.closest ? parseFloat(r.closest.multiplier.toFixed(5)) : '',
-        mm(r.heightUsed), mm(r.scaled.height), mm(r.deltas.height),
-        mm(r.heightRange?.min), mm(r.heightRange?.max),
-        mm(b.bust), mm(r.scaled.bust), mm(r.deltas.bust),
-        mm(b.waist), mm(r.scaled.waist), mm(r.deltas.waist),
-        mm(b.hips), mm(r.scaled.hips), mm(r.deltas.hips),
-        mm(b.underbust), mm(b.shoulder), mm(b.arm), mm(b.inseam),
-        b.feet || '', b.notes || '',
-      ])
-    }
+    if (characters) rows.push([], [])          // blank line between blocks
+    characters++
+    resultRows += outcome.results.length
+    rows.push(...buildExportRows(character, opts, outcome))
   }
 
-  return { rows, characters, resultRows: rows.length - 1 }
+  return { rows, characters, resultRows }
 }
 
 /** The blank template, hint row included - the importer skips it on the way back in. */
