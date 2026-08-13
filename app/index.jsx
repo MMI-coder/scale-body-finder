@@ -9,6 +9,7 @@ import {
     useWindowDimensions,
 } from 'react-native'
 
+import BatchPanel from '../Components/BatchPanel'
 import BodyCard from '../Components/BodyCard'
 import Dropdown from '../Components/Dropdown'
 import SegmentedControl from '../Components/SegmentedControl'
@@ -297,6 +298,9 @@ export default function Index() {
                         </ThemedButton>
                     </>
                 )}
+
+                <Spacer height={30} />
+                <BatchPanel />
 
                 {/* Outside the results branch on purpose - the glossary explains the
                     controls as much as the cards, so it has to be readable before

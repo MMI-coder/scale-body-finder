@@ -29,9 +29,12 @@ const { bodies } = loadBodies()
 const src = [
   strip(fs.readFileSync(path.join(ROOT, 'utils', 'scaleUtils.js'), 'utf8')),
   strip(fs.readFileSync(path.join(ROOT, 'utils', 'matching.js'), 'utf8')),
+  strip(fs.readFileSync(path.join(ROOT, 'utils', 'batch.js'), 'utf8')),
   `return { compareBodies, scaleCharacter, atSixth, heightRange, heightAgainst, heightAnchor,
             scaleName, snapDivisor, scaleInRange, buildExportRows, rowsToCsv,
-            WORKING_SCALES, DEFAULT_WORKING_SCALE, PRIORITIES, SCORED }`,
+            WORKING_SCALES, DEFAULT_WORKING_SCALE, PRIORITIES, SCORED,
+            parseCharacterCsv, runBatch, templateCsv, parseScaleName,
+            TEMPLATE_HEADERS, BATCH_HEADERS }`,
 ].join('\n')
 
 const api = new Function('BODIES', 'console', src)(bodies, console)
@@ -162,10 +165,14 @@ const glossaryTerms = [
 const STRUCTURAL = [
   'Scale Body Finder - results', 'Character', 'Character Measurements', 'Notes', 'Sort by',
 ]
+// "Height - Body Measurement (mm)" is one cell of the group the glossary calls
+// "Body Measurements", so the singular maps back to the plural term.
 const normalise = l =>
   l.replace(/\s*\((?:mm|1:[^)]*)\)$/, '')       // trailing unit or scale
-   .replace(/\s*-\s*(?:Body Measurement|Difference)$/, '')
+   .replace(/\s*-\s*(Body|Character) Measurements?$/, ' $1 Measurements')
+   .replace(/\s*-\s*Difference$/, '')
    .replace(/\s+(?:Low|High)$/, '')
+   .replace(/^(?:Height|Bust|Waist|Hips)\s+(Body|Character) Measurements$/, '$1 Measurements')
    .trim()
 
 const csvLabels = [...new Set(
@@ -189,6 +196,79 @@ csvLabels.forEach(l => {
   if (!ok) console.log(`    unrecognised: "${l}" (normalises to "${base}")`)
 })
 check(`all ${csvLabels.length} CSV labels are app terms`, unknown.length, 0)
+
+// --- batch upload -----------------------------------------------------------
+console.log('\nBatch: the template round-trips')
+const template = api.templateCsv()
+check('template has the expected columns', api.parseCharacterCsv(template).errors[0],
+  'The file has a header but no character rows.')
+check('template header matches', template.split('\n')[0].startsWith('Character Name,Scale Reference Selector'), true)
+
+const HEAD = api.TEMPLATE_HEADERS.join(',')
+const HINT = template.split('\n')[1]
+const csvOf = (...rows) => [HEAD, HINT, ...rows].join('\n')
+
+console.log('\nBatch: parsing')
+const good = api.parseCharacterCsv(csvOf(
+  'Kasumi,1:6,1580,890,540,840,Bust,3',
+  'Honoka,1:5 3/4,1500,990,580,890,Height,5',
+  'Ayane,1:6 1/4,1570,930,560,850,Hips,All'
+))
+check('hint row is skipped automatically', good.jobs.length, 3)
+check('no errors on a clean file', good.errors.length, 0)
+check('per-row scale kept', good.jobs.map(j => j.workingScale).join(','), '6,5.75,6.25')
+check('per-row priority kept', good.jobs.map(j => j.priority).join(','), 'bust,height,hips')
+check('All becomes unlimited', good.jobs[2].count, null)
+check('3 and 5 kept', `${good.jobs[0].count},${good.jobs[1].count}`, '3,5')
+
+console.log('\nBatch: centimetres are rejected outright')
+const cm = api.parseCharacterCsv(csvOf(
+  'Kasumi,1:6,158,89,54,84,Bust,3',
+  'Honoka,1:6,1500,990,580,890,Height,3'
+))
+check('the whole upload is fatal', cm.fatal, true)
+check('nothing is processed', cm.jobs.length, 0)
+check('says it must be millimetres', cm.errors.some(e => /must be in millimetres/.test(e)), true)
+check('suggests the right number', cm.errors.some(e => /Did you mean 1580\?/.test(e)), true)
+console.log('    ' + cm.errors[0])
+console.log('    ' + cm.errors[1])
+
+console.log('\nBatch: a bad row is skipped, the rest still run')
+const mixed = api.parseCharacterCsv(csvOf(
+  'Kasumi,1:6,1580,890,540,840,Bust,3',
+  'Broken,1:9,1580,890,540,840,Bust,3',
+  'AlsoBroken,1:6,1580,890,540,840,Elbow,3',
+  'Ayane,1:6,1570,930,560,850,Hips,3'
+))
+check('good rows survive', mixed.jobs.map(j => j.character.name).join(','), 'Kasumi,Ayane')
+check('not fatal', !!mixed.fatal, false)
+check('out-of-range scale named', mixed.errors.some(e => /outside the scales/.test(e)), true)
+check('bad priority named', mixed.errors.some(e => /not one of Height, Bust, Waist, Hips/.test(e)), true)
+mixed.errors.forEach(e => console.log('    ' + e))
+
+console.log('\nBatch: different scales really do give different results')
+const out = api.runBatch(good.jobs, bodies)
+check('one header row plus results', out.rows[0][0], 'Character')
+check('three characters processed', out.characters, 3)
+check('3 + 5 + 23 result rows', out.resultRows, 31)
+const bodyCol = api.BATCH_HEADERS.indexOf('Product Name')
+const charCol = api.BATCH_HEADERS.indexOf('Character')
+const scaleCol = api.BATCH_HEADERS.indexOf('Scale Reference Selector')
+const forChar = n => out.rows.slice(1).filter(r => r[charCol] === n)
+console.log('    Kasumi @ ' + forChar('Kasumi')[0][scaleCol] + ' -> ' + forChar('Kasumi').map(r => r[bodyCol]).join(', '))
+console.log('    Honoka @ ' + forChar('Honoka')[0][scaleCol] + ' -> ' + forChar('Honoka').map(r => r[bodyCol]).join(', '))
+check('each row carries its own scale',
+  `${forChar('Kasumi')[0][scaleCol]}|${forChar('Honoka')[0][scaleCol]}|${forChar('Ayane')[0][scaleCol]}`,
+  '1:6|1:5 3/4|1:6 1/4')
+
+console.log('\nBatch: wording matches the app')
+const batchUnknown = api.BATCH_HEADERS.filter(l => {
+  const base = normalise(l).replace(/\s*\(1:1\)$/, '')
+  return !glossaryTerms.includes(base) && !STRUCTURAL.includes(base) &&
+         !['Character Measurement'].includes(base)
+})
+batchUnknown.forEach(l => console.log(`    unrecognised: "${l}"`))
+check(`all ${api.BATCH_HEADERS.length} batch labels are app terms`, batchUnknown.length, 0)
 
 console.log(failures === 0 ? '\nAll checks passed.\n' : `\n${failures} CHECK(S) FAILED.\n`)
 process.exitCode = failures === 0 ? 0 : 1
