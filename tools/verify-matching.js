@@ -112,7 +112,7 @@ console.log('\nSorting by difference in the chosen measurement')
 for (const priority of api.PRIORITIES) {
   const asc = api.compareBodies(example, { workingScale: 6, priority, sort: 'least', bodies })
   const desc = api.compareBodies(example, { workingScale: 6, priority, sort: 'greatest', bodies })
-  const key = r => Math.abs(r.deltas[priority])
+  const key = r => (r.deltas[priority] == null ? Infinity : Math.abs(r.deltas[priority]))
   const ascOk = asc.results.every((r, i, a) => i === 0 || key(a[i - 1]) <= key(r))
   const descOk = desc.results.every((r, i, a) => i === 0 || key(a[i - 1]) >= key(r))
   console.log(
@@ -122,7 +122,22 @@ for (const priority of api.PRIORITIES) {
   )
   check(`  ${priority} ascending is ordered`, ascOk, true)
   check(`  ${priority} descending is ordered`, descOk, true)
+  // A body with no figure for the sorted measurement must not appear at either
+  // end of the list. It sorted first under "greatest" before this was fixed.
+  check(`  ${priority} never ranks a body that has no ${priority}`,
+    asc.results.every(r => r.deltas[priority] != null) &&
+    desc.results.every(r => r.deltas[priority] != null), true)
 }
+
+console.log('\nBodies with no height drop out of Height priority only')
+const noHeightCodes = bodies.filter(b => b.heightSource == null).map(b => b.code)
+console.log('    no height data: ' + (noHeightCodes.join(', ') || '(none)'))
+const byHeight = api.compareBodies(example, { workingScale: 6, priority: 'height', sort: 'greatest', bodies })
+const byBust = api.compareBodies(example, { workingScale: 6, priority: 'bust', sort: 'greatest', bodies })
+check('excluded under Height', byHeight.results.filter(r => noHeightCodes.includes(r.body.code)).length, 0)
+check('  and the reason is given', byHeight.excluded.some(e => /no height measurement/.test(e.reason)), true)
+check('still present under Bust', byBust.results.filter(r => noHeightCodes.includes(r.body.code)).length,
+  noHeightCodes.length)
 
 // --- working scale changes the answer --------------------------------------
 console.log('\nChanging the working scale re-sorts')
@@ -136,7 +151,7 @@ check('different scales pick different bodies', new Set(Object.values(seen)).siz
 
 // --- counts and closest scale ----------------------------------------------
 console.log('\nResult counts and closest scale')
-check('all bodies when count is null', out6.results.length, 23)
+check('all bodies when count is null', out6.results.length, 25)
 check('3 when asked for 3',
   api.compareBodies(example, { workingScale: 6, priority: 'bust', count: 3, bodies }).results.length, 3)
 check('S07C closest scale on bust', s07c.closest.name, '1:6 1/64')
@@ -175,12 +190,16 @@ const normalise = l =>
    .replace(/^(?:Height|Bust|Waist|Hips)\s+(Body|Character) Measurements$/, '$1 Measurements')
    .trim()
 
+// Product names and codes are values, not labels. Taken from the data rather
+// than a regex of prefixes, so a new manufacturer's naming can't trip this.
+const bodyIdentifiers = new Set(bodies.flatMap(b => [b.name, b.code]))
 const csvLabels = [...new Set(
   [...csv.matchAll(/"([A-Z][^"]*)"/g)].map(m => m[1])
-)].filter(l => !/^\d|^1:|^S\d|^VCD|^SR-|^TB-|^N-1A/.test(l))
+)].filter(l => !bodyIdentifiers.has(l))
+  .filter(l => !/^\d|^1:/.test(l))
   // values, not labels: the character's own name, manufacturers, materials,
   // feet types, the measurement names used as inline keys, and the sort summary
-  .filter(l => ![example.name, 'TBLeague', 'VeryCool', 'Novan Studio', 'TPE', 'Silicone',
+  .filter(l => ![example.name, ...new Set(bodies.map(b => b.manufacturer)), 'TPE', 'Silicone',
                  'Attached', 'Removable', 'Bust', 'Waist', 'Hips', 'Height',
                  'Least difference in Bust'].includes(l))
   .filter(l => !l.startsWith('There are versions') && !l.startsWith('Model line')
@@ -251,7 +270,7 @@ const out = api.runBatch(good.jobs, bodies)
 const firstCell = out.rows.map(r => (r[0] == null ? '' : String(r[0])))
 check('file title', out.rows[0][0], 'Scale Body Finder - batch results')
 check('three characters processed', out.characters, 3)
-check('3 + 5 + 23 results', out.resultRows, 31)
+check('3 + 5 + 25 results', out.resultRows, 33)
 check('a block per character', firstCell.filter(c => c === 'Scale Body Finder - results').length, 3)
 check('each block names its character', firstCell.filter(c => c === 'Character').length, 3)
 

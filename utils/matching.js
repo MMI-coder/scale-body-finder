@@ -116,6 +116,15 @@ export function compareBodies(character, opts = {}) {
       totalOff += Math.abs(deltas[k])
     }
 
+    // A body with no figure for the measurement being sorted on can't be placed
+    // in that ordering at all. Sorting it to one end would be a lie in both
+    // directions - last under "least", first under "greatest" - so it drops out
+    // of this list entirely and still appears under every other priority.
+    if (deltas[priority] == null) {
+      excluded.push({ body, reason: `no ${priority} measurement` })
+      continue
+    }
+
     // Closest scale: where this body's priority measurement would land exactly.
     // Reference only - it doesn't affect the comparison above.
     const bodyPriority = priority === 'height' ? heightAnchor(body) : body[priority]

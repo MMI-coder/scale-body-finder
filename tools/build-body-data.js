@@ -254,15 +254,20 @@ rows.slice(1).forEach((r, i) => {
     body.manufacturerHeight = null
   }
 
+  // A body with no height is incomplete, not broken. It still matches on
+  // bust/waist/hips, shows a dash where its height would be, and drops out of
+  // Height priority because there is nothing to compare. Worth saying out loud,
+  // not worth refusing to build over - inventing a height would be worse.
   const noHeight = bodies.filter(b => b.heightSource == null).map(b => b.code)
-  if (noHeight.length) problems.push(`no height at all: ${noHeight.join(', ')}`)
 
-  return { bodies, images: [...images].sort(), problems }
+  return { bodies, images: [...images].sort(), problems, warnings: noHeight.length
+    ? [`no height data (will not appear under Height priority): ${noHeight.join(', ')}`]
+    : [] }
 }
 
 // --- write -----------------------------------------------------------------
 function main() {
-const { bodies, images: imgList, problems } = loadBodies()
+const { bodies, images: imgList, problems, warnings } = loadBodies()
 const imgMap = imgList
   .map(f => `  ${JSON.stringify(f)}: require(${JSON.stringify('../images/' + f)}),`)
   .join('\n')
@@ -302,6 +307,10 @@ fs.writeFileSync(OUT, out)
 
 console.log(`bodies: ${bodies.length}`)
 console.log(`images referenced: ${imgList.length}`)
+if (warnings.length) {
+  console.log(`\nNOTE (${warnings.length}) - built anyway:`)
+  warnings.forEach(w => console.log('  ' + w))
+}
 if (problems.length) {
   console.log(`\nPROBLEMS (${problems.length}):`)
   problems.forEach(p => console.log('  ' + p))
