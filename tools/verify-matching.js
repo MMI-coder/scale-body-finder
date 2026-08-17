@@ -15,7 +15,7 @@
 
 const fs = require('fs')
 const path = require('path')
-const { loadBodies } = require('./build-body-data')
+const { loadBodies, parseCsv } = require('./build-body-data')
 
 const ROOT = path.join(__dirname, '..')
 
@@ -190,20 +190,24 @@ const normalise = l =>
    .replace(/^(?:Height|Bust|Waist|Hips)\s+(Body|Character) Measurements$/, '$1 Measurements')
    .trim()
 
-// Product names and codes are values, not labels. Taken from the data rather
-// than a regex of prefixes, so a new manufacturer's naming can't trip this.
-const bodyIdentifiers = new Set(bodies.flatMap(b => [b.name, b.code]))
-const csvLabels = [...new Set(
-  [...csv.matchAll(/"([A-Z][^"]*)"/g)].map(m => m[1])
-)].filter(l => !bodyIdentifiers.has(l))
+// Everything a body row can contribute is a value, not a label - product names,
+// codes, manufacturers, materials, feet types and free-text notes. All read
+// from the data rather than matched by prefix, so adding a maker or writing a
+// new note can't trip this check.
+const bodyValues = new Set(
+  bodies.flatMap(b => [b.name, b.code, b.manufacturer, b.material, b.feet, b.notes])
+        .filter(Boolean)
+)
+// Parsed, not regexed. Some notes contain escaped quotes ("" inside a field),
+// and a regex stops at the first one and reports half a sentence as a label.
+const csvLabels = [...new Set(parseCsv(csv).flat())]
+  .filter(l => /^[A-Z]/.test(l))
+  .filter(l => !bodyValues.has(l))
   .filter(l => !/^\d|^1:/.test(l))
-  // values, not labels: the character's own name, manufacturers, materials,
-  // feet types, the measurement names used as inline keys, and the sort summary
-  .filter(l => ![example.name, ...new Set(bodies.map(b => b.manufacturer)), 'TPE', 'Silicone',
-                 'Attached', 'Removable', 'Bust', 'Waist', 'Hips', 'Height',
+  // the character's own name, the measurement names used as inline keys, and
+  // the sort summary sentence
+  .filter(l => ![example.name, 'Bust', 'Waist', 'Hips', 'Height',
                  'Least difference in Bust'].includes(l))
-  .filter(l => !l.startsWith('There are versions') && !l.startsWith('Model line')
-            && !l.startsWith('This is a') && !l.startsWith('This is an'))
 
 const unknown = csvLabels.filter(l => {
   const base = normalise(l)
