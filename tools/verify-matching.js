@@ -34,7 +34,8 @@ const src = [
             scaleName, snapDivisor, scaleInRange, buildExportRows, rowsToCsv,
             WORKING_SCALES, DEFAULT_WORKING_SCALE, PRIORITIES, SCORED,
             parseCharacterCsv, runBatch, templateCsv, parseScaleName,
-            TEMPLATE_HEADERS }`,
+            TEMPLATE_HEADERS, BODY_TYPES, DEFAULT_BODY_TYPE, pickBustPiece,
+            exportFileName }`,
 ].join('\n')
 
 const api = new Function('BODIES', 'console', src)(bodies, console)
@@ -234,7 +235,7 @@ const csvOf = (...rows) => [HEAD, HINT, ...rows].join('\n')
 console.log('\nBatch: parsing')
 const good = api.parseCharacterCsv(csvOf(
   'Kasumi,1:6,1580,890,540,840,Bust,3',
-  'Honoka,1:5 3/4,1500,990,580,890,Height,5',
+  'Honoka,1:5 3/4,1500,990,580,910,Height,5',
   'Ayane,1:6 1/4,1570,930,560,850,Hips,All'
 ))
 check('hint row is skipped automatically', good.jobs.length, 3)
@@ -247,7 +248,7 @@ check('3 and 5 kept', `${good.jobs[0].count},${good.jobs[1].count}`, '3,5')
 console.log('\nBatch: centimetres are rejected outright')
 const cm = api.parseCharacterCsv(csvOf(
   'Kasumi,1:6,158,89,54,84,Bust,3',
-  'Honoka,1:6,1500,990,580,890,Height,3'
+  'Honoka,1:6,1500,990,580,910,Height,3'
 ))
 check('the whole upload is fatal', cm.fatal, true)
 check('nothing is processed', cm.jobs.length, 0)
@@ -297,6 +298,111 @@ console.log('\nBatch: wording matches the app')
 // labels - already checked above. This guards the two file-level rows.
 const batchOnly = ['Scale Body Finder - batch results', 'Characters']
 check('batch-only labels are structural', batchOnly.every(l => firstCell.includes(l)), true)
+
+
+// ---------------------------------------------------------------------------
+// Jointed bodies
+//
+// Two things have to hold at once. The jointed catalogue has to work - modular
+// bodies get the chest piece nearest the character, and that piece is what the
+// comparison and Actual Body Scale are built from. And the seamless side has to
+// be untouched by any of it: its export feeds another tool, so its shape is a
+// contract.
+// ---------------------------------------------------------------------------
+console.log('\nJointed: the two catalogues are separate')
+const HONOKA = { name: 'Honoka', height: 1500, bust: 990, waist: 580, hips: 910 }
+const seamlessOut = api.compareBodies(HONOKA, { workingScale: 6, priority: 'bust', bodyType: 'Seamless' })
+const jointedOut  = api.compareBodies(HONOKA, { workingScale: 6, priority: 'bust', bodyType: 'Jointed' })
+
+check('body types offered', api.BODY_TYPES.join(','), 'Seamless,Jointed')
+check('seamless is the default', api.DEFAULT_BODY_TYPE, 'Seamless')
+check('seamless pool', seamlessOut.results.length, 25)
+check('jointed pool', jointedOut.results.length, 3)
+check('every seamless result is seamless',
+  seamlessOut.results.every(r => r.body.bodyType === 'Seamless'), true)
+check('every jointed result is jointed',
+  jointedOut.results.every(r => r.body.bodyType === 'Jointed'), true)
+check('no body appears in both',
+  jointedOut.results.some(r => seamlessOut.results.some(x => x.body.code === r.body.code)), false)
+check('the default search finds only seamless bodies',
+  api.compareBodies(HONOKA, { workingScale: 6, priority: 'bust' }).results.length, 25)
+
+console.log('\nJointed: the chest piece is chosen, not fixed')
+const at201 = jointedOut.results.find(r => r.body.code === 'AT-201')
+check('AT-201 is modular', at201.bustOptions.length, 5)
+check('  its pieces', at201.bustOptions.map(o => o.piece).join(','), 'A-cup,C-cup,D-cup,E-cup,G-cup')
+check('  and their measurements', at201.bustOptions.map(o => o.bust).join(','), '128,140,145,155,185')
+// Honoka at 1:6 wants a 165mm bust. E-cup at 155 is 10mm out, G-cup at 185 is 20mm.
+check('Honoka at 1:6 wants a bust of', r2(jointedOut.scaled.bust), 165)
+check('  so the E-cup is fitted', at201.bustPiece, 'E-cup')
+check('  and the comparison uses its 155mm', at201.bust, 155)
+check('  giving a difference of -10', r2(at201.deltas.bust), -10)
+check('the body itself has no single bust', at201.body.bust, null)
+// 800/6 is 133.3 - nearer the A-cup at 128 than the C-cup at 140.
+const pieceFor = bust => api.compareBodies({ ...HONOKA, bust }, { workingScale: 6, priority: 'bust', bodyType: 'Jointed' })
+  .results.find(r => r.body.code === 'AT-201').bustPiece
+check('a smaller character gets a smaller piece', pieceFor(800), 'A-cup')
+check('  and one in between gets the C-cup', pieceFor(840), 'C-cup')
+check('  and a much larger one gets the G-cup', pieceFor(1150), 'G-cup')
+check('pickBustPiece leaves a fixed-bust body alone',
+  api.pickBustPiece(byCode.S07C, 165).piece, null)
+check('  and returns its own measurement', api.pickBustPiece(byCode.S07C, 165).bust, 153)
+
+console.log('\nJointed: Actual Body Scale is built from the fitted piece')
+// 990 / 155 must be the number used - not the A-cup or the G-cup. The card lets
+// you look at those; the scale stays on the piece the engine fitted.
+check('AT-201 closest scale on bust', at201.closest.name, api.scaleName(990 / 155))
+check('  which is the E-cup, not the A-cup', at201.closest.name === api.scaleName(990 / 128), false)
+
+console.log('\nJointed: sorted on the fitted piece, not the frame')
+const jointedByWaist = api.compareBodies(HONOKA, { workingScale: 6, priority: 'waist', bodyType: 'Jointed' })
+check('all three are still returned under Waist', jointedByWaist.results.length, 3)
+check('  and each still names a piece',
+  jointedByWaist.results.every(r => r.bustPiece != null), true)
+
+console.log('\nExport: Bust Piece appears on the jointed file only')
+const seamlessCsvRows = api.buildExportRows(HONOKA,
+  { workingScale: 6, priority: 'bust', sort: 'least', bodyType: 'Seamless' }, seamlessOut)
+const jointedCsvRows = api.buildExportRows(HONOKA,
+  { workingScale: 6, priority: 'bust', sort: 'least', bodyType: 'Jointed' }, jointedOut)
+const headerOf = rows => rows.find(r => r[0] === 'Manufacturer')
+
+check('seamless header is unchanged at 21 columns', headerOf(seamlessCsvRows).length, 21)
+check('  and says nothing about a Bust Piece',
+  headerOf(seamlessCsvRows).includes('Bust Piece'), false)
+check('  and every seamless body row is 21 wide too',
+  seamlessCsvRows.filter(r => r.length > 12).every(r => r.length === 21), true)
+check('jointed header has 22 columns', headerOf(jointedCsvRows).length, 22)
+check('  with Bust Piece in position 10', headerOf(jointedCsvRows)[9], 'Bust Piece')
+check('  just before the bust pair',
+  headerOf(jointedCsvRows).slice(9, 12).join(' | '),
+  'Bust Piece | Bust - Body Measurement (mm) | Bust - Difference (mm)')
+const jointedDataRow = jointedCsvRows.find(r => r[0] === 'WorldBox')
+check('a jointed row names its piece', jointedDataRow[9], 'E-cup')
+check('  and reports that piece measurement', jointedDataRow[10], 155)
+check('the jointed file states which catalogue was searched',
+  jointedCsvRows.some(r => r[0] === 'Body Type' && r[1] === 'Jointed'), true)
+check('the seamless file does not',
+  seamlessCsvRows.some(r => r[0] === 'Body Type'), false)
+
+console.log('\nBatch: runs against whichever section is on screen')
+const oneJob = () => [{ character: HONOKA, workingScale: 6, priority: 'bust', count: null, line: 2 }]
+const jointedBatch = api.runBatch(oneJob(), undefined, 'Jointed')
+const jointedBatchCsv = api.rowsToCsv(jointedBatch.rows)
+check('three jointed results', jointedBatch.resultRows, 3)
+check('  no seamless body leaked in', jointedBatchCsv.includes('"TBLeague"'), false)
+check('  and the piece is in the file', jointedBatchCsv.includes('"E-cup"'), true)
+const seamlessBatch = api.runBatch(oneJob(), undefined, 'Seamless')
+check('the same roster run seamless gives 25', seamlessBatch.resultRows, 25)
+check('  with no Bust Piece column', api.rowsToCsv(seamlessBatch.rows).includes('"Bust Piece"'), false)
+
+console.log('\nExport: file names')
+check('seamless keeps the name it has always had',
+  api.exportFileName('Honoka', 'bust', 'Seamless'), 'Honoka_Results_Bust.csv')
+check('  and with no body type given at all',
+  api.exportFileName('Honoka', 'bust'), 'Honoka_Results_Bust.csv')
+check('jointed is told apart', api.exportFileName('Honoka', 'bust', 'Jointed'),
+  'Honoka_Results_Bust_Jointed.csv')
 
 console.log(failures === 0 ? '\nAll checks passed.\n' : `\n${failures} CHECK(S) FAILED.\n`)
 process.exitCode = failures === 0 ? 0 : 1

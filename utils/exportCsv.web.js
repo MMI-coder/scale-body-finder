@@ -20,7 +20,7 @@ export async function exportResults(character, opts, outcome) {
 
   const link = document.createElement('a')
   link.href = url
-  link.download = exportFileName(character.name, opts.priority)
+  link.download = exportFileName(character.name, opts.priority, opts.bodyType)
   document.body.appendChild(link)
   link.click()
   document.body.removeChild(link)

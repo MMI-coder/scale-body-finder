@@ -14,7 +14,7 @@ import { exportFileName } from './scaleUtils'
 
 export async function exportResults(character, opts, outcome) {
   const csv = rowsToCsv(buildExportRows(character, opts, outcome))
-  const name = exportFileName(character.name, opts.priority)
+  const name = exportFileName(character.name, opts.priority, opts.bodyType)
   const fileUri = FileSystem.cacheDirectory + name
 
   await FileSystem.writeAsStringAsync(fileUri, csv, {

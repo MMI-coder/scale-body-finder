@@ -137,6 +137,8 @@ const C = {
   name: col('Product Name'),
   code: col('Product Code'),
   material: col('Material'),
+  bodyType: col('Body Type'),
+  bustPiece: col('Bust Piece'),
   pegMin: col('Neck Peg Min - Measured (mm)'),
   pegMax: col('Neck Peg Max - Measured (mm)'),
   pegMfr: col('Neck Peg Max - Mfr Stated (mm)'),
@@ -166,6 +168,8 @@ rows.slice(1).forEach((r, i) => {
     name: str(r[C.name]) || code,
     manufacturer: str(r[C.manufacturer]),
     material: str(r[C.material]),
+    bodyType: str(r[C.bodyType]) || 'Seamless',
+    bustPiece: str(r[C.bustPiece]),
     pegMin: num(r[C.pegMin]),
     pegMax: num(r[C.pegMax]),
     pegMfr: num(r[C.pegMfr]),
@@ -233,6 +237,49 @@ rows.slice(1).forEach((r, i) => {
   }
   bodies.push(body)
 })
+
+  // --- modular bodies: several rows, one product ----------------------------
+  // A modular body ships one frame and a set of chest pieces, so the CSV carries
+  // a row per piece. They collapse into a single entry with bustOptions; the
+  // matcher picks the closest piece at compare time and the card lets you cycle.
+  // Without this you would get five near-identical cards for one product,
+  // crowding out every other manufacturer.
+  const grouped = []
+  const byProduct = new Map()
+  for (const b of bodies) {
+    const key = `${b.manufacturer}|${b.code}`
+    if (!byProduct.has(key)) byProduct.set(key, [])
+    byProduct.get(key).push(b)
+  }
+  for (const [key, group] of byProduct) {
+    if (group.length === 1) { grouped.push(group[0]); continue }
+
+    const first = group[0]
+    // Everything except the chest piece has to agree, or "the same product" is a lie.
+    const VARY = new Set(['bust', 'bustPiece'])
+    for (const b of group.slice(1)) {
+      for (const k of Object.keys(first)) {
+        if (VARY.has(k) || typeof first[k] === 'object') continue
+        if (b[k] !== first[k]) {
+          problems.push(`${b.code}: rows for one product disagree on ${k} (${first[k]} vs ${b[k]})`)
+        }
+      }
+    }
+    const missing = group.filter(b => !b.bustPiece).length
+    if (missing) problems.push(`${first.code}: ${missing} of ${group.length} rows have no Bust Piece`)
+
+    grouped.push({
+      ...first,
+      bust: null,                       // no single bust; the matcher chooses
+      bustPiece: null,
+      bustOptions: group
+        .map(b => ({ piece: b.bustPiece, bust: b.bust }))
+        .filter(o => o.piece != null && o.bust != null)
+        .sort((a, b) => a.bust - b.bust),
+    })
+  }
+  bodies.length = 0
+  bodies.push(...grouped)
 
   // Second pass: bodies that borrow a reference body's height range.
   for (const [code, refCode] of Object.entries(HEIGHT_ESTIMATED_FROM)) {
