@@ -22,7 +22,7 @@ import { Colors } from '../Constants/Colors'
 import { BODIES } from '../data/bodies'
 import { GLOSSARY } from '../data/glossary'
 import { exportResults } from '../utils/exportCsv'
-import { compareBodies } from '../utils/matching'
+import { BODY_TYPES, DEFAULT_BODY_TYPE, compareBodies } from '../utils/matching'
 import {
     DEFAULT_UNIT,
     DEFAULT_WORKING_SCALE,
@@ -48,6 +48,21 @@ const PRIORITY_OPTIONS = [
     { value: 'hips', label: 'Hips' },
 ]
 
+/**
+ * The two catalogues.
+ *
+ * People come to this hobby with a preference already made - seamless if the
+ * character shows skin, jointed if the figure has to hold a pose - and they
+ * rarely cross over. So this isn't a filter buried in the results; it's the
+ * first choice on the page, and it decides what gets searched at all.
+ */
+const SECTION_OPTIONS = BODY_TYPES.map((t) => ({ value: t, label: t }))
+
+const SECTION_BLURB = {
+    Seamless: 'One-piece TPE or silicone bodies with no visible joints. The usual choice when the character shows a lot of skin.',
+    Jointed: 'Hard plastic bodies built from parts. They hold a pose, and the chest piece is swappable - so bust is something you choose, not something the body has.',
+}
+
 const SORT_OPTIONS = [
     { value: 'least', label: 'Least difference' },
     { value: 'greatest', label: 'Greatest difference' },
@@ -69,6 +84,7 @@ export default function Index() {
     const theme = Colors[colorScheme] ?? Colors.light
     const { width } = useWindowDimensions()
 
+    const [bodyType, setBodyType] = useState(DEFAULT_BODY_TYPE)
     const [name, setName] = useState('')
     const [unit, setUnit] = useState(DEFAULT_UNIT)
     const [values, setValues] = useState(emptyValues)
@@ -110,10 +126,10 @@ export default function Index() {
     }, [values, unit, name])
 
     const ready = character.height && character.bust && character.waist && character.hips
-    const opts = { workingScale, priority, sort, count: count || null, bodies: BODIES }
+    const opts = { workingScale, priority, sort, count: count || null, bodyType, bodies: BODIES }
     const outcome = useMemo(
         () => (ready ? compareBodies(character, opts) : null),
-        [character, workingScale, priority, sort, count, ready]
+        [character, workingScale, priority, sort, count, bodyType, ready]
     )
 
     const onExport = async () => {
@@ -138,6 +154,21 @@ export default function Index() {
                 </ThemedText>
 
                 <Spacer height={22} />
+
+                {/* ---------------- which catalogue ---------------- */}
+                <ThemedCard>
+                    <ThemedText style={styles.controlName}>Body Type</ThemedText>
+                    <ThemedText style={[styles.label, { color: theme.muted }]}>
+                        Choose which kind of body you are shopping for. Only that kind is searched.
+                    </ThemedText>
+                    <SegmentedControl options={SECTION_OPTIONS} value={bodyType} onChange={setBodyType} />
+                    <Spacer height={10} />
+                    <ThemedText style={[styles.sub, { color: theme.muted, marginTop: 0 }]}>
+                        {SECTION_BLURB[bodyType]}
+                    </ThemedText>
+                </ThemedCard>
+
+                <Spacer height={20} />
 
                 {/* ---------------- how to use ---------------- */}
                 <ThemedCard>
@@ -272,7 +303,8 @@ export default function Index() {
                         {/* ---------------- results ---------------- */}
                         <ThemedText style={styles.h2}>Results</ThemedText>
                         <ThemedText style={[styles.sub, { color: theme.muted }]}>
-                            {outcome.results.length} result{outcome.results.length === 1 ? '' : 's'} based on the data
+                            {outcome.results.length} {bodyType.toLowerCase()} result
+                            {outcome.results.length === 1 ? '' : 's'} based on the data
                             you provided, compared at {scaleLabel} and sorted by{' '}
                             {cap(sort)} difference in {cap(priority)}.
                         </ThemedText>
@@ -300,7 +332,7 @@ export default function Index() {
                 )}
 
                 <Spacer height={30} />
-                <BatchPanel />
+                <BatchPanel bodyType={bodyType} />
 
                 {/* Outside the results branch on purpose - the glossary explains the
                     controls as much as the cards, so it has to be readable before
@@ -321,8 +353,9 @@ export default function Index() {
 
                 <Spacer height={30} />
                 <ThemedText style={[styles.credit, { color: theme.muted }]}>
-                    Product images are manufacturer material — TBLeague (Phicen), VeryCool and Novan Studio — used
-                    for identification and comparison; all rights remain with them.
+                    Product images are manufacturer material — TBLeague (Phicen), VeryCool, Novan Studio,
+                    Longshan, 86Toys and WorldBox — used for identification and comparison; all rights remain
+                    with them.
                 </ThemedText>
                 <Spacer height={40} />
             </View>

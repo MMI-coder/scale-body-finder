@@ -129,11 +129,17 @@ export function safeFileName(name, fallback = 'Character') {
 /**
  * Name for an exported results file: CharacterName_Results_PriorityChosen.csv
  *
+ * A jointed run adds _Jointed on the end, so running the same character through
+ * both sections leaves you with two files instead of one overwriting the other.
+ * Seamless keeps the plain name it has always had - those files are already
+ * being fed to other tools, and renaming them would break that for no gain.
+ *
  * Kept here rather than in either export module so the browser and native
  * versions can't drift apart on it.
  */
-export function exportFileName(characterName, priority) {
+export function exportFileName(characterName, priority, bodyType) {
   const who = safeFileName(characterName)
   const what = priority ? priority.charAt(0).toUpperCase() + priority.slice(1) : null
-  return [who, 'Results', what].filter(Boolean).join('_') + '.csv'
+  const which = bodyType && bodyType !== 'Seamless' ? bodyType : null
+  return [who, 'Results', what, which].filter(Boolean).join('_') + '.csv'
 }

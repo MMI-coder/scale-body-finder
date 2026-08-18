@@ -234,7 +234,7 @@ export function parseCharacterCsv(text) {
  * columns, where nobody found them. Reusing buildExportRows means the two
  * exports can't drift apart: change the manual layout and the batch follows.
  */
-export function runBatch(jobs, bodies = BODIES) {
+export function runBatch(jobs, bodies = BODIES, bodyType = undefined) {
   const rows = [
     ['Scale Body Finder - batch results'],
     ['Characters', jobs.length],
@@ -245,7 +245,7 @@ export function runBatch(jobs, bodies = BODIES) {
 
   for (const job of jobs) {
     const { character, workingScale, priority, count } = job
-    const opts = { workingScale, priority, sort: 'least', count, bodies }
+    const opts = { workingScale, priority, sort: 'least', count, bodyType, bodies }
     const outcome = compareBodies(character, opts)
     if (!outcome.results.length) continue
 

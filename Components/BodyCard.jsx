@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Image, Modal, Pressable, StyleSheet, View, useColorScheme, useWindowDimensions } from 'react-native'
 import { Colors } from '../Constants/Colors'
 import { bodyImage } from '../data/bodies'
@@ -14,6 +14,12 @@ export const SCALE_INFO =
     'For reference purposes only. This scale number is provided so the user can accurately ' +
     'create any clothing, accessories, props, and/or environments for their character that may ' +
     'benefit from being made to the same perceived scale as the character itself.'
+
+export const BUST_PIECE_INFO =
+    'This body is modular - the chest is a separate part, and the manufacturer sells several. ' +
+    'The card opens on the piece closest to your character, and you can switch between the ' +
+    'others to see what each one would measure. Switching only changes the Bust row: the results ' +
+    'stay in the order they were found, and Actual Body Scale stays on the closest piece.'
 
 export const HEIGHT_INFO =
     'For reference purposes only. Height is measured by hand using a shoeless body and a ' +
@@ -32,7 +38,20 @@ const BodyCard = ({ result, unit, expanded, onToggle }) => {
     const { width, height: winH } = useWindowDimensions()
     const [lightbox, setLightbox] = useState(false)
 
-    const { body, priority, scaled, deltas, heightRange, heightUsed, closest } = result
+    const { body, priority, scaled, deltas, heightRange, heightUsed, closest, bustOptions } = result
+
+    // Modular bodies open on the piece nearest the character and can be cycled
+    // from there. The pick is display only - it never reorders the results and
+    // never moves Actual Body Scale, both of which are fixed on the piece the
+    // engine chose. Re-pick when the engine's choice changes underneath, which
+    // happens when the scale or the character does.
+    const [piece, setPiece] = useState(result.bustPiece)
+    useEffect(() => setPiece(result.bustPiece), [result.bustPiece])
+
+    const shown = bustOptions?.find((o) => o.piece === piece)
+    const shownBust = shown ? shown.bust : result.bust ?? body.bust
+    const bustDelta = shownBust == null || scaled.bust == null ? null : shownBust - scaled.bust
+    const swapped = bustOptions && piece !== result.bustPiece
     const src = bodyImage(body.image)
     const ratio = body.imageW && body.imageH ? body.imageW / body.imageH : 0.75
 
@@ -119,7 +138,10 @@ const BodyCard = ({ result, unit, expanded, onToggle }) => {
                             <ThemedText style={[styles.th, { color: theme.muted }]}>Difference</ThemedText>
                         </View>
                         {ROWS.map((k) => {
-                            const bodyVal = k === 'height' ? heightUsed : body[k]
+                            const bodyVal = k === 'height' ? heightUsed
+                                          : k === 'bust'   ? shownBust
+                                          : body[k]
+                            const delta = k === 'bust' ? bustDelta : deltas[k]
                             if (bodyVal == null && scaled[k] == null) return null
                             const isPriority = k === priority
                             return (
@@ -132,12 +154,60 @@ const BodyCard = ({ result, unit, expanded, onToggle }) => {
                                         {fmtMM(scaled[k], unit)}
                                     </ThemedText>
                                     <ThemedText style={[styles.td, styles.diff]}>
-                                        {fmtDelta(deltas[k])}
+                                        {fmtDelta(delta)}
                                     </ThemedText>
                                 </View>
                             )
                         })}
                     </View>
+
+                    {bustOptions ? (
+                        <View style={[styles.pieces, { borderColor: theme.cardBorder }]}>
+                            <InfoBubble
+                                label="Bust Piece"
+                                text={BUST_PIECE_INFO}
+                                labelStyle={[styles.extraLabel, { color: theme.muted }]}
+                            />
+                            <View style={styles.pieceRow}>
+                                {bustOptions.map((o) => {
+                                    const on = o.piece === piece
+                                    return (
+                                        <Pressable
+                                            key={o.piece}
+                                            onPress={() => setPiece(o.piece)}
+                                            accessibilityRole="button"
+                                            accessibilityState={{ selected: on }}
+                                            style={[
+                                                styles.pieceChip,
+                                                { borderColor: on ? Colors.primary : theme.cardBorder },
+                                                on && { backgroundColor: Colors.primary },
+                                            ]}
+                                        >
+                                            <ThemedText
+                                                style={[styles.pieceText, on && styles.pieceTextOn]}
+                                            >
+                                                {o.piece}
+                                            </ThemedText>
+                                            <ThemedText
+                                                style={[
+                                                    styles.pieceMM,
+                                                    { color: theme.muted },
+                                                    on && styles.pieceTextOn,
+                                                ]}
+                                            >
+                                                {fmtMM(o.bust, unit)}{unit}
+                                            </ThemedText>
+                                        </Pressable>
+                                    )
+                                })}
+                            </View>
+                            <ThemedText style={[styles.pieceNote, { color: theme.muted }]}>
+                                {swapped
+                                    ? `Showing ${piece}. This body was placed in the results on its ${result.bustPiece}, which is the closest to your character.`
+                                    : `${result.bustPiece} is the closest piece to your character.`}
+                            </ThemedText>
+                        </View>
+                    ) : null}
 
                     {heightMet ? (
                         <ThemedText style={[styles.metNote, { color: Colors.primary }]}>
@@ -216,6 +286,14 @@ const BodyCard = ({ result, unit, expanded, onToggle }) => {
 export default BodyCard
 
 const styles = StyleSheet.create({
+    pieces: { borderTopWidth: StyleSheet.hairlineWidth, paddingTop: 12, marginTop: 12 },
+    pieceRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 6 },
+    pieceChip: { borderWidth: 1, borderRadius: 8, paddingVertical: 6, paddingHorizontal: 10, alignItems: 'center' },
+    pieceText: { fontSize: 13, fontWeight: '700' },
+    pieceMM: { fontSize: 11, marginTop: 1, fontVariant: ['tabular-nums'] },
+    pieceTextOn: { color: '#ffffff' },
+    pieceNote: { fontSize: 12, lineHeight: 17, marginTop: 8 },
+
     card: { padding: 16, gap: 14 },
     imageTile: { width: '100%', borderRadius: 8, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' },
     imageTileCompact: { height: 300 },

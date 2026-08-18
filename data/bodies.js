@@ -41,6 +41,9 @@ const IMAGES = {
   "VeryCool VCD-05.jpg": require("../images/VeryCool VCD-05.jpg"),
   "VeryCool VCD-06.jpg": require("../images/VeryCool VCD-06.jpg"),
   "VeryCool VCD-07.jpg": require("../images/VeryCool VCD-07.jpg"),
+  "WorldBox AT-201.jpg": require("../images/WorldBox AT-201.jpg"),
+  "WorldBox AT-203.jpg": require("../images/WorldBox AT-203.jpg"),
+  "WorldBox AT-206.jpg": require("../images/WorldBox AT-206.jpg"),
 }
 
 /** Resolve a CSV image filename to a bundled asset, or null. */
@@ -54,6 +57,8 @@ export const BODIES = [
     "name": "S07C",
     "manufacturer": "TBLeague",
     "material": "TPE",
+    "bodyType": "Seamless",
+    "bustPiece": null,
     "pegMin": 260,
     "pegMax": 266,
     "pegMfr": null,
@@ -94,6 +99,8 @@ export const BODIES = [
     "name": "S10D",
     "manufacturer": "TBLeague",
     "material": "TPE",
+    "bodyType": "Seamless",
+    "bustPiece": null,
     "pegMin": 262,
     "pegMax": 268,
     "pegMfr": null,
@@ -134,6 +141,8 @@ export const BODIES = [
     "name": "S16A",
     "manufacturer": "TBLeague",
     "material": "TPE",
+    "bodyType": "Seamless",
+    "bustPiece": null,
     "pegMin": 265,
     "pegMax": 268,
     "pegMfr": null,
@@ -174,6 +183,8 @@ export const BODIES = [
     "name": "S20A",
     "manufacturer": "TBLeague",
     "material": "TPE",
+    "bodyType": "Seamless",
+    "bustPiece": null,
     "pegMin": 264,
     "pegMax": 268,
     "pegMfr": null,
@@ -214,6 +225,8 @@ export const BODIES = [
     "name": "S22A",
     "manufacturer": "TBLeague",
     "material": "TPE",
+    "bodyType": "Seamless",
+    "bustPiece": null,
     "pegMin": 262,
     "pegMax": 268,
     "pegMfr": null,
@@ -254,6 +267,8 @@ export const BODIES = [
     "name": "S24A",
     "manufacturer": "TBLeague",
     "material": "TPE",
+    "bodyType": "Seamless",
+    "bustPiece": null,
     "pegMin": 245,
     "pegMax": 250,
     "pegMfr": null,
@@ -294,6 +309,8 @@ export const BODIES = [
     "name": "S38A",
     "manufacturer": "TBLeague",
     "material": "TPE",
+    "bodyType": "Seamless",
+    "bustPiece": null,
     "pegMin": 246,
     "pegMax": 252,
     "pegMfr": null,
@@ -334,6 +351,8 @@ export const BODIES = [
     "name": "S42A",
     "manufacturer": "TBLeague",
     "material": "TPE",
+    "bodyType": "Seamless",
+    "bustPiece": null,
     "pegMin": 272,
     "pegMax": 278,
     "pegMfr": null,
@@ -374,6 +393,8 @@ export const BODIES = [
     "name": "S44A",
     "manufacturer": "TBLeague",
     "material": "TPE",
+    "bodyType": "Seamless",
+    "bustPiece": null,
     "pegMin": 245,
     "pegMax": 253,
     "pegMfr": null,
@@ -414,6 +435,8 @@ export const BODIES = [
     "name": "S48A",
     "manufacturer": "TBLeague",
     "material": "TPE",
+    "bodyType": "Seamless",
+    "bustPiece": null,
     "pegMin": 262,
     "pegMax": 268,
     "pegMfr": null,
@@ -454,6 +477,8 @@ export const BODIES = [
     "name": "S52A",
     "manufacturer": "TBLeague",
     "material": "TPE",
+    "bodyType": "Seamless",
+    "bustPiece": null,
     "pegMin": 272,
     "pegMax": 278,
     "pegMfr": null,
@@ -494,6 +519,8 @@ export const BODIES = [
     "name": "SR-AD01",
     "manufacturer": "TBLeague",
     "material": "Silicone",
+    "bodyType": "Seamless",
+    "bustPiece": null,
     "pegMin": null,
     "pegMax": null,
     "pegMfr": 280,
@@ -522,6 +549,8 @@ export const BODIES = [
     "name": "SR-BD01",
     "manufacturer": "TBLeague",
     "material": "Silicone",
+    "bodyType": "Seamless",
+    "bustPiece": null,
     "pegMin": null,
     "pegMax": null,
     "pegMfr": 273,
@@ -550,6 +579,8 @@ export const BODIES = [
     "name": "SR-CD01",
     "manufacturer": "TBLeague",
     "material": "Silicone",
+    "bodyType": "Seamless",
+    "bustPiece": null,
     "pegMin": null,
     "pegMax": null,
     "pegMfr": 265,
@@ -578,6 +609,8 @@ export const BODIES = [
     "name": "SR-DD01",
     "manufacturer": "TBLeague",
     "material": "Silicone",
+    "bodyType": "Seamless",
+    "bustPiece": null,
     "pegMin": null,
     "pegMax": null,
     "pegMfr": 265,
@@ -606,6 +639,8 @@ export const BODIES = [
     "name": "TB-DF01",
     "manufacturer": "TBLeague",
     "material": "TPE",
+    "bodyType": "Seamless",
+    "bustPiece": null,
     "pegMin": null,
     "pegMax": null,
     "pegMfr": 270,
@@ -634,6 +669,8 @@ export const BODIES = [
     "name": "N-1A",
     "manufacturer": "Novan Studio",
     "material": "Silicone",
+    "bodyType": "Seamless",
+    "bustPiece": null,
     "pegMin": null,
     "pegMax": null,
     "pegMfr": 275,
@@ -662,6 +699,8 @@ export const BODIES = [
     "name": "VCD-01",
     "manufacturer": "VeryCool",
     "material": "Silicone",
+    "bodyType": "Seamless",
+    "bustPiece": null,
     "pegMin": null,
     "pegMax": null,
     "pegMfr": 260,
@@ -704,6 +743,8 @@ export const BODIES = [
     "name": "VCD-02",
     "manufacturer": "VeryCool",
     "material": "Silicone",
+    "bodyType": "Seamless",
+    "bustPiece": null,
     "pegMin": null,
     "pegMax": null,
     "pegMfr": 260,
@@ -746,6 +787,8 @@ export const BODIES = [
     "name": "VCD-03",
     "manufacturer": "VeryCool",
     "material": "Silicone",
+    "bodyType": "Seamless",
+    "bustPiece": null,
     "pegMin": 262,
     "pegMax": 270,
     "pegMfr": 260,
@@ -786,6 +829,8 @@ export const BODIES = [
     "name": "VCD-05",
     "manufacturer": "VeryCool",
     "material": "Silicone",
+    "bodyType": "Seamless",
+    "bustPiece": null,
     "pegMin": 268,
     "pegMax": 274,
     "pegMfr": 260,
@@ -826,6 +871,8 @@ export const BODIES = [
     "name": "VCD-06",
     "manufacturer": "VeryCool",
     "material": "Silicone",
+    "bodyType": "Seamless",
+    "bustPiece": null,
     "pegMin": null,
     "pegMax": null,
     "pegMfr": 260,
@@ -868,6 +915,8 @@ export const BODIES = [
     "name": "VCD-07",
     "manufacturer": "VeryCool",
     "material": "Silicone",
+    "bodyType": "Seamless",
+    "bustPiece": null,
     "pegMin": null,
     "pegMax": null,
     "pegMfr": 260,
@@ -910,6 +959,8 @@ export const BODIES = [
     "name": "LSJS-TS01",
     "manufacturer": "Longshan",
     "material": "Silicone",
+    "bodyType": "Seamless",
+    "bustPiece": null,
     "pegMin": null,
     "pegMax": null,
     "pegMfr": 270,
@@ -937,6 +988,8 @@ export const BODIES = [
     "name": "86-TS01-A",
     "manufacturer": "86Toys",
     "material": "Silicone",
+    "bodyType": "Seamless",
+    "bustPiece": null,
     "pegMin": null,
     "pegMax": null,
     "pegMfr": 265,
@@ -959,6 +1012,198 @@ export const BODIES = [
     "heightsByHead": null,
     "imageW": 1500,
     "imageH": 1500
+  },
+  {
+    "code": "AT-201",
+    "name": "AT-201",
+    "manufacturer": "WorldBox",
+    "material": "Plastic",
+    "bodyType": "Jointed",
+    "bustPiece": null,
+    "pegMin": 248,
+    "pegMax": 248,
+    "pegMfr": 248,
+    "head": "Custom 38mm 3D Print",
+    "heightMin": 266,
+    "heightMax": 266,
+    "bust": null,
+    "underbust": null,
+    "waist": 98,
+    "hips": 156,
+    "shoulder": 66,
+    "arm": 86,
+    "inseam": 115,
+    "feet": "Removable",
+    "image": "WorldBox AT-201.jpg",
+    "notes": "WorldBox bodies are modular. Height is fixed. Fitting legs from another AT-series body changes it, across a 266-274mm span.",
+    "headSize": 38,
+    "heightSource": "measured",
+    "heightsByHead": {
+      "38": {
+        "min": 266,
+        "max": 266
+      },
+      "37.5": {
+        "min": 265.5,
+        "max": 265.5
+      },
+      "38.5": {
+        "min": 266.5,
+        "max": 266.5
+      }
+    },
+    "imageW": 850,
+    "imageH": 1378,
+    "bustOptions": [
+      {
+        "piece": "A-cup",
+        "bust": 128
+      },
+      {
+        "piece": "C-cup",
+        "bust": 140
+      },
+      {
+        "piece": "D-cup",
+        "bust": 145
+      },
+      {
+        "piece": "E-cup",
+        "bust": 155
+      },
+      {
+        "piece": "G-cup",
+        "bust": 185
+      }
+    ]
+  },
+  {
+    "code": "AT-203",
+    "name": "AT-203",
+    "manufacturer": "WorldBox",
+    "material": "Plastic",
+    "bodyType": "Jointed",
+    "bustPiece": null,
+    "pegMin": 256,
+    "pegMax": 256,
+    "pegMfr": 256,
+    "head": "Custom 38mm 3D Print",
+    "heightMin": 274,
+    "heightMax": 274,
+    "bust": null,
+    "underbust": null,
+    "waist": 98,
+    "hips": 156,
+    "shoulder": 66,
+    "arm": 86,
+    "inseam": 125,
+    "feet": "Removable",
+    "image": "WorldBox AT-203.jpg",
+    "notes": "WorldBox bodies are modular. Height is fixed. Fitting legs from another AT-series body changes it, across a 266-274mm span.",
+    "headSize": 38,
+    "heightSource": "measured",
+    "heightsByHead": {
+      "38": {
+        "min": 274,
+        "max": 274
+      },
+      "37.5": {
+        "min": 273.5,
+        "max": 273.5
+      },
+      "38.5": {
+        "min": 274.5,
+        "max": 274.5
+      }
+    },
+    "imageW": 750,
+    "imageH": 1216,
+    "bustOptions": [
+      {
+        "piece": "A-cup",
+        "bust": 128
+      },
+      {
+        "piece": "C-cup",
+        "bust": 140
+      },
+      {
+        "piece": "D-cup",
+        "bust": 145
+      },
+      {
+        "piece": "E-cup",
+        "bust": 155
+      },
+      {
+        "piece": "G-cup",
+        "bust": 185
+      }
+    ]
+  },
+  {
+    "code": "AT-206",
+    "name": "AT-206",
+    "manufacturer": "WorldBox",
+    "material": "Plastic",
+    "bodyType": "Jointed",
+    "bustPiece": null,
+    "pegMin": 248,
+    "pegMax": 248,
+    "pegMfr": 248,
+    "head": "Custom 38mm 3D Print",
+    "heightMin": 266,
+    "heightMax": 266,
+    "bust": null,
+    "underbust": null,
+    "waist": 98,
+    "hips": 160,
+    "shoulder": 72,
+    "arm": 86,
+    "inseam": 115,
+    "feet": "Removable",
+    "image": "WorldBox AT-206.jpg",
+    "notes": "WorldBox bodies are modular. Height is fixed. Fitting legs from another AT-series body changes it, across a 266-274mm span.",
+    "headSize": 38,
+    "heightSource": "measured",
+    "heightsByHead": {
+      "38": {
+        "min": 266,
+        "max": 266
+      },
+      "37.5": {
+        "min": 265.5,
+        "max": 265.5
+      },
+      "38.5": {
+        "min": 266.5,
+        "max": 266.5
+      }
+    },
+    "imageW": 900,
+    "imageH": 1200,
+    "bustOptions": [
+      {
+        "piece": "A-cup",
+        "bust": 128
+      },
+      {
+        "piece": "C-cup",
+        "bust": 140
+      },
+      {
+        "piece": "D-cup",
+        "bust": 145
+      },
+      {
+        "piece": "E-cup",
+        "bust": 155
+      },
+      {
+        "piece": "G-cup",
+        "bust": 185
+      }
+    ]
   }
 ]
 

@@ -26,6 +26,29 @@ export const SCORED = ['height', 'bust', 'waist', 'hips']
 
 export const SORTS = ['least', 'greatest']
 
+/** The two catalogues. A search only ever looks in one of them. */
+export const BODY_TYPES = ['Seamless', 'Jointed']
+export const DEFAULT_BODY_TYPE = 'Seamless'
+
+/**
+ * Which chest piece a modular body would wear to best match a target bust.
+ *
+ * Modular bodies ship a frame plus a set of chest pieces, so their bust isn't a
+ * property of the body - it's a choice. This picks the closest, and the card
+ * lets you cycle to the others afterwards. Selection always uses this one, so
+ * cycling never reorders results.
+ *
+ * A body with a fixed bust just returns it, with no piece named.
+ */
+export function pickBustPiece(body, target) {
+  if (!body.bustOptions || !body.bustOptions.length) {
+    return { bust: body.bust, piece: null, options: null }
+  }
+  const best = body.bustOptions.reduce((a, b) =>
+    Math.abs(b.bust - target) < Math.abs(a.bust - target) ? b : a)
+  return { bust: best.bust, piece: best.piece, options: body.bustOptions }
+}
+
 /** A character's measurements at a given scale divisor. */
 export function scaleCharacter(character, divisor) {
   const out = {}
@@ -89,6 +112,7 @@ export function compareBodies(character, opts = {}) {
     priority = 'bust',
     sort = 'least',
     count = null,
+    bodyType = DEFAULT_BODY_TYPE,
     bodies = BODIES,
   } = opts
 
@@ -101,8 +125,12 @@ export function compareBodies(character, opts = {}) {
   const results = []
   const excluded = []
 
-  for (const body of bodies) {
-    if (['bust', 'waist', 'hips'].some(k => body[k] == null)) {
+  // Seamless and jointed are separate catalogues, never mixed in one list.
+  const pool = bodyType ? bodies.filter(b => (b.bodyType || 'Seamless') === bodyType) : bodies
+
+  for (const body of pool) {
+    const chosen = pickBustPiece(body, scaled.bust)
+    if (chosen.bust == null || ['waist', 'hips'].some(k => body[k] == null)) {
       excluded.push({ body, reason: 'incomplete measurements' })
       continue
     }
@@ -110,7 +138,9 @@ export function compareBodies(character, opts = {}) {
     const deltas = {}
     let totalOff = 0
     for (const k of usable) {
-      const bodyVal = k === 'height' ? heightAgainst(body, scaled.height) : body[k]
+      const bodyVal = k === 'height' ? heightAgainst(body, scaled.height)
+                    : k === 'bust'   ? chosen.bust
+                    : body[k]
       if (bodyVal == null) { deltas[k] = null; continue }
       deltas[k] = bodyVal - scaled[k]     // positive = body is larger
       totalOff += Math.abs(deltas[k])
@@ -127,7 +157,9 @@ export function compareBodies(character, opts = {}) {
 
     // Closest scale: where this body's priority measurement would land exactly.
     // Reference only - it doesn't affect the comparison above.
-    const bodyPriority = priority === 'height' ? heightAnchor(body) : body[priority]
+    const bodyPriority = priority === 'height' ? heightAnchor(body)
+                       : priority === 'bust'   ? chosen.bust
+                       : body[priority]
     const charPriority = character[priority]
     let closest = null
     if (bodyPriority != null && charPriority) {
@@ -150,6 +182,9 @@ export function compareBodies(character, opts = {}) {
       totalOff,                                 // sum of |delta| across all scored
       heightUsed: heightAgainst(body, scaled.height),
       heightRange: heightRange(body),
+      bust: chosen.bust,            // the chosen piece's measurement
+      bustPiece: chosen.piece,      // null on a fixed-bust body
+      bustOptions: chosen.options,  // null on a fixed-bust body
       closest,
     })
   }
@@ -167,7 +202,11 @@ export function compareBodies(character, opts = {}) {
 
 /** Rows for the CSV export - mirrors what's on screen. */
 export function buildExportRows(character, opts, outcome) {
-  const { workingScale, priority, sort } = opts
+  const { workingScale, priority, sort, bodyType = DEFAULT_BODY_TYPE } = opts
+  // Bust Piece only means something on a modular body, so it only appears in the
+  // jointed export. The seamless file's shape is a contract - another tool reads
+  // it - and must not change.
+  const modular = bodyType === 'Jointed'
   const mm = v => (v == null ? '' : parseFloat(v.toFixed(2)))
   const cap = w => (w ? w.charAt(0).toUpperCase() + w.slice(1) : w)
   const s = outcome.scaled
@@ -178,6 +217,7 @@ export function buildExportRows(character, opts, outcome) {
     // Every label below is a term the app also uses on screen, capitalised the
     // same way. A spreadsheet opened a week later should read like the page it
     // came from.
+    ...(modular ? [['Body Type', bodyType]] : []),
     ['Scale Reference Selector', scaleName(workingScale)],
     ['Measurement Priority Field', cap(priority)],
     ['Sort by', `${cap(sort)} difference in ${cap(priority)}`],
@@ -189,6 +229,7 @@ export function buildExportRows(character, opts, outcome) {
       'Manufacturer', 'Product Name', 'Material', 'Actual Body Scale', 'Scale Multiplier',
       'Height - Body Measurement (mm)', 'Height - Difference (mm)',
       'Height Range Low (mm)', 'Height Range High (mm)',
+      ...(modular ? ['Bust Piece'] : []),
       'Bust - Body Measurement (mm)', 'Bust - Difference (mm)',
       'Waist - Body Measurement (mm)', 'Waist - Difference (mm)',
       'Hips - Body Measurement (mm)', 'Hips - Difference (mm)',
@@ -205,7 +246,8 @@ export function buildExportRows(character, opts, outcome) {
       r.closest ? parseFloat(r.closest.multiplier.toFixed(5)) : '',
       mm(r.heightUsed), mm(r.deltas.height),
       mm(r.heightRange?.min), mm(r.heightRange?.max),
-      mm(b.bust), mm(r.deltas.bust),
+      ...(modular ? [r.bustPiece || ''] : []),
+      mm(r.bust ?? b.bust), mm(r.deltas.bust),
       mm(b.waist), mm(r.deltas.waist),
       mm(b.hips), mm(r.deltas.hips),
       mm(b.underbust), mm(b.shoulder), mm(b.arm), mm(b.inseam),

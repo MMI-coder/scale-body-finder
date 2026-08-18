@@ -1,26 +1,41 @@
-Manufacturer,Product Name,Product Code,Material,Neck Peg Min - Measured (mm),Neck Peg Max - Measured (mm),Neck Peg Max - Mfr Stated (mm),Head Used,Height with Head (Min),Height with Head (max),Bust (mm),Underbust (mm),Waist (mm),Hips (mm),Shoulder Width (mm),Arm Length (mm),Leg Inseam (mm),Feet,Image,Notes
-TBLeague,S07C,S07C,TPE,260,266,,Custom 38mm 3D Print,274,280,153,106,93,143,67,92,128,Attached,S07 Family.jpg,"Model line includes: S07C, S07D, S09C and S09D"
-TBLeague,S10D,S10D,TPE,262,268,,Custom 38mm 3D Print,277,283,145,106,92,147,67,90,129,Removable,S10 Family.jpg,"Model line includes: S10D, S10E, S12D and S12E"
-TBLeague,S16A,S16A,TPE,265,268,,Custom 38mm 3D Print,280,283,136,108,94,140,62,90,130,Removable,S16 Family.jpg,"Model line includes: S16A, S16B, S17B, and S17C"
-TBLeague,S20A,S20A,TPE,264,268,,Custom 38mm 3D Print,280,284,163,123,91,140,68,88,130,Removable,S20 Family.jpg,"Model line includes: S20A, S20B, S21B, and S21C"
-TBLeague,S22A,S22A,TPE,262,268,,Custom 38mm 3D Print,278,282,146,114,95,140,70,95,130,Removable,S22 Family.jpg,"Model line includes: S22A, S22B, S23B, and S23C"
-TBLeague,S24A,S24A,TPE,245,250,,Custom 37.5mm 3D Print,262,267,136,104,84,125,58,80,124,Removable,S24 Family.jpg,"Model line includes: S24A, S24B, S25B, and S25C"
-TBLeague,S38A,S38A,TPE,246,252,,Custom 38.5mm 3D Print,264,270,163,117,107,160,70,80,122,Removable,S38 Family.jpg,"Model line includes: S38A, S38B, S39A, and S39B"
-TBLeague,S42A,S42A,TPE,272,278,,Custom 38.5mm 3D Print,292,298,160,120,93,158,62,90,140,Attached,S42 Family.jpg,"Model line includes: S42A, S42B, S43A, and S43B"
-TBLeague,S44A,S44A,TPE,245,253,,Custom 37.5mm 3D Print,260,268,113,96,74,124,52,75,125,Removable,S44 Family.jpg,"Model line includes: S44A, S44B, S45A, and S45B"
-TBLeague,S48A,S48A,TPE,262,268,,Custom 37.5mm 3D Print,278,284,137,103,93,142,54,74,130,Removable,S48 Family.jpg,"Model line includes: S48A, S48B, S49A, and S49B"
-TBLeague,S52A,S52A,TPE,272,278,,Custom 38.5mm 3D Print,292,298,160,120,93,158,62,90,140,Removable,S52 Family.jpg,"Model line includes: S52A, S52B, S53A, and S53B"
-TBLeague,SR-AD01,SR-AD01,Silicone,N/A,N/A,280,Manufacturer,306,310,160,N/A,105,169,N/A,N/A,N/A,Removable,TBLeague SR-AD01.jpg,"There are versions where a head sculpt is included. It adds ""(H)"" to the Product Name/Code"
-TBLeague,SR-BD01,SR-BD01,Silicone,N/A,N/A,273,Manufacturer,291,295,150,N/A,95,178,62,85,150,Removable,TBLeague SR-BD01.jpg,"There are versions where a head sculpt is included. It adds ""(H)"" to the Product Name/Code"
-TBLeague,SR-CD01,SR-CD01,Silicone,N/A,N/A,265,Manufacturer,279,283,150,N/A,95,164,58,85,150,Removable,TBLeague SR-CD01.jpg,"There are versions where a head sculpt is included. It adds ""(H)"" to the Product Name/Code"
-TBLeague,SR-DD01,SR-DD01,Silicone,N/A,N/A,265,Manufacturer,279,283,156,N/A,97,170,58,85,150,Removable,TBLeague SR-DD01.jpg,"There are versions where a head sculpt is included. It adds ""(H)"" to the Product Name/Code"
-TBLeague,TB-DF01,TB-DF01,TPE,N/A,N/A,270,Manufacturer,291,295,150,N/A,97,165,N/A,N/A,N/A,Removable,TBLeague TB-DF01.jpg,"There are versions where a head sculpt is included. It adds ""(H)"" to the Product Name/Code"
-Novan Studio,N-1A,N-1A,Silicone,N/A,N/A,275,Manufacturer,285,285,160,N/A,110,170,60,N/A,N/A,Attached,N-1A.jpg,
-VeryCool,VCD-01,VCD-01,Silicone,N/A,N/A,260,N/A,N/A,N/A,140,N/A,88,152,64,90,152,Removable,VeryCool VCD-01.jpg,
-VeryCool,VCD-02,VCD-02,Silicone,N/A,N/A,260,N/A,N/A,N/A,138,N/A,90,152,64,90,148,Removable,VeryCool VCD-02.jpg,
-VeryCool,VCD-03,VCD-03,Silicone,262,270,260,Custom 38mm 3D Print,278,284,153,98,86,170,60,95,138,Removable,VeryCool VCD-03.jpg,
-VeryCool,VCD-05,VCD-05,Silicone,268,274,260,Custom 38mm 3D Print,284,290,146,110,91,145,65,95,135,Removable,VeryCool VCD-05.jpg,
-VeryCool,VCD-06,VCD-06,Silicone,N/A,N/A,260,N/A,N/A,N/A,150,N/A,80,145,55,90,150,Attached,VeryCool VCD-06.jpg,This is an attached foot version of the VCD-07
-VeryCool,VCD-07,VCD-07,Silicone,N/A,N/A,260,N/A,N/A,N/A,150,N/A,80,145,55,90,150,Removable,VeryCool VCD-07.jpg,This is a detachable foot version of the VCD-06
-Longshan,LSJS-TS01,LSJS-TS01,Silicone,N/A,N/A,270,N/A,N/A,N/A,140,N/A,90,175,60,85,145,Removable,Longshan LSJS-TS01.jpg,Longshan's own product image is labelled LSJS-ST01; the product code is LSJS-TS01.
-86Toys,86-TS01-A,86-TS01-A,Silicone,N/A,N/A,265,N/A,N/A,280,124,N/A,84,150,N/A,76,144,Removable,86Toys 86-TS01-A.jpg,
+Manufacturer,Product Name,Product Code,Material,Body Type,Neck Peg Min - Measured (mm),Neck Peg Max - Measured (mm),Neck Peg Max - Mfr Stated (mm),Head Used,Height with Head (Min),Height with Head (max),Bust Piece,Bust (mm),Underbust (mm),Waist (mm),Hips (mm),Shoulder Width (mm),Arm Length (mm),Leg Inseam (mm),Feet,Image,Notes
+TBLeague,S07C,S07C,TPE,Seamless,260,266,,Custom 38mm 3D Print,274,280,,153,106,93,143,67,92,128,Attached,S07 Family.jpg,"Model line includes: S07C, S07D, S09C and S09D"
+TBLeague,S10D,S10D,TPE,Seamless,262,268,,Custom 38mm 3D Print,277,283,,145,106,92,147,67,90,129,Removable,S10 Family.jpg,"Model line includes: S10D, S10E, S12D and S12E"
+TBLeague,S16A,S16A,TPE,Seamless,265,268,,Custom 38mm 3D Print,280,283,,136,108,94,140,62,90,130,Removable,S16 Family.jpg,"Model line includes: S16A, S16B, S17B, and S17C"
+TBLeague,S20A,S20A,TPE,Seamless,264,268,,Custom 38mm 3D Print,280,284,,163,123,91,140,68,88,130,Removable,S20 Family.jpg,"Model line includes: S20A, S20B, S21B, and S21C"
+TBLeague,S22A,S22A,TPE,Seamless,262,268,,Custom 38mm 3D Print,278,282,,146,114,95,140,70,95,130,Removable,S22 Family.jpg,"Model line includes: S22A, S22B, S23B, and S23C"
+TBLeague,S24A,S24A,TPE,Seamless,245,250,,Custom 37.5mm 3D Print,262,267,,136,104,84,125,58,80,124,Removable,S24 Family.jpg,"Model line includes: S24A, S24B, S25B, and S25C"
+TBLeague,S38A,S38A,TPE,Seamless,246,252,,Custom 38.5mm 3D Print,264,270,,163,117,107,160,70,80,122,Removable,S38 Family.jpg,"Model line includes: S38A, S38B, S39A, and S39B"
+TBLeague,S42A,S42A,TPE,Seamless,272,278,,Custom 38.5mm 3D Print,292,298,,160,120,93,158,62,90,140,Attached,S42 Family.jpg,"Model line includes: S42A, S42B, S43A, and S43B"
+TBLeague,S44A,S44A,TPE,Seamless,245,253,,Custom 37.5mm 3D Print,260,268,,113,96,74,124,52,75,125,Removable,S44 Family.jpg,"Model line includes: S44A, S44B, S45A, and S45B"
+TBLeague,S48A,S48A,TPE,Seamless,262,268,,Custom 37.5mm 3D Print,278,284,,137,103,93,142,54,74,130,Removable,S48 Family.jpg,"Model line includes: S48A, S48B, S49A, and S49B"
+TBLeague,S52A,S52A,TPE,Seamless,272,278,,Custom 38.5mm 3D Print,292,298,,160,120,93,158,62,90,140,Removable,S52 Family.jpg,"Model line includes: S52A, S52B, S53A, and S53B"
+TBLeague,SR-AD01,SR-AD01,Silicone,Seamless,N/A,N/A,280,Manufacturer,306,310,,160,N/A,105,169,N/A,N/A,N/A,Removable,TBLeague SR-AD01.jpg,"There are versions where a head sculpt is included. It adds ""(H)"" to the Product Name/Code"
+TBLeague,SR-BD01,SR-BD01,Silicone,Seamless,N/A,N/A,273,Manufacturer,291,295,,150,N/A,95,178,62,85,150,Removable,TBLeague SR-BD01.jpg,"There are versions where a head sculpt is included. It adds ""(H)"" to the Product Name/Code"
+TBLeague,SR-CD01,SR-CD01,Silicone,Seamless,N/A,N/A,265,Manufacturer,279,283,,150,N/A,95,164,58,85,150,Removable,TBLeague SR-CD01.jpg,"There are versions where a head sculpt is included. It adds ""(H)"" to the Product Name/Code"
+TBLeague,SR-DD01,SR-DD01,Silicone,Seamless,N/A,N/A,265,Manufacturer,279,283,,156,N/A,97,170,58,85,150,Removable,TBLeague SR-DD01.jpg,"There are versions where a head sculpt is included. It adds ""(H)"" to the Product Name/Code"
+TBLeague,TB-DF01,TB-DF01,TPE,Seamless,N/A,N/A,270,Manufacturer,291,295,,150,N/A,97,165,N/A,N/A,N/A,Removable,TBLeague TB-DF01.jpg,"There are versions where a head sculpt is included. It adds ""(H)"" to the Product Name/Code"
+Novan Studio,N-1A,N-1A,Silicone,Seamless,N/A,N/A,275,Manufacturer,285,285,,160,N/A,110,170,60,N/A,N/A,Attached,N-1A.jpg,
+VeryCool,VCD-01,VCD-01,Silicone,Seamless,N/A,N/A,260,N/A,N/A,N/A,,140,N/A,88,152,64,90,152,Removable,VeryCool VCD-01.jpg,
+VeryCool,VCD-02,VCD-02,Silicone,Seamless,N/A,N/A,260,N/A,N/A,N/A,,138,N/A,90,152,64,90,148,Removable,VeryCool VCD-02.jpg,
+VeryCool,VCD-03,VCD-03,Silicone,Seamless,262,270,260,Custom 38mm 3D Print,278,284,,153,98,86,170,60,95,138,Removable,VeryCool VCD-03.jpg,
+VeryCool,VCD-05,VCD-05,Silicone,Seamless,268,274,260,Custom 38mm 3D Print,284,290,,146,110,91,145,65,95,135,Removable,VeryCool VCD-05.jpg,
+VeryCool,VCD-06,VCD-06,Silicone,Seamless,N/A,N/A,260,N/A,N/A,N/A,,150,N/A,80,145,55,90,150,Attached,VeryCool VCD-06.jpg,This is an attached foot version of the VCD-07
+VeryCool,VCD-07,VCD-07,Silicone,Seamless,N/A,N/A,260,N/A,N/A,N/A,,150,N/A,80,145,55,90,150,Removable,VeryCool VCD-07.jpg,This is a detachable foot version of the VCD-06
+Longshan,LSJS-TS01,LSJS-TS01,Silicone,Seamless,N/A,N/A,270,N/A,N/A,N/A,,140,N/A,90,175,60,85,145,Removable,Longshan LSJS-TS01.jpg,Longshan's own product image is labelled LSJS-ST01; the product code is LSJS-TS01.
+86Toys,86-TS01-A,86-TS01-A,Silicone,Seamless,N/A,N/A,265,N/A,N/A,280,,124,N/A,84,150,N/A,76,144,Removable,86Toys 86-TS01-A.jpg,
+WorldBox,AT-201,AT-201,Plastic,Jointed,248,248,248,Custom 38mm 3D Print,266,266,A-cup,128,N/A,98,156,66,86,115,Removable,WorldBox AT-201.jpg,"WorldBox bodies are modular. Height is fixed. Fitting legs from another AT-series body changes it, across a 266-274mm span."
+WorldBox,AT-201,AT-201,Plastic,Jointed,248,248,248,Custom 38mm 3D Print,266,266,C-cup,140,N/A,98,156,66,86,115,Removable,WorldBox AT-201.jpg,"WorldBox bodies are modular. Height is fixed. Fitting legs from another AT-series body changes it, across a 266-274mm span."
+WorldBox,AT-201,AT-201,Plastic,Jointed,248,248,248,Custom 38mm 3D Print,266,266,D-cup,145,N/A,98,156,66,86,115,Removable,WorldBox AT-201.jpg,"WorldBox bodies are modular. Height is fixed. Fitting legs from another AT-series body changes it, across a 266-274mm span."
+WorldBox,AT-201,AT-201,Plastic,Jointed,248,248,248,Custom 38mm 3D Print,266,266,E-cup,155,N/A,98,156,66,86,115,Removable,WorldBox AT-201.jpg,"WorldBox bodies are modular. Height is fixed. Fitting legs from another AT-series body changes it, across a 266-274mm span."
+WorldBox,AT-201,AT-201,Plastic,Jointed,248,248,248,Custom 38mm 3D Print,266,266,G-cup,185,N/A,98,156,66,86,115,Removable,WorldBox AT-201.jpg,"WorldBox bodies are modular. Height is fixed. Fitting legs from another AT-series body changes it, across a 266-274mm span."
+WorldBox,AT-203,AT-203,Plastic,Jointed,256,256,256,Custom 38mm 3D Print,274,274,A-cup,128,N/A,98,156,66,86,125,Removable,WorldBox AT-203.jpg,"WorldBox bodies are modular. Height is fixed. Fitting legs from another AT-series body changes it, across a 266-274mm span."
+WorldBox,AT-203,AT-203,Plastic,Jointed,256,256,256,Custom 38mm 3D Print,274,274,C-cup,140,N/A,98,156,66,86,125,Removable,WorldBox AT-203.jpg,"WorldBox bodies are modular. Height is fixed. Fitting legs from another AT-series body changes it, across a 266-274mm span."
+WorldBox,AT-203,AT-203,Plastic,Jointed,256,256,256,Custom 38mm 3D Print,274,274,D-cup,145,N/A,98,156,66,86,125,Removable,WorldBox AT-203.jpg,"WorldBox bodies are modular. Height is fixed. Fitting legs from another AT-series body changes it, across a 266-274mm span."
+WorldBox,AT-203,AT-203,Plastic,Jointed,256,256,256,Custom 38mm 3D Print,274,274,E-cup,155,N/A,98,156,66,86,125,Removable,WorldBox AT-203.jpg,"WorldBox bodies are modular. Height is fixed. Fitting legs from another AT-series body changes it, across a 266-274mm span."
+WorldBox,AT-203,AT-203,Plastic,Jointed,256,256,256,Custom 38mm 3D Print,274,274,G-cup,185,N/A,98,156,66,86,125,Removable,WorldBox AT-203.jpg,"WorldBox bodies are modular. Height is fixed. Fitting legs from another AT-series body changes it, across a 266-274mm span."
+WorldBox,AT-206,AT-206,Plastic,Jointed,248,248,248,Custom 38mm 3D Print,266,266,A-cup,128,N/A,98,160,72,86,115,Removable,WorldBox AT-206.jpg,"WorldBox bodies are modular. Height is fixed. Fitting legs from another AT-series body changes it, across a 266-274mm span."
+WorldBox,AT-206,AT-206,Plastic,Jointed,248,248,248,Custom 38mm 3D Print,266,266,C-cup,140,N/A,98,160,72,86,115,Removable,WorldBox AT-206.jpg,"WorldBox bodies are modular. Height is fixed. Fitting legs from another AT-series body changes it, across a 266-274mm span."
+WorldBox,AT-206,AT-206,Plastic,Jointed,248,248,248,Custom 38mm 3D Print,266,266,D-cup,145,N/A,98,160,72,86,115,Removable,WorldBox AT-206.jpg,"WorldBox bodies are modular. Height is fixed. Fitting legs from another AT-series body changes it, across a 266-274mm span."
+WorldBox,AT-206,AT-206,Plastic,Jointed,248,248,248,Custom 38mm 3D Print,266,266,E-cup,155,N/A,98,160,72,86,115,Removable,WorldBox AT-206.jpg,"WorldBox bodies are modular. Height is fixed. Fitting legs from another AT-series body changes it, across a 266-274mm span."
+WorldBox,AT-206,AT-206,Plastic,Jointed,248,248,248,Custom 38mm 3D Print,266,266,G-cup,185,N/A,98,160,72,86,115,Removable,WorldBox AT-206.jpg,"WorldBox bodies are modular. Height is fixed. Fitting legs from another AT-series body changes it, across a 266-274mm span."
