@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Image, Modal, Pressable, StyleSheet, View, useColorScheme, useWindowDimensions } from 'react-native'
 import { Colors } from '../Constants/Colors'
 import { bodyImage } from '../data/bodies'
+import { define } from '../data/glossary'
 import { fmtDelta, fmtMM } from '../utils/scaleUtils'
 import InfoBubble from './InfoBubble'
 import ThemedCard from './ThemedCard'
@@ -9,6 +10,13 @@ import ThemedText from './ThemedText'
 
 const LABELS = { height: 'Height', bust: 'Bust', waist: 'Waist', hips: 'Hips' }
 const ROWS = ['height', 'bust', 'waist', 'hips']
+
+/**
+ * A bubble's text: the glossary definition if one is written, otherwise the
+ * wording below. Keeping the fallbacks means clearing a definition out of
+ * TERMINOLOGY.md empties the glossary entry without emptying the card.
+ */
+const info = (term, fallback) => define(term) ?? fallback
 
 export const SCALE_INFO =
     'For reference purposes only. This scale number is provided so the user can accurately ' +
@@ -117,7 +125,7 @@ const BodyCard = ({ result, unit, expanded, onToggle }) => {
                     <View style={[styles.scaleBox, { borderColor: theme.cardBorder }]}>
                         <InfoBubble
                             label="Actual Body Scale"
-                            text={SCALE_INFO}
+                            text={info('Actual Body Scale', SCALE_INFO)}
                             labelStyle={[styles.scaleLabel, { color: theme.muted }]}
                         />
                         <ThemedText style={[styles.scaleValue, { color: Colors.primary }]}>
@@ -154,7 +162,7 @@ const BodyCard = ({ result, unit, expanded, onToggle }) => {
                                         {fmtMM(scaled[k], unit)}
                                     </ThemedText>
                                     <ThemedText style={[styles.td, styles.diff]}>
-                                        {fmtDelta(delta)}
+                                        {fmtDelta(delta, unit)}
                                     </ThemedText>
                                 </View>
                             )
@@ -165,7 +173,7 @@ const BodyCard = ({ result, unit, expanded, onToggle }) => {
                         <View style={[styles.pieces, { borderColor: theme.cardBorder }]}>
                             <InfoBubble
                                 label="Bust Piece"
-                                text={BUST_PIECE_INFO}
+                                text={info('Bust Piece', BUST_PIECE_INFO)}
                                 labelStyle={[styles.extraLabel, { color: theme.muted }]}
                             />
                             <View style={styles.pieceRow}>
@@ -218,7 +226,7 @@ const BodyCard = ({ result, unit, expanded, onToggle }) => {
                     <View style={[styles.heights, { borderColor: theme.cardBorder }]}>
                         <InfoBubble
                             label="Height Range"
-                            text={HEIGHT_INFO}
+                            text={info('Height Range', HEIGHT_INFO)}
                             labelStyle={[styles.extraLabel, { color: theme.muted }]}
                         />
                         <ThemedText style={styles.heightPrimary}>{rangeText}</ThemedText>

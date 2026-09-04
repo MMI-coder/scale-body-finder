@@ -44,11 +44,18 @@ export function fmtWithUnit(mm, unit = 'cm', dash = '—') {
  * A signed difference, always in millimetres regardless of display unit.
  * Differences are small and physical - millimetres are how they're discussed.
  */
-export function fmtDelta(mm, dash = '—') {
+/**
+ * A difference, in whichever unit is selected.
+ *
+ * This used to be millimetres always, with "mm" appended, while the columns
+ * either side of it followed the selector - so at cm a row read 26.6 / 250 /
+ * -2234mm, three numbers in two units. One row, one unit.
+ */
+export function fmtDelta(mm, unit = 'cm', dash = '—') {
   if (mm === null || mm === undefined || Number.isNaN(mm)) return dash
-  const r = parseFloat(mm.toFixed(2))
-  if (r === 0) return '0mm'
-  return `${r > 0 ? '+' : ''}${r}mm`
+  const r = parseFloat(fromMM(mm, unit).toFixed(2))
+  if (r === 0) return `0${unit}`
+  return `${r > 0 ? '+' : ''}${r}${unit}`
 }
 
 // ---------------------------------------------------------------------------

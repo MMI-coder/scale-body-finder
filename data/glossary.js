@@ -128,4 +128,17 @@ export const GLOSSARY = [
   }
 ]
 
+/**
+ * One definition by name, for the (i) bubbles on a card.
+ *
+ * The bubbles used to carry their own wording, which said almost the same thing
+ * as the glossary in slightly different words - two places to keep in step, and
+ * they had already drifted. Returns null for a term with no definition written,
+ * so a bubble can fall back rather than showing a blank.
+ */
+export function define(term) {
+  const hit = GLOSSARY.find(g => g.term === term)
+  return hit ? hit.definition : null
+}
+
 export default GLOSSARY
