@@ -41,6 +41,9 @@ const src = [
 const api = new Function('BODIES', 'console', src)(bodies, console)
 const byCode = Object.fromEntries(bodies.map(b => [b.code, b]))
 
+const SEAMLESS = bodies.filter(b => (b.bodyType || 'Seamless') === 'Seamless').length
+const JOINTED = bodies.filter(b => b.bodyType === 'Jointed').length
+
 let failures = 0
 function check(label, actual, expected, tol = 0) {
   const ok = typeof expected === 'number' ? Math.abs(actual - expected) <= tol : actual === expected
@@ -152,7 +155,7 @@ check('different scales pick different bodies', new Set(Object.values(seen)).siz
 
 // --- counts and closest scale ----------------------------------------------
 console.log('\nResult counts and closest scale')
-check('all bodies when count is null', out6.results.length, 25)
+check('every seamless body when count is null', out6.results.length, SEAMLESS)
 check('3 when asked for 3',
   api.compareBodies(example, { workingScale: 6, priority: 'bust', count: 3, bodies }).results.length, 3)
 check('S07C closest scale on bust', s07c.closest.name, '1:6 1/64')
@@ -275,7 +278,7 @@ const out = api.runBatch(good.jobs, bodies)
 const firstCell = out.rows.map(r => (r[0] == null ? '' : String(r[0])))
 check('file title', out.rows[0][0], 'Scale Body Finder - batch results')
 check('three characters processed', out.characters, 3)
-check('3 + 5 + 25 results', out.resultRows, 33)
+check(`3 + 5 + ${SEAMLESS} results`, out.resultRows, 3 + 5 + SEAMLESS)
 check('a block per character', firstCell.filter(c => c === 'Scale Body Finder - results').length, 3)
 check('each block names its character', firstCell.filter(c => c === 'Character').length, 3)
 
@@ -309,6 +312,15 @@ check('batch-only labels are structural', batchOnly.every(l => firstCell.include
 // be untouched by any of it: its export feeds another tool, so its shape is a
 // contract.
 // ---------------------------------------------------------------------------
+console.log('\nEvery body lands in exactly one catalogue')
+// A Body Type matching neither name is filtered out of both sections and never
+// appears anywhere - no error, clean build, the body just ceases to exist. The
+// data build rejects that now; this is the backstop if that check ever moves.
+check('every body has a valid Body Type',
+  bodies.filter(b => !api.BODY_TYPES.includes(b.bodyType)).map(b => b.code).join(',') || '(all valid)',
+  '(all valid)')
+check('seamless + jointed accounts for every body', SEAMLESS + JOINTED, bodies.length)
+
 console.log('\nJointed: the two catalogues are separate')
 const HONOKA = { name: 'Honoka', height: 1500, bust: 990, waist: 580, hips: 910 }
 const seamlessOut = api.compareBodies(HONOKA, { workingScale: 6, priority: 'bust', bodyType: 'Seamless' })
@@ -316,8 +328,8 @@ const jointedOut  = api.compareBodies(HONOKA, { workingScale: 6, priority: 'bust
 
 check('body types offered', api.BODY_TYPES.join(','), 'Seamless,Jointed')
 check('seamless is the default', api.DEFAULT_BODY_TYPE, 'Seamless')
-check('seamless pool', seamlessOut.results.length, 25)
-check('jointed pool', jointedOut.results.length, 3)
+check('seamless pool', seamlessOut.results.length, SEAMLESS)
+check('jointed pool', jointedOut.results.length, JOINTED)
 check('every seamless result is seamless',
   seamlessOut.results.every(r => r.body.bodyType === 'Seamless'), true)
 check('every jointed result is jointed',
@@ -325,7 +337,7 @@ check('every jointed result is jointed',
 check('no body appears in both',
   jointedOut.results.some(r => seamlessOut.results.some(x => x.body.code === r.body.code)), false)
 check('the default search finds only seamless bodies',
-  api.compareBodies(HONOKA, { workingScale: 6, priority: 'bust' }).results.length, 25)
+  api.compareBodies(HONOKA, { workingScale: 6, priority: 'bust' }).results.length, SEAMLESS)
 
 console.log('\nJointed: the chest piece is chosen, not fixed')
 const at201 = jointedOut.results.find(r => r.body.code === 'AT-201')
@@ -393,7 +405,7 @@ check('three jointed results', jointedBatch.resultRows, 3)
 check('  no seamless body leaked in', jointedBatchCsv.includes('"TBLeague"'), false)
 check('  and the piece is in the file', jointedBatchCsv.includes('"E-cup"'), true)
 const seamlessBatch = api.runBatch(oneJob(), undefined, 'Seamless')
-check('the same roster run seamless gives 25', seamlessBatch.resultRows, 25)
+check(`the same roster run seamless gives ${SEAMLESS}`, seamlessBatch.resultRows, SEAMLESS)
 check('  with no Bust Piece column', api.rowsToCsv(seamlessBatch.rows).includes('"Bust Piece"'), false)
 
 console.log('\nExport: file names')

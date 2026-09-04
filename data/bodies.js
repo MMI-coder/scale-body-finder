@@ -15,6 +15,9 @@
 
 export const HEAD_SIZES = [37.5,38,38.5]
 
+/** The two catalogues. Every body carries exactly one of these. */
+export const BODY_TYPES = ["Seamless","Jointed"]
+
 const IMAGES = {
   "86Toys 86-TS01-A.jpg": require("../images/86Toys 86-TS01-A.jpg"),
   "Longshan LSJS-TS01.jpg": require("../images/Longshan LSJS-TS01.jpg"),
@@ -41,6 +44,7 @@ const IMAGES = {
   "VeryCool VCD-05.jpg": require("../images/VeryCool VCD-05.jpg"),
   "VeryCool VCD-06.jpg": require("../images/VeryCool VCD-06.jpg"),
   "VeryCool VCD-07.jpg": require("../images/VeryCool VCD-07.jpg"),
+  "VeryCool VCD-08.jpg": require("../images/VeryCool VCD-08.jpg"),
   "WorldBox AT-201.jpg": require("../images/WorldBox AT-201.jpg"),
   "WorldBox AT-203.jpg": require("../images/WorldBox AT-203.jpg"),
   "WorldBox AT-206.jpg": require("../images/WorldBox AT-206.jpg"),
@@ -953,6 +957,35 @@ export const BODIES = [
     "imageH": 2233,
     "heightEstimatedFrom": "S07C",
     "manufacturerHeight": null
+  },
+  {
+    "code": "VCD-08",
+    "name": "VCD-08",
+    "manufacturer": "VeryCool",
+    "material": "Silicone",
+    "bodyType": "Seamless",
+    "bustPiece": null,
+    "pegMin": null,
+    "pegMax": null,
+    "pegMfr": 265,
+    "head": null,
+    "heightMin": null,
+    "heightMax": null,
+    "bust": 130,
+    "underbust": null,
+    "waist": 88,
+    "hips": 170,
+    "shoulder": 60,
+    "arm": 90,
+    "inseam": 138,
+    "feet": "Removable",
+    "image": "VeryCool VCD-08.jpg",
+    "notes": null,
+    "headSize": null,
+    "heightSource": null,
+    "heightsByHead": null,
+    "imageW": 2910,
+    "imageH": 2160
   },
   {
     "code": "LSJS-TS01",
