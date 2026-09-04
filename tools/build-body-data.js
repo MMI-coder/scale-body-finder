@@ -72,6 +72,16 @@ function jpegSize(file) {
 const HEAD_SIZES = [37.5, 38, 38.5]
 
 /**
+ * The two catalogues. Every body has to land in exactly one of them.
+ *
+ * This is validated rather than trusted because a wrong value here doesn't look
+ * like an error - it looks like nothing. A body whose Body Type matches neither
+ * name is filtered out of both sections and simply never appears, with no
+ * warning and a clean build. A typo silently deletes a body.
+ */
+const BODY_TYPES = ['Seamless', 'Jointed']
+
+/**
  * Height for each head option, derived from the one that was actually measured.
  *
  * The peg socket depth is fixed by the sculpt, so a head 0.5mm taller puts the
@@ -168,7 +178,7 @@ rows.slice(1).forEach((r, i) => {
     name: str(r[C.name]) || code,
     manufacturer: str(r[C.manufacturer]),
     material: str(r[C.material]),
-    bodyType: str(r[C.bodyType]) || 'Seamless',
+    bodyType: str(r[C.bodyType]),
     bustPiece: str(r[C.bustPiece]),
     pegMin: num(r[C.pegMin]),
     pegMax: num(r[C.pegMax]),
@@ -214,6 +224,15 @@ rows.slice(1).forEach((r, i) => {
   } else {
     body.heightSource = null
     body.heightsByHead = null
+  }
+
+  // Body Type decides which catalogue a body appears in, so a bad value takes it
+  // out of both. Blank is an error too: defaulting it to Seamless would quietly
+  // file a jointed body in the wrong section.
+  if (body.bodyType == null) {
+    problems.push(`${code}: no Body Type - must be ${BODY_TYPES.join(' or ')}`)
+  } else if (!BODY_TYPES.includes(body.bodyType)) {
+    problems.push(`${code}: Body Type "${body.bodyType}" is not ${BODY_TYPES.join(' or ')}`)
   }
 
   // Bust/waist/hips are what selection runs on - a row without them is unusable.
@@ -335,6 +354,9 @@ const out = `/**
  */
 
 export const HEAD_SIZES = ${JSON.stringify(HEAD_SIZES)}
+
+/** The two catalogues. Every body carries exactly one of these. */
+export const BODY_TYPES = ${JSON.stringify(BODY_TYPES)}
 
 const IMAGES = {
 ${imgMap}

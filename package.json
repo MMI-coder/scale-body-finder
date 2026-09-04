@@ -15,7 +15,8 @@
     "web": "expo start --web",
     "prebuild:web": "npm run data",
     "build:web": "expo export --platform web",
-    "glossary": "node tools/build-glossary.js --preview"
+    "glossary": "node tools/build-glossary.js --preview",
+    "catalogue": "node tools/export-catalogue.js"
   },
   "dependencies": {
     "@expo/metro-runtime": "~6.1.2",

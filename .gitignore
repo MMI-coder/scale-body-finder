@@ -44,3 +44,8 @@ memory/
 # generated native folders
 /ios
 /android
+
+# Generated spreadsheets - regenerate with `npm run catalogue`.
+# Not committed: a copy of the catalogue in the repo is one more thing that can
+# go stale, which is the problem the generator exists to solve.
+exports/
