@@ -7,6 +7,14 @@
 
 export const GLOSSARY = [
   {
+    "term": "Body Type",
+    "definition": "Seamless or Jointed body type."
+  },
+  {
+    "term": "Bust Piece",
+    "definition": "Interchangable bust piece for WorldBox jointed bodies. Comes in the following sizes: A, C, D, E, and G. Must be purchased seprately."
+  },
+  {
     "term": "Scale Reference Selector",
     "definition": "Defaults to 1:6th scale. The selector allows the user to quickly see their character's scaled measurements at various scales."
   },
@@ -24,7 +32,7 @@ export const GLOSSARY = [
   },
   {
     "term": "Body Measurements",
-    "definition": "The real world measurements of the physical seamless body being viewed. These are derived from the manufacturer when no hand measurements are provided. All measurements, from the manufacturer or when done by hand, can vary slightly."
+    "definition": "The real world measurements of the physical body being viewed. These are derived from the manufacturer when no hand measurements are provided. All measurements, from the manufacturer or when done by hand, can vary slightly."
   },
   {
     "term": "Character Measurements",
@@ -36,7 +44,7 @@ export const GLOSSARY = [
   },
   {
     "term": "Height Range",
-    "definition": "A range of estimated heights for the viewed body. As every seamless body has adjustable hips to help users fine tune the body's height, and to allow for increased range of articulation, this range seeks to account for both the shortest and tallest height achievable by a given body. The bodies with a single value have a yet to be determined range, so they run with the manufacturer's stated height with a head sculpt."
+    "definition": "Applies to only the seamless body type. All seamless body types have adjustable hips. This allows users to fine tune the body's height, and allows for increased range of articulation. This range seeks to account for both the shortest and tallest height achievable by a given seamless body. The seamless bodies with a single value have a yet to be determined range, so they run with the manufacturer's stated height with a head sculpt.\n\nJointed body heights are static, and based on a standardized 3D printed head sculpt."
   },
   {
     "term": "Head Sculpt",
@@ -44,7 +52,11 @@ export const GLOSSARY = [
   },
   {
     "term": "Seamless Body",
-    "definition": "The type of body most commonly used in scale character creation."
+    "definition": "The type of body most commonly used in scale character creation. Characterized by no visible joints outside of wrists, ankles and necks."
+  },
+  {
+    "term": "Jointed Body",
+    "definition": "Body type with visible joints throughout the body. Elbows, knees, shoulders and more are visible and can only be hidden with clothing."
   },
   {
     "term": "Model Line",
@@ -60,7 +72,7 @@ export const GLOSSARY = [
   },
   {
     "term": "Material",
-    "definition": "The type of material the body is made of. TPE is the old standard while Platinum Silicone is the new standard."
+    "definition": "The type of material the body is made of. TPE is the old standard of seamless bodies while Platinum Silicone is the new standard. Jointed bodies utilize hard plastics."
   },
   {
     "term": "Height",

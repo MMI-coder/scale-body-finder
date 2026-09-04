@@ -13,6 +13,14 @@ for you, not something to keep. Delete them or ignore them.
 
 These are the ones a user meets on a data card or a control and can't guess.
 
+### Body Type
+*Currently:* the control at the very top of the page. Picks which catalogue is searched — Seamless or Jointed. Nothing is ever mixed between the two, and everything below it works the same either way.
+**Definition:** Seamless or Jointed body type. 
+
+### Bust Piece
+*Currently:* jointed only. Modular bodies ship a frame plus several swappable chest pieces, so their bust is a choice rather than a fixed measurement. A card opens on the piece closest to your character; cycling to another changes only the Bust row — it never reorders results and never moves Actual Body Scale. Also a column in the jointed CSV export.
+**Definition:** Interchangable bust piece for WorldBox jointed bodies. Comes in the following sizes: A, C, D, E, and G. Must be purchased seprately.
+
 ### Scale Reference Selector
 *Currently:* the scale everything is compared at. Dropdown, 1:5 1/2 to 1:6 1/2 in 1/64 steps, 1:6 default. **This control has no name on screen yet — naming it here names it in the app.**
 **Definition:** Defaults to 1:6th scale. The selector allows the user to quickly see their character's scaled measurements at various scales.
@@ -32,7 +40,7 @@ may benefit from being made to the same perceived scale as the character itself.
 
 ### Body Measurements
 *Currently:* the body's own physical measurements.
-**Definition:** The real world measurements of the physical seamless body being viewed. These are derived from the manufacturer when no hand measurements are provided. All measurements, from the manufacturer or when done by hand, can vary slightly. 
+**Definition:** The real world measurements of the physical body being viewed. These are derived from the manufacturer when no hand measurements are provided. All measurements, from the manufacturer or when done by hand, can vary slightly. 
 
 ### Character Measurements
 *Currently:* your character divided by the Comparison Scale. Identical across every card.
@@ -44,15 +52,21 @@ may benefit from being made to the same perceived scale as the character itself.
 
 ### Height Range
 *Currently:* the span a body can be posed between, for the head sculpt it was measured with.
-**Definition:** A range of estimated heights for the viewed body. As every seamless body has adjustable hips to help users fine tune the body's height, and to allow for increased range of articulation, this range seeks to account for both the shortest and tallest height achievable by a given body. The bodies with a single value have a yet to be determined range, so they run with the manufacturer's stated height with a head sculpt. 
+**Definition:** Applies to only the seamless body type. All seamless body types have adjustable hips. This allows users to fine tune the body's height, and allows for increased range of articulation. This range seeks to account for both the shortest and tallest height achievable by a given seamless body. The seamless bodies with a single value have a yet to be determined range, so they run with the manufacturer's stated height with a head sculpt. 
+
+Jointed body heights are static, and based on a standardized 3D printed head sculpt. 
 
 ### Head Sculpt
 *Currently:* the head fitted to the body. Three sizes — 37.5mm, 38mm, 38.5mm — each changing total height 1:1.
 **Definition:** Listed as the "37.5mm/38.0mm/38.5mm" heads on the result cards, these are the sizes, measured from bottom of the chin to the top of the scalp, of the head sculpts used in hand measuring. This works in conjunction with Height Range as not all head sculpts are created equal, just as all bodies are not created equal.
 
 ### Seamless Body
-*Currently:* the product category the whole app covers. Never actually defined anywhere on the page.
-**Definition:** The type of body most commonly used in scale character creation. 
+*Currently:* one of two catalogues, not the whole app any more. Now named on screen by the Body Type control.
+**Definition:** The type of body most commonly used in scale character creation. Characterized by no visible joints outside of wrists, ankles and necks. 
+
+### Jointed Body
+*Currently:* the second catalogue, added 2026-08-17. Hard plastic, visible joints, holds a pose. Currently WorldBox only, but built expecting other makers.
+**Definition:** Body type with visible joints throughout the body. Elbows, knees, shoulders and more are visible and can only be hidden with clothing.
 
 ### Model Line
 *Currently:* a group of product codes that are the same sculpt in different skin tones. Appears in card Notes as "Model line includes: …".
@@ -67,8 +81,8 @@ may benefit from being made to the same perceived scale as the character itself.
 **Definition:** Attached feet are permanently attached and truly seamless, while Removable feet can be swapped between flat feet, heeled feet, or footwear with peg holes.
 
 ### Material
-*Currently:* TPE or Silicone.
-**Definition:** The type of material the body is made of. TPE is the old standard while Platinum Silicone is the new standard.
+*Currently:* TPE, Silicone, or Plastic.
+**Definition:** The type of material the body is made of. TPE is the old standard of seamless bodies while Platinum Silicone is the new standard. Jointed bodies utilize hard plastics.
 
 ---
 

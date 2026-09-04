@@ -28,7 +28,13 @@ function parseTerminology(text) {
 
   const flush = () => {
     if (term) {
-      const def = buf.join(' ').replace(/\s+/g, ' ').trim()
+      const def = buf
+        .join('\n')
+        .replace(/[ \t]+/g, ' ')
+        .replace(/\n{2,}/g, '\u0000')   // hold the paragraph breaks
+        .replace(/\n/g, ' ')            // wrapped lines are one paragraph
+        .replace(/\u0000/g, '\n\n')
+        .trim()
       if (def) entries.push({ term, definition: def })
     }
     buf = []
@@ -53,10 +59,12 @@ function parseTerminology(text) {
       continue
     }
 
-    // Keep gathering wrapped lines, but never the *Currently:* note.
+    // Keep gathering until the next term. A blank line is a paragraph break,
+    // not the end - a definition can run to several paragraphs.
     if (collecting) {
-      if (!line) { flush(); term = term; continue }
       if (/^\*Currently:\*/.test(line)) continue
+      // Notes to me, not text for the app.
+      if (/^\*NEEDS REVISION:\*/.test(line)) continue
       buf.push(line)
     }
   }
