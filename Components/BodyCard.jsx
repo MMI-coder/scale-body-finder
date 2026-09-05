@@ -9,6 +9,7 @@ import ThemedCard from './ThemedCard'
 import ThemedText from './ThemedText'
 
 const LABELS = { height: 'Height', bust: 'Bust', waist: 'Waist', hips: 'Hips' }
+const MALE_LABELS = { ...LABELS, bust: 'Chest' }
 const ROWS = ['height', 'bust', 'waist', 'hips']
 
 /**
@@ -47,6 +48,7 @@ const BodyCard = ({ result, unit, expanded, onToggle }) => {
     const [lightbox, setLightbox] = useState(false)
 
     const { body, priority, scaled, deltas, heightRange, heightUsed, closest, bustOptions } = result
+    const labels = body.gender === 'Male' ? MALE_LABELS : LABELS
 
     // Modular bodies open on the piece nearest the character and can be cycled
     // from there. The pick is display only - it never reorders the results and
@@ -111,8 +113,13 @@ const BodyCard = ({ result, unit, expanded, onToggle }) => {
                     <View style={styles.headText}>
                         <ThemedText style={styles.name}>{body.name}</ThemedText>
                         <ThemedText style={[styles.sub, { color: theme.muted }]}>
-                            {[body.manufacturer, body.material].filter(Boolean).join(' · ')}
+                            {[body.manufacturer, body.material, body.bodyType].filter(Boolean).join(' · ')}
                         </ThemedText>
+                        {body.build ? (
+                            <ThemedText style={[styles.build, { color: Colors.primary }]}>
+                                {body.build}
+                            </ThemedText>
+                        ) : null}
                     </View>
                     <ThemedText style={[styles.chevron, { color: theme.muted }]}>
                         {expanded ? '▲' : '▼'}
@@ -155,7 +162,7 @@ const BodyCard = ({ result, unit, expanded, onToggle }) => {
                             return (
                                 <View key={k} style={[styles.tr, { borderColor: theme.cardBorder }]}>
                                     <ThemedText style={[styles.td, styles.colName, isPriority && styles.priority]}>
-                                        {LABELS[k]}
+                                        {labels[k]}
                                     </ThemedText>
                                     <ThemedText style={styles.td}>{fmtMM(bodyVal, unit)}</ThemedText>
                                     <ThemedText style={[styles.td, { color: theme.muted }]}>
@@ -294,6 +301,7 @@ const BodyCard = ({ result, unit, expanded, onToggle }) => {
 export default BodyCard
 
 const styles = StyleSheet.create({
+    build: { fontSize: 13, fontWeight: '700', marginTop: 2 },
     pieces: { borderTopWidth: StyleSheet.hairlineWidth, paddingTop: 12, marginTop: 12 },
     pieceRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 6 },
     pieceChip: { borderWidth: 1, borderRadius: 8, paddingVertical: 6, paddingHorizontal: 10, alignItems: 'center' },

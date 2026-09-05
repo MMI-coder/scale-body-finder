@@ -13,6 +13,14 @@ for you, not something to keep. Delete them or ignore them.
 
 These are the ones a user meets on a data card or a control and can't guess.
 
+### Gender
+*Currently:* the control at the top of the page. Picks which catalogue is searched — Female or Male. Nothing is mixed between them. Replaces the old Seamless/Jointed control, which is now just a note on the card.
+**Definition:** Is it a Female body, or a Male body? Pick which one you want to look through.
+
+### Build
+*Currently:* male bodies only. The physique of the body — the "does it look the part" question, which is what male buyers ask first. Shown on the card and in the export. One of the eight values in Part 4. Does not filter or sort anything.
+**Definition:** Male bodies only. This is a general description of the look of the body. Example, the TBL M35 is "Super Heavily Muscled" as it is, well, super heavily muscled.
+
 ### Body Type
 *Currently:* the control at the very top of the page. Picks which catalogue is searched — Seamless or Jointed. Nothing is ever mixed between the two, and everything below it works the same either way.
 **Definition:** Seamless or Jointed body type. 
@@ -158,7 +166,51 @@ define *and* put them back, or leave all three blank.
 
 ---
 
-# Part 4 — Anything I missed
+# Part 4 — Male body builds
+
+The eight values `Build` can take. These are judgment calls you will be re-making
+months apart, so what each one needs is a line that lets you sort a body you have
+never seen before into exactly one of them.
+
+The neighbours are the hard part — several of these sit next to each other and
+the definition has to say where one stops. Prompts below are only prompts; ignore
+them if you would rather write it your own way.
+
+### Super Tall/Athletic
+*Needs to say:* whether this is about height, build, or both — it is the only one of the eight naming height, so does a short athletic body land here or in Athletic?
+**Definition:** Bodies that would come in scaled over 6ft tall and have a leaner, but still muscular, build fit this category.
+
+### Super Heavily Muscled
+*Needs to say:* what separates it from Heavily Muscled. Bodybuilder versus strongman, a size threshold, a named example body?
+**Definition:** Bodies that come in scaled at 6ft or taller and look like they could fit in with the Hulk or Arnold Schwarzenegger in his prime.
+
+### Heavily Muscled
+*Needs to say:* the floor — what makes a body heavily muscled rather than Athletic.
+**Definition:** Bodies that come in looking like they body build. Can cover a range of heights.
+
+### Average Muscle Build
+*Needs to say:* what separates it from Average Build below, and from Athletic. These three are the crowded middle.
+**Definition:** Bodies that are toned, and muscular, but not to the point of body builders or super heroes. 
+
+### Average Build
+*Needs to say:* the baseline. Is this "no notable musculature", or is it the dad-bod you mentioned?
+**Definition:** Bodies that are fit, but not super toned. May or may not have muscle definition, or if they do, it is not sculpted like a greek god. 
+
+### Athletic
+*Needs to say:* how it differs from Average Muscle Build on one side and Heavily Muscled on the other.
+**Definition:** Bodies that are muscular, lanky, and more akin to a pro athlete in look.
+
+### Asian Athletic
+*Needs to say:* what it actually denotes. The hobby knows this term; someone reading the glossary cold will not. Worth being explicit about whether it describes a build, a market, or a manufacturer's line.
+**Definition:** Bodies that fit the stereotypical tall, fit, muscular Asian male. Very idealized.
+
+### Heavy
+*Needs to say:* whether this means heavyset, tall and broad, or overweight — and how it sits against Average Build.
+**Definition:** Bodies that fit the heavier set builds. Can range in height, but have a bit of size in either the gut or overall. Google Eddie Hall for the extreme of this.
+
+---
+
+# Part 5 — Anything I missed
 
 Add terms here and I'll wire them in.
 

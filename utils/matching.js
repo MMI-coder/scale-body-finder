@@ -26,9 +26,36 @@ export const SCORED = ['height', 'bust', 'waist', 'hips']
 
 export const SORTS = ['least', 'greatest']
 
-/** The two catalogues. A search only ever looks in one of them. */
+/**
+ * The two catalogues. A search only ever looks in one of them.
+ *
+ * This used to be Seamless/Jointed. Male bodies span both constructions, so the
+ * split moved to Gender and Seamless/Jointed became a note on the card. Female
+ * results now mix the two, which they did not before.
+ */
+export const GENDERS = ['Female', 'Male']
+export const DEFAULT_GENDER = 'Female'
+
+/** Construction. Reported, never filtered on. */
 export const BODY_TYPES = ['Seamless', 'Jointed']
-export const DEFAULT_BODY_TYPE = 'Seamless'
+
+/**
+ * What each catalogue can be sorted on.
+ *
+ * Male bodies are published with a neck peg height and little else - chest,
+ * waist and hips are rarely stated - so height is the only thing there is
+ * enough data to rank on. More can be added when the measurements exist.
+ */
+export const PRIORITIES_BY_GENDER = {
+  Female: ['height', 'bust', 'waist', 'hips'],
+  Male: ['height'],
+}
+
+/** What counts toward overall fit, per catalogue. */
+export const SCORED_BY_GENDER = {
+  Female: ['height', 'bust', 'waist', 'hips'],
+  Male: ['height', 'bust', 'waist', 'hips'],
+}
 
 /**
  * Which chest piece a modular body would wear to best match a target bust.
@@ -65,6 +92,10 @@ export function atSixth(character) {
 
 /** The height range a body can actually be posed to, for its default head. */
 export function heightRange(body) {
+  // Male heights are a span in their own right: the head allowance, plus hip
+  // travel on a seamless body. Never keyed by head size - male sculpts have no
+  // standard sizes to key on.
+  if (body.maleHeight) return { min: body.maleHeight.min, max: body.maleHeight.max }
   if (body.heightsByHead) {
     const r = body.heightsByHead[body.headSize]
     if (r) return { min: r.min, max: r.max }
@@ -112,25 +143,30 @@ export function compareBodies(character, opts = {}) {
     priority = 'bust',
     sort = 'least',
     count = null,
-    bodyType = DEFAULT_BODY_TYPE,
+    gender = DEFAULT_GENDER,
     bodies = BODIES,
   } = opts
 
   if (!PRIORITIES.includes(priority)) throw new Error(`bad priority: ${priority}`)
 
   const scaled = scaleCharacter(character, workingScale)
-  const usable = SCORED.filter(k => scaled[k] != null)
+  const usable = (SCORED_BY_GENDER[gender] ?? SCORED).filter(k => scaled[k] != null)
   if (!usable.length) return { results: [], scaled, considered: 0, excluded: [] }
 
   const results = []
   const excluded = []
 
-  // Seamless and jointed are separate catalogues, never mixed in one list.
-  const pool = bodyType ? bodies.filter(b => (b.bodyType || 'Seamless') === bodyType) : bodies
+  // Female and male are separate catalogues, never mixed in one list.
+  const pool = gender ? bodies.filter(b => b.gender === gender) : bodies
 
   for (const body of pool) {
     const chosen = pickBustPiece(body, scaled.bust)
-    if (chosen.bust == null || ['waist', 'hips'].some(k => body[k] == null)) {
+    // Female bodies are only worth showing with a full set of measurements.
+    // Male bodies are published with a peg height and often nothing else, so
+    // requiring the same set would empty the catalogue. There, the priority
+    // check below is the only bar - which today means height.
+    if (gender !== 'Male' &&
+        (chosen.bust == null || ['waist', 'hips'].some(k => body[k] == null))) {
       excluded.push({ body, reason: 'incomplete measurements' })
       continue
     }
@@ -190,7 +226,31 @@ export function compareBodies(character, opts = {}) {
   }
 
   const key = m => (m.deltas[priority] == null ? Infinity : Math.abs(m.deltas[priority]))
-  results.sort((a, b) => (sort === 'greatest' ? key(b) - key(a) : key(a) - key(b)))
+
+  /**
+   * How far the target sits from the middle of a body's height window.
+   *
+   * Male bodies carry a 9mm window when seamless - head allowance plus hip
+   * travel - so most of them match any given character exactly, and a list
+   * sorted on height alone would be a pile of zeroes in data order. Everything
+   * inside the window still matches; this only decides which match leads.
+   *
+   * Female sorting is untouched: their windows are posability, they are ranked
+   * on four measurements rather than one, and the behaviour is already settled.
+   */
+  const centreOff = m => {
+    const r = m.heightRange
+    if (!r || m.scaled.height == null) return 0
+    return Math.abs(m.scaled.height - (r.min + r.max) / 2)
+  }
+  const tie = gender === 'Male' && priority === 'height'
+    ? (a, b) => centreOff(a) - centreOff(b)
+    : () => 0
+
+  results.sort((a, b) => {
+    const primary = sort === 'greatest' ? key(b) - key(a) : key(a) - key(b)
+    return primary !== 0 ? primary : tie(a, b)
+  })
 
   return {
     results: count ? results.slice(0, count) : results,
@@ -202,11 +262,12 @@ export function compareBodies(character, opts = {}) {
 
 /** Rows for the CSV export - mirrors what's on screen. */
 export function buildExportRows(character, opts, outcome) {
-  const { workingScale, priority, sort, bodyType = DEFAULT_BODY_TYPE } = opts
-  // Bust Piece only means something on a modular body, so it only appears in the
-  // jointed export. The seamless file's shape is a contract - another tool reads
-  // it - and must not change.
-  const modular = bodyType === 'Jointed'
+  const { workingScale, priority, sort, gender = DEFAULT_GENDER } = opts
+  // The two files have different shapes because the two catalogues hold
+  // different facts. Female carries Bust Piece, because a female export can now
+  // contain modular WorldBox bodies alongside seamless ones. Male carries Build
+  // and drops Bust Piece, there being no modular male bodies.
+  const male = gender === 'Male'
   const mm = v => (v == null ? '' : parseFloat(v.toFixed(2)))
   const cap = w => (w ? w.charAt(0).toUpperCase() + w.slice(1) : w)
   const s = outcome.scaled
@@ -217,7 +278,7 @@ export function buildExportRows(character, opts, outcome) {
     // Every label below is a term the app also uses on screen, capitalised the
     // same way. A spreadsheet opened a week later should read like the page it
     // came from.
-    ...(modular ? [['Body Type', bodyType]] : []),
+    ['Gender', gender],
     ['Scale Reference Selector', scaleName(workingScale)],
     ['Measurement Priority Field', cap(priority)],
     ['Sort by', `${cap(sort)} difference in ${cap(priority)}`],
@@ -226,11 +287,13 @@ export function buildExportRows(character, opts, outcome) {
     [`Character Measurements (${scaleName(workingScale)})`, 'Height', mm(s.height), 'Bust', mm(s.bust), 'Waist', mm(s.waist), 'Hips', mm(s.hips)],
     [],
     [
-      'Manufacturer', 'Product Name', 'Material', 'Actual Body Scale', 'Scale Multiplier',
+      'Manufacturer', 'Product Name', 'Material', 'Body Type',
+      ...(male ? ['Build'] : []),
+      'Actual Body Scale', 'Scale Multiplier',
       'Height - Body Measurement (mm)', 'Height - Difference (mm)',
       'Height Range Low (mm)', 'Height Range High (mm)',
-      ...(modular ? ['Bust Piece'] : []),
-      'Bust - Body Measurement (mm)', 'Bust - Difference (mm)',
+      ...(male ? [] : ['Bust Piece']),
+      `${male ? 'Chest' : 'Bust'} - Body Measurement (mm)`, `${male ? 'Chest' : 'Bust'} - Difference (mm)`,
       'Waist - Body Measurement (mm)', 'Waist - Difference (mm)',
       'Hips - Body Measurement (mm)', 'Hips - Difference (mm)',
       'Underbust (mm)', 'Shoulder Width (mm)', 'Arm Length (mm)', 'Leg Inseam (mm)',
@@ -241,12 +304,13 @@ export function buildExportRows(character, opts, outcome) {
   for (const r of outcome.results) {
     const b = r.body
     rows.push([
-      b.manufacturer || '', b.name || b.code, b.material || '',
+      b.manufacturer || '', b.name || b.code, b.material || '', b.bodyType || '',
+      ...(male ? [b.build || ''] : []),
       r.closest ? r.closest.name : '',
       r.closest ? parseFloat(r.closest.multiplier.toFixed(5)) : '',
       mm(r.heightUsed), mm(r.deltas.height),
       mm(r.heightRange?.min), mm(r.heightRange?.max),
-      ...(modular ? [r.bustPiece || ''] : []),
+      ...(male ? [] : [r.bustPiece || '']),
       mm(r.bust ?? b.bust), mm(r.deltas.bust),
       mm(b.waist), mm(r.deltas.waist),
       mm(b.hips), mm(r.deltas.hips),

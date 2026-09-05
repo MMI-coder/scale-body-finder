@@ -7,6 +7,14 @@
 
 export const GLOSSARY = [
   {
+    "term": "Gender",
+    "definition": "Is it a Female body, or a Male body? Pick which one you want to look through."
+  },
+  {
+    "term": "Build",
+    "definition": "Male bodies only. This is a general description of the look of the body. Example, the TBL M35 is \"Super Heavily Muscled\" as it is, well, super heavily muscled."
+  },
+  {
     "term": "Body Type",
     "definition": "Seamless or Jointed body type."
   },
@@ -125,6 +133,38 @@ export const GLOSSARY = [
   {
     "term": "Show",
     "definition": "How many results are returned."
+  },
+  {
+    "term": "Super Tall/Athletic",
+    "definition": "Bodies that would come in scaled over 6ft tall and have a leaner, but still muscular, build fit this category."
+  },
+  {
+    "term": "Super Heavily Muscled",
+    "definition": "Bodies that come in scaled at 6ft or taller and look like they could fit in with the Hulk or Arnold Schwarzenegger in his prime."
+  },
+  {
+    "term": "Heavily Muscled",
+    "definition": "Bodies that come in looking like they body build. Can cover a range of heights."
+  },
+  {
+    "term": "Average Muscle Build",
+    "definition": "Bodies that are toned, and muscular, but not to the point of body builders or super heroes."
+  },
+  {
+    "term": "Average Build",
+    "definition": "Bodies that are fit, but not super toned. May or may not have muscle definition, or if they do, it is not sculpted like a greek god."
+  },
+  {
+    "term": "Athletic",
+    "definition": "Bodies that are muscular, lanky, and more akin to a pro athlete in look."
+  },
+  {
+    "term": "Asian Athletic",
+    "definition": "Bodies that fit the stereotypical tall, fit, muscular Asian male. Very idealized."
+  },
+  {
+    "term": "Heavy",
+    "definition": "Bodies that fit the heavier set builds. Can range in height, but have a bit of size in either the gut or overall. Google Eddie Hall for the extreme of this."
   }
 ]
 

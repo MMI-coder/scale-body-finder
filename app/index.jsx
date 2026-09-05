@@ -22,7 +22,7 @@ import { Colors } from '../Constants/Colors'
 import { BODIES } from '../data/bodies'
 import { GLOSSARY } from '../data/glossary'
 import { exportResults } from '../utils/exportCsv'
-import { BODY_TYPES, DEFAULT_BODY_TYPE, compareBodies } from '../utils/matching'
+import { DEFAULT_GENDER, GENDERS, PRIORITIES_BY_GENDER, compareBodies } from '../utils/matching'
 import {
     DEFAULT_UNIT,
     DEFAULT_WORKING_SCALE,
@@ -51,16 +51,15 @@ const PRIORITY_OPTIONS = [
 /**
  * The two catalogues.
  *
- * People come to this hobby with a preference already made - seamless if the
- * character shows skin, jointed if the figure has to hold a pose - and they
- * rarely cross over. So this isn't a filter buried in the results; it's the
- * first choice on the page, and it decides what gets searched at all.
+ * This was Seamless/Jointed until male bodies arrived. Male bodies come in both
+ * constructions, so the split moved to the bigger divide and Seamless/Jointed
+ * became a note on the card. Female results now mix the two.
  */
-const SECTION_OPTIONS = BODY_TYPES.map((t) => ({ value: t, label: t }))
+const SECTION_OPTIONS = GENDERS.map((g) => ({ value: g, label: g }))
 
 const SECTION_BLURB = {
-    Seamless: 'One-piece TPE or silicone bodies with no visible joints. The usual choice when the character shows a lot of skin.',
-    Jointed: 'Hard plastic bodies built from parts. They hold a pose, and the chest piece is swappable - so bust is something you choose, not something the body has.',
+    Female: 'Seamless and jointed female bodies together. Sorted on whichever measurement matters most to you.',
+    Male: 'Male bodies, seamless and jointed together. Height is the question here - manufacturers rarely publish chest, waist or hips - so height is what these sort on, and each card carries a build so you can see whether it looks the part.',
 }
 
 const SORT_OPTIONS = [
@@ -84,7 +83,7 @@ export default function Index() {
     const theme = Colors[colorScheme] ?? Colors.light
     const { width } = useWindowDimensions()
 
-    const [bodyType, setBodyType] = useState(DEFAULT_BODY_TYPE)
+    const [gender, setGender] = useState(DEFAULT_GENDER)
     const [name, setName] = useState('')
     const [unit, setUnit] = useState(DEFAULT_UNIT)
     const [values, setValues] = useState(emptyValues)
@@ -95,6 +94,22 @@ export default function Index() {
     const [expanded, setExpanded] = useState({})
 
     const columns = width >= 1250 ? 3 : width >= 850 ? 2 : 1
+
+    // Male bodies are published with a peg height and little else, so height is
+    // the only thing there is data to sort on. Showing four buttons where three
+    // do nothing would just be a lie about what the section can do.
+    const priorityOptions = PRIORITY_OPTIONS.filter((o) =>
+        PRIORITIES_BY_GENDER[gender].includes(o.value))
+    const allowed = PRIORITIES_BY_GENDER[gender].includes(priority)
+    const activePriority = allowed ? priority : PRIORITIES_BY_GENDER[gender][0]
+
+    // Switching to Male with Waist selected would otherwise leave a dead choice
+    // sitting in state, and the next switch back would restore it silently.
+    if (!allowed && priority !== activePriority) setPriority(activePriority)
+
+    // Male measurements beyond height are rarely published, so asking for a
+    // full set would be asking for numbers that change nothing.
+    const needed = gender === 'Male' ? ['height'] : ['height', 'bust', 'waist', 'hips']
 
     const setField = (key, text) => setValues((v) => ({ ...v, [key]: text }))
     const toggleCard = (code) => setExpanded((e) => ({ ...e, [code]: !e[code] }))
@@ -125,11 +140,11 @@ export default function Index() {
         return { name: name.trim(), ...mm }
     }, [values, unit, name])
 
-    const ready = character.height && character.bust && character.waist && character.hips
-    const opts = { workingScale, priority, sort, count: count || null, bodyType, bodies: BODIES }
+    const ready = needed.every((k) => character[k])
+    const opts = { workingScale, priority: activePriority, sort, count: count || null, gender, bodies: BODIES }
     const outcome = useMemo(
         () => (ready ? compareBodies(character, opts) : null),
-        [character, workingScale, priority, sort, count, bodyType, ready]
+        [character, workingScale, activePriority, sort, count, gender, ready]
     )
 
     const onExport = async () => {
@@ -157,14 +172,14 @@ export default function Index() {
 
                 {/* ---------------- which catalogue ---------------- */}
                 <ThemedCard>
-                    <ThemedText style={styles.controlName}>Body Type</ThemedText>
+                    <ThemedText style={styles.controlName}>Gender</ThemedText>
                     <ThemedText style={[styles.label, { color: theme.muted }]}>
                         Choose which kind of body you are shopping for. Only that kind is searched.
                     </ThemedText>
-                    <SegmentedControl options={SECTION_OPTIONS} value={bodyType} onChange={setBodyType} />
+                    <SegmentedControl options={SECTION_OPTIONS} value={gender} onChange={setGender} />
                     <Spacer height={10} />
                     <ThemedText style={[styles.sub, { color: theme.muted, marginTop: 0 }]}>
-                        {SECTION_BLURB[bodyType]}
+                        {SECTION_BLURB[gender]}
                     </ThemedText>
                 </ThemedCard>
 
@@ -174,11 +189,18 @@ export default function Index() {
                 <ThemedCard>
                     <ThemedText style={styles.h2}>How to use this tool</ThemedText>
                     <Spacer height={10} />
-                    {[
-                        "Start by entering your character's name and their real world measurements for height, bust, waist, and hips (in either cm or mm) in the fields below.",
-                        'Next, choose which measurement field is most important to you and your project: Height, Bust, Waist, or Hips.',
-                        'Your results will be displayed below. Click on a card to view more details.',
-                    ].map((line, i) => (
+                    {(gender === 'Male'
+                        ? [
+                            "Start by entering your character's name and their real world height (in either cm or mm) in the fields below. Chest, waist and hips are optional - most male bodies are not published with them.",
+                            'Results are sorted on Height, which is the measurement male bodies are actually published with. Each card carries a build so you can see whether it looks the part.',
+                            'Your results will be displayed below. Click on a card to view more details.',
+                        ]
+                        : [
+                            "Start by entering your character's name and their real world measurements for height, bust, waist, and hips (in either cm or mm) in the fields below.",
+                            'Next, choose which measurement field is most important to you and your project: Height, Bust, Waist, or Hips.',
+                            'Your results will be displayed below. Click on a card to view more details.',
+                        ]
+                    ).map((line, i) => (
                         <View key={i} style={styles.step}>
                             <ThemedText style={[styles.stepNum, { color: Colors.primary }]}>{i + 1}</ThemedText>
                             <ThemedText style={[styles.stepText, { color: theme.muted }]}>{line}</ThemedText>
@@ -212,7 +234,8 @@ export default function Index() {
                         {FIELDS.map((f) => (
                             <View key={f.key} style={styles.measureField}>
                                 <ThemedText style={[styles.label, { color: theme.muted }]}>
-                                    {f.label} ({unit})
+                                    {gender === 'Male' && f.key === 'bust' ? 'Chest' : f.label} ({unit})
+                                    {needed.includes(f.key) ? '' : ' — optional'}
                                 </ThemedText>
                                 <ThemedTextInput
                                     value={values[f.key]}
@@ -232,7 +255,7 @@ export default function Index() {
                         Choose which measurement field is most important to you and your project. This helps
                         sort the results list.
                     </ThemedText>
-                    <SegmentedControl options={PRIORITY_OPTIONS} value={priority} onChange={setPriority} />
+                    <SegmentedControl options={priorityOptions} value={activePriority} onChange={setPriority} />
 
                     <Spacer height={18} />
 
@@ -266,7 +289,9 @@ export default function Index() {
                 {!ready ? (
                     <ThemedCard>
                         <ThemedText style={{ color: theme.muted }}>
-                            Enter a height, bust, waist and hips measurement to see results.
+                            {gender === 'Male'
+                                ? 'Enter a height to see results. Chest, waist and hips are optional — most male bodies are not published with them.'
+                                : 'Enter a height, bust, waist and hips measurement to see results.'}
                         </ThemedText>
                     </ThemedCard>
                 ) : (
@@ -282,10 +307,10 @@ export default function Index() {
                             </ThemedText>
                             <Spacer height={14} />
                             <View style={styles.sixthRow}>
-                                {FIELDS.map((f) => (
+                                {FIELDS.filter((f) => character[f.key] != null).map((f) => (
                                     <View key={f.key} style={styles.sixthItem}>
                                         <ThemedText style={[styles.label, { color: theme.muted }]}>
-                                            {f.label}
+                                            {gender === 'Male' && f.key === 'bust' ? 'Chest' : f.label}
                                         </ThemedText>
                                         <ThemedText style={styles.sixthValue}>
                                             {fmtMM(outcome.scaled[f.key], unit)}
@@ -303,10 +328,10 @@ export default function Index() {
                         {/* ---------------- results ---------------- */}
                         <ThemedText style={styles.h2}>Results</ThemedText>
                         <ThemedText style={[styles.sub, { color: theme.muted }]}>
-                            {outcome.results.length} {bodyType.toLowerCase()} result
+                            {outcome.results.length} {gender.toLowerCase()} result
                             {outcome.results.length === 1 ? '' : 's'} based on the data
                             you provided, compared at {scaleLabel} and sorted by{' '}
-                            {cap(sort)} difference in {cap(priority)}.
+                            {cap(sort)} difference in {cap(activePriority)}.
                         </ThemedText>
 
                         <Spacer height={16} />
@@ -332,7 +357,7 @@ export default function Index() {
                 )}
 
                 <Spacer height={30} />
-                <BatchPanel bodyType={bodyType} />
+                <BatchPanel gender={gender} />
 
                 {/* Outside the results branch on purpose - the glossary explains the
                     controls as much as the cards, so it has to be readable before

@@ -3,7 +3,7 @@ import { StyleSheet, View, useColorScheme } from 'react-native'
 import { Colors } from '../Constants/Colors'
 import { parseCharacterCsv, runBatch, templateCsv } from '../utils/batch'
 import { BATCH_SUPPORTED, pickCsvFile, saveCsv } from '../utils/batchFile'
-import { DEFAULT_BODY_TYPE, rowsToCsv } from '../utils/matching'
+import { DEFAULT_GENDER, rowsToCsv } from '../utils/matching'
 import Spacer from './Spacer'
 import ThemedButton from './ThemedButton'
 import ThemedCard from './ThemedCard'
@@ -15,7 +15,7 @@ import ThemedText from './ThemedText'
  * Each row carries its own scale, priority and result count, so characters in
  * the same file can be compared at different scales.
  */
-const BatchPanel = ({ bodyType = DEFAULT_BODY_TYPE }) => {
+const BatchPanel = ({ gender = DEFAULT_GENDER }) => {
     const colorScheme = useColorScheme()
     const theme = Colors[colorScheme] ?? Colors.light
     const [status, setStatus] = useState(null)   // { tone, text }
@@ -56,17 +56,17 @@ const BatchPanel = ({ bodyType = DEFAULT_BODY_TYPE }) => {
 
         // The upload has no Body Type column - it runs against whichever section
         // is on screen, so the same roster can be run twice for a comparison.
-        const { rows, characters, resultRows } = runBatch(jobs, undefined, bodyType)
+        const { rows, characters, resultRows } = runBatch(jobs, undefined, gender)
         saveCsv(
-            bodyType === DEFAULT_BODY_TYPE
+            gender === DEFAULT_GENDER
                 ? 'Scale_Body_Finder_Batch_Results.csv'
-                : `Scale_Body_Finder_Batch_Results_${bodyType}.csv`,
+                : `Scale_Body_Finder_Batch_Results_${gender}.csv`,
             rowsToCsv(rows))
         setErrors(problems)
         setStatus({
             tone: problems.length ? 'warn' : 'ok',
             text: `${characters} character${characters === 1 ? '' : 's'} processed, ` +
-                  `${resultRows} ${bodyType.toLowerCase()} result row${resultRows === 1 ? '' : 's'} downloaded.` +
+                  `${resultRows} ${gender.toLowerCase()} result row${resultRows === 1 ? '' : 's'} downloaded.` +
                   (problems.length ? ` ${problems.length} row${problems.length === 1 ? '' : 's'} skipped.` : ''),
         })
     }
@@ -85,8 +85,8 @@ const BatchPanel = ({ bodyType = DEFAULT_BODY_TYPE }) => {
                 All measurements must be in millimetres. A height of 158 will be rejected — it wants 1580.
             </ThemedText>
             <ThemedText style={[styles.sub, { color: theme.muted }]}>
-                The file has no Body Type column. The run uses the Body Type selected at the top of the page
-                — currently {bodyType} — so to see both, run the same file once in each.
+                The file has no Gender column. The run uses the Gender selected at the top of the page
+                — currently {gender} — so to see both, run the same file once in each.
             </ThemedText>
 
             <Spacer height={16} />

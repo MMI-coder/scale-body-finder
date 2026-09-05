@@ -34,15 +34,17 @@ const src = [
             scaleName, snapDivisor, scaleInRange, buildExportRows, rowsToCsv,
             WORKING_SCALES, DEFAULT_WORKING_SCALE, PRIORITIES, SCORED,
             parseCharacterCsv, runBatch, templateCsv, parseScaleName,
-            TEMPLATE_HEADERS, BODY_TYPES, DEFAULT_BODY_TYPE, pickBustPiece,
-            exportFileName }`,
+            TEMPLATE_HEADERS, BODY_TYPES, GENDERS, DEFAULT_GENDER, pickBustPiece,
+            exportFileName, PRIORITIES_BY_GENDER, heightRange }`,
 ].join('\n')
 
 const api = new Function('BODIES', 'console', src)(bodies, console)
 const byCode = Object.fromEntries(bodies.map(b => [b.code, b]))
 
-const SEAMLESS = bodies.filter(b => (b.bodyType || 'Seamless') === 'Seamless').length
-const JOINTED = bodies.filter(b => b.bodyType === 'Jointed').length
+const SEAMLESS = bodies.filter(b => b.gender === 'Female' && b.bodyType === 'Seamless').length
+const JOINTED = bodies.filter(b => b.gender === 'Female' && b.bodyType === 'Jointed').length
+const FEMALE = bodies.filter(b => b.gender === 'Female').length
+const MALE = bodies.filter(b => b.gender === 'Male').length
 
 let failures = 0
 function check(label, actual, expected, tol = 0) {
@@ -155,7 +157,7 @@ check('different scales pick different bodies', new Set(Object.values(seen)).siz
 
 // --- counts and closest scale ----------------------------------------------
 console.log('\nResult counts and closest scale')
-check('every seamless body when count is null', out6.results.length, SEAMLESS)
+check('every female body when count is null', out6.results.length, FEMALE)
 check('3 when asked for 3',
   api.compareBodies(example, { workingScale: 6, priority: 'bust', count: 3, bodies }).results.length, 3)
 check('S07C closest scale on bust', s07c.closest.name, '1:6 1/64')
@@ -199,7 +201,9 @@ const normalise = l =>
 // from the data rather than matched by prefix, so adding a maker or writing a
 // new note can't trip this check.
 const bodyValues = new Set(
-  bodies.flatMap(b => [b.name, b.code, b.manufacturer, b.material, b.feet, b.notes])
+  bodies.flatMap(b => [b.name, b.code, b.manufacturer, b.material, b.feet, b.notes,
+                       b.gender, b.bodyType, b.build,
+                       ...(b.bustOptions || []).map(o => o.piece)])
         .filter(Boolean)
 )
 // Parsed, not regexed. Some notes contain escaped quotes ("" inside a field),
@@ -278,7 +282,7 @@ const out = api.runBatch(good.jobs, bodies)
 const firstCell = out.rows.map(r => (r[0] == null ? '' : String(r[0])))
 check('file title', out.rows[0][0], 'Scale Body Finder - batch results')
 check('three characters processed', out.characters, 3)
-check(`3 + 5 + ${SEAMLESS} results`, out.resultRows, 3 + 5 + SEAMLESS)
+check(`3 + 5 + ${FEMALE} results`, out.resultRows, 3 + 5 + FEMALE)
 check('a block per character', firstCell.filter(c => c === 'Scale Body Finder - results').length, 3)
 check('each block names its character', firstCell.filter(c => c === 'Character').length, 3)
 
@@ -313,34 +317,37 @@ check('batch-only labels are structural', batchOnly.every(l => firstCell.include
 // contract.
 // ---------------------------------------------------------------------------
 console.log('\nEvery body lands in exactly one catalogue')
+check('every body has a valid Gender',
+  bodies.filter(b => !api.GENDERS.includes(b.gender)).map(b => b.code).join(',') || '(all valid)',
+  '(all valid)')
+check('female + male accounts for every body', FEMALE + MALE, bodies.length)
+check('Build is male-only',
+  bodies.filter(b => b.gender === 'Female' && b.build != null).length, 0)
 // A Body Type matching neither name is filtered out of both sections and never
 // appears anywhere - no error, clean build, the body just ceases to exist. The
 // data build rejects that now; this is the backstop if that check ever moves.
 check('every body has a valid Body Type',
   bodies.filter(b => !api.BODY_TYPES.includes(b.bodyType)).map(b => b.code).join(',') || '(all valid)',
   '(all valid)')
-check('seamless + jointed accounts for every body', SEAMLESS + JOINTED, bodies.length)
+check('seamless + jointed accounts for every female body', SEAMLESS + JOINTED, FEMALE)
 
-console.log('\nJointed: the two catalogues are separate')
+console.log('\nFemale results now mix seamless and jointed')
 const HONOKA = { name: 'Honoka', height: 1500, bust: 990, waist: 580, hips: 910 }
-const seamlessOut = api.compareBodies(HONOKA, { workingScale: 6, priority: 'bust', bodyType: 'Seamless' })
-const jointedOut  = api.compareBodies(HONOKA, { workingScale: 6, priority: 'bust', bodyType: 'Jointed' })
+const femaleOut = api.compareBodies(HONOKA, { workingScale: 6, priority: 'bust', gender: 'Female' })
+const seamlessOut = femaleOut
+const jointedOut = femaleOut
 
-check('body types offered', api.BODY_TYPES.join(','), 'Seamless,Jointed')
-check('seamless is the default', api.DEFAULT_BODY_TYPE, 'Seamless')
-check('seamless pool', seamlessOut.results.length, SEAMLESS)
-check('jointed pool', jointedOut.results.length, JOINTED)
-check('every seamless result is seamless',
-  seamlessOut.results.every(r => r.body.bodyType === 'Seamless'), true)
-check('every jointed result is jointed',
-  jointedOut.results.every(r => r.body.bodyType === 'Jointed'), true)
-check('no body appears in both',
-  jointedOut.results.some(r => seamlessOut.results.some(x => x.body.code === r.body.code)), false)
-check('the default search finds only seamless bodies',
-  api.compareBodies(HONOKA, { workingScale: 6, priority: 'bust' }).results.length, SEAMLESS)
+check('catalogues offered', api.GENDERS.join(','), 'Female,Male')
+check('female is the default', api.DEFAULT_GENDER, 'Female')
+check('every female body is returned together', femaleOut.results.length, FEMALE)
+check('  seamless among them', femaleOut.results.filter(r => r.body.bodyType === 'Seamless').length, SEAMLESS)
+check('  jointed among them', femaleOut.results.filter(r => r.body.bodyType === 'Jointed').length, JOINTED)
+check('  and they really are in one list', SEAMLESS > 0 && JOINTED > 0, true)
+check('the default search is the female catalogue',
+  api.compareBodies(HONOKA, { workingScale: 6, priority: 'bust' }).results.length, FEMALE)
 
 console.log('\nJointed: the chest piece is chosen, not fixed')
-const at201 = jointedOut.results.find(r => r.body.code === 'AT-201')
+const at201 = femaleOut.results.find(r => r.body.code === 'AT-201')
 check('AT-201 is modular', at201.bustOptions.length, 5)
 check('  its pieces', at201.bustOptions.map(o => o.piece).join(','), 'A-cup,C-cup,D-cup,E-cup,G-cup')
 check('  and their measurements', at201.bustOptions.map(o => o.bust).join(','), '128,140,145,155,185')
@@ -351,7 +358,7 @@ check('  and the comparison uses its 155mm', at201.bust, 155)
 check('  giving a difference of -10', r2(at201.deltas.bust), -10)
 check('the body itself has no single bust', at201.body.bust, null)
 // 800/6 is 133.3 - nearer the A-cup at 128 than the C-cup at 140.
-const pieceFor = bust => api.compareBodies({ ...HONOKA, bust }, { workingScale: 6, priority: 'bust', bodyType: 'Jointed' })
+const pieceFor = bust => api.compareBodies({ ...HONOKA, bust }, { workingScale: 6, priority: 'bust', gender: 'Female' })
   .results.find(r => r.body.code === 'AT-201').bustPiece
 check('a smaller character gets a smaller piece', pieceFor(800), 'A-cup')
 check('  and one in between gets the C-cup', pieceFor(840), 'C-cup')
@@ -367,54 +374,173 @@ check('AT-201 closest scale on bust', at201.closest.name, api.scaleName(990 / 15
 check('  which is the E-cup, not the A-cup', at201.closest.name === api.scaleName(990 / 128), false)
 
 console.log('\nJointed: sorted on the fitted piece, not the frame')
-const jointedByWaist = api.compareBodies(HONOKA, { workingScale: 6, priority: 'waist', bodyType: 'Jointed' })
-check('all three are still returned under Waist', jointedByWaist.results.length, 3)
+const byWaist = api.compareBodies(HONOKA, { workingScale: 6, priority: 'waist', gender: 'Female' })
+check('the jointed bodies are still returned under Waist',
+  byWaist.results.filter(r => r.body.bodyType === 'Jointed').length, JOINTED)
 check('  and each still names a piece',
-  jointedByWaist.results.every(r => r.bustPiece != null), true)
+  byWaist.results.filter(r => r.body.bodyType === 'Jointed').every(r => r.bustPiece != null), true)
 
-console.log('\nExport: Bust Piece appears on the jointed file only')
-const seamlessCsvRows = api.buildExportRows(HONOKA,
-  { workingScale: 6, priority: 'bust', sort: 'least', bodyType: 'Seamless' }, seamlessOut)
-const jointedCsvRows = api.buildExportRows(HONOKA,
-  { workingScale: 6, priority: 'bust', sort: 'least', bodyType: 'Jointed' }, jointedOut)
+console.log('\nExport: the female file carries Bust Piece and Body Type')
+const femaleCsvRows = api.buildExportRows(HONOKA,
+  { workingScale: 6, priority: 'bust', sort: 'least', gender: 'Female' }, femaleOut)
 const headerOf = rows => rows.find(r => r[0] === 'Manufacturer')
+const fh = headerOf(femaleCsvRows)
 
-check('seamless header is unchanged at 21 columns', headerOf(seamlessCsvRows).length, 21)
-check('  and says nothing about a Bust Piece',
-  headerOf(seamlessCsvRows).includes('Bust Piece'), false)
-check('  and every seamless body row is 21 wide too',
-  seamlessCsvRows.filter(r => r.length > 12).every(r => r.length === 21), true)
-check('jointed header has 22 columns', headerOf(jointedCsvRows).length, 22)
-check('  with Bust Piece in position 10', headerOf(jointedCsvRows)[9], 'Bust Piece')
-check('  just before the bust pair',
-  headerOf(jointedCsvRows).slice(9, 12).join(' | '),
-  'Bust Piece | Bust - Body Measurement (mm) | Bust - Difference (mm)')
-const jointedDataRow = jointedCsvRows.find(r => r[0] === 'WorldBox')
-check('a jointed row names its piece', jointedDataRow[9], 'E-cup')
-check('  and reports that piece measurement', jointedDataRow[10], 155)
-check('the jointed file states which catalogue was searched',
-  jointedCsvRows.some(r => r[0] === 'Body Type' && r[1] === 'Jointed'), true)
-check('the seamless file does not',
-  seamlessCsvRows.some(r => r[0] === 'Body Type'), false)
+check('Body Type is a column now', fh.includes('Body Type'), true)
+check('Bust Piece is always present on the female file', fh.includes('Bust Piece'), true)
+check('  Build is not - male only', fh.includes('Build'), false)
+check('the bust pair says Bust, not Chest',
+  fh.filter(h => /^Bust - /.test(h)).length, 2)
+check('every body row matches the header width',
+  femaleCsvRows.filter(r => r.length > 12).every(r => r.length === fh.length), true)
+const jointedDataRow = femaleCsvRows.find(r => r[0] === 'WorldBox')
+const seamlessDataRow = femaleCsvRows.find(r => r[0] === 'TBLeague')
+check('a jointed row reports its construction', jointedDataRow[3], 'Jointed')
+check('a seamless row reports its construction', seamlessDataRow[3], 'Seamless')
+check('a jointed row names its piece', jointedDataRow[fh.indexOf('Bust Piece')], 'E-cup')
+check('a seamless row leaves the piece blank', seamlessDataRow[fh.indexOf('Bust Piece')], '')
+check('the file states which catalogue was searched',
+  femaleCsvRows.some(r => r[0] === 'Gender' && r[1] === 'Female'), true)
 
 console.log('\nBatch: runs against whichever section is on screen')
 const oneJob = () => [{ character: HONOKA, workingScale: 6, priority: 'bust', count: null, line: 2 }]
-const jointedBatch = api.runBatch(oneJob(), undefined, 'Jointed')
-const jointedBatchCsv = api.rowsToCsv(jointedBatch.rows)
-check('three jointed results', jointedBatch.resultRows, 3)
-check('  no seamless body leaked in', jointedBatchCsv.includes('"TBLeague"'), false)
-check('  and the piece is in the file', jointedBatchCsv.includes('"E-cup"'), true)
-const seamlessBatch = api.runBatch(oneJob(), undefined, 'Seamless')
-check(`the same roster run seamless gives ${SEAMLESS}`, seamlessBatch.resultRows, SEAMLESS)
-check('  with no Bust Piece column', api.rowsToCsv(seamlessBatch.rows).includes('"Bust Piece"'), false)
+const femaleBatch = api.runBatch(oneJob(), undefined, 'Female')
+check(`the roster run female gives ${FEMALE}`, femaleBatch.resultRows, FEMALE)
+check('  with a Bust Piece column', api.rowsToCsv(femaleBatch.rows).includes('"Bust Piece"'), true)
+check('  and both constructions in it',
+  api.rowsToCsv(femaleBatch.rows).includes('"WorldBox"') &&
+  api.rowsToCsv(femaleBatch.rows).includes('"TBLeague"'), true)
+
+
+// ---------------------------------------------------------------------------
+// Male bodies
+//
+// There are none in the catalogue yet, so these run against fixtures built the
+// way the importer builds them. What matters is that the male path is genuinely
+// its own: height derived from a peg rather than measured against a known head,
+// no requirement to carry chest/waist/hips, height the only thing to sort on,
+// and ties broken by which window sits most centred on the character.
+// ---------------------------------------------------------------------------
+console.log('\nMale: height is derived from the neck peg')
+
+// peg 295, published, therefore the tallest setting.
+//   seamless -> hips take 5 off the bottom, head adds 11..15  => 301..310
+//   jointed  -> fixed height, head adds 11..15                => 306..310
+const maleBody = (over) => ({
+  manufacturer: 'TestCo', name: over.code, code: over.code,
+  gender: 'Male', bodyType: 'Seamless', build: 'Athletic', material: 'TPE',
+  bust: null, underbust: null, waist: null, hips: null,
+  heightsByHead: null, headSize: null, manufacturerHeight: null,
+  feet: 'Removable', notes: null, ...over,
+})
+const derive = (peg, type) => {
+  const low = type === 'Seamless' ? peg - 5 : peg
+  return { min: low + 11, max: peg + 15 }
+}
+
+const mSeamless = maleBody({ code: 'M-SEAM', bodyType: 'Seamless', maleHeight: derive(295, 'Seamless') })
+const mJointed  = maleBody({ code: 'M-JOINT', bodyType: 'Jointed', build: 'Heavy', maleHeight: derive(292, 'Jointed') })
+const mMeasured = maleBody({ code: 'M-MEAS', bodyType: 'Seamless', build: 'Heavy', maleHeight: { min: 308, max: 308 } })
+const mFull     = maleBody({ code: 'M-FULL', bodyType: 'Seamless', build: 'Average Build',
+                             maleHeight: derive(293, 'Seamless'), bust: 160, waist: 120, hips: 150 })
+const maleSet = [mSeamless, mJointed, mMeasured, mFull,
+                 ...bodies.filter(b => b.gender === 'Female')]
+
+check('seamless male window is 9mm',
+  `${mSeamless.maleHeight.min}-${mSeamless.maleHeight.max}`, '301-310')
+check('  hip travel comes off the bottom, head off the top',
+  mSeamless.maleHeight.max - mSeamless.maleHeight.min, 9)
+check('jointed male window is 4mm - head only, no hips',
+  `${mJointed.maleHeight.min}-${mJointed.maleHeight.max}`, '303-307')
+check('heightRange reads a male body', api.heightRange(mSeamless).min, 301)
+check('  and still reads a female one', api.heightRange(byCode.S07C).min, 274)
+
+console.log('\nMale: a body with only a height still competes')
+// KAITO at 1:6 wants 305mm - inside both derived windows.
+const KAITO = { name: 'Kaito', height: 1830 }
+const maleOut = api.compareBodies(KAITO, { workingScale: 6, priority: 'height', gender: 'Male', bodies: maleSet })
+check('all four male bodies are returned', maleOut.results.length, 4)
+check('  none dropped for missing chest/waist/hips',
+  maleOut.excluded.filter(e => e.reason === 'incomplete measurements').length, 0)
+check('  and no female body leaked in',
+  maleOut.results.every(r => r.body.gender === 'Male'), true)
+check('the female catalogue is unaffected by their presence',
+  api.compareBodies(HONOKA, { workingScale: 6, priority: 'bust', gender: 'Female', bodies: maleSet })
+     .results.length, FEMALE)
+
+// --- and the same path, on the real body in the catalogue ------------------
+if (MALE > 0) {
+  console.log('\nMale: the real catalogue')
+  const m34 = bodies.find(b => b.code === 'M-34')
+  check('M-34 is male', m34.gender, 'Male')
+  check('  with a build', m34.build, 'Heavily Muscled')
+  check('  measured, not derived', m34.heightSource, 'measured')
+  check('  so its window is the measured one, not peg + 11..15',
+    `${m34.maleHeight.min}-${m34.maleHeight.max}`, '308-313')
+  check('  which is NOT what the estimate would have given',
+    `${m34.pegMin + 11}-${m34.pegMax + 15}`, '299-308')
+  check('it carries chest, waist and hips', [m34.bust, m34.waist, m34.hips].join(','), '210,142,164')
+  const real = api.compareBodies({ name: 'K', height: 1860 },
+    { workingScale: 6, priority: 'height', gender: 'Male' })
+  check('it is returned by a male search', real.results.some(r => r.body.code === 'M-34'), true)
+  check('  and a female search never sees it',
+    api.compareBodies(HONOKA, { workingScale: 6, priority: 'bust', gender: 'Female' })
+       .results.some(r => r.body.code === 'M-34'), false)
+}
+
+console.log('\nMale: ties break on the most centred window')
+// 305 sits inside 301-310 (centre 305.5), 306-310 (centre 308) and misses 308 by 3.
+const order = maleOut.results.map(r => r.body.code)
+check('character wants', r2(maleOut.scaled.height), 305)
+check('everything containing 305 ties at zero',
+  maleOut.results.filter(r => r.deltas.height === 0).map(r => r.body.code).sort().join(','),
+  'M-FULL,M-JOINT,M-SEAM')
+check('the most centred of them leads', order[0], 'M-JOINT')
+check('  M-JOINT centre is 305, dead on', Math.abs(305 - 305), 0)
+check('  M-SEAM centre is 305.5, half out', Math.abs(305 - 305.5), 0.5)
+check('  M-FULL centre is 303.5, and it comes third', order[2], 'M-FULL')
+check('the body that cannot reach it comes last', order[order.length - 1], 'M-MEAS')
+check('  and the pool was only the fixtures', maleOut.results.length, 4)
+check('  because a measured height is a point, not a window',
+  r2(maleOut.results.find(r => r.body.code === 'M-MEAS').deltas.height), 3)
+
+console.log('\nMale: height is the only priority offered')
+check('female can sort four ways', api.PRIORITIES_BY_GENDER.Female.join(','), 'height,bust,waist,hips')
+check('male can sort one way', api.PRIORITIES_BY_GENDER.Male.join(','), 'height')
+
+console.log('\nMale: the export is its own shape')
+const maleCsvRows = api.buildExportRows(KAITO,
+  { workingScale: 6, priority: 'height', sort: 'least', gender: 'Male' }, maleOut)
+const mh = maleCsvRows.find(r => r[0] === 'Manufacturer')
+check('Build is a column', mh.includes('Build'), true)
+check('Bust Piece is not - no modular male bodies', mh.includes('Bust Piece'), false)
+check('the chest pair says Chest, not Bust', mh.filter(h => /^Chest - /.test(h)).length, 2)
+check('  and nothing says Bust', mh.some(h => /^Bust/.test(h)), false)
+check('Body Type is reported', mh.includes('Body Type'), true)
+const mRow = maleCsvRows.find(r => r[1] === 'M-SEAM')
+check('a male row carries its build', mRow[mh.indexOf('Build')], 'Athletic')
+check('  and its construction', mRow[3], 'Seamless')
+const jRow = maleCsvRows.find(r => r[1] === 'M-JOINT')
+check('a jointed male row too', jRow[mh.indexOf('Build')] + ' / ' + jRow[3], 'Heavy / Jointed')
+check('the file states the catalogue',
+  maleCsvRows.some(r => r[0] === 'Gender' && r[1] === 'Male'), true)
+check('every male row matches the header width',
+  maleCsvRows.filter(r => r.length > 12).every(r => r.length === mh.length), true)
+
+console.log('\nMale: blank chest/waist/hips do not become zeroes')
+const seamRow = maleCsvRows.find(r => r[1] === 'M-SEAM')
+check('an unmeasured chest exports blank, not 0', seamRow[mh.indexOf('Chest - Body Measurement (mm)')], '')
+check('  and so does its difference', seamRow[mh.indexOf('Chest - Difference (mm)')], '')
+const fullRow = maleCsvRows.find(r => r[1] === 'M-FULL')
+check('a measured chest still exports', fullRow[mh.indexOf('Chest - Body Measurement (mm)')], 160)
 
 console.log('\nExport: file names')
-check('seamless keeps the name it has always had',
-  api.exportFileName('Honoka', 'bust', 'Seamless'), 'Honoka_Results_Bust.csv')
-check('  and with no body type given at all',
+check('female keeps the name it has always had',
+  api.exportFileName('Honoka', 'bust', 'Female'), 'Honoka_Results_Bust.csv')
+check('  and with no gender given at all',
   api.exportFileName('Honoka', 'bust'), 'Honoka_Results_Bust.csv')
-check('jointed is told apart', api.exportFileName('Honoka', 'bust', 'Jointed'),
-  'Honoka_Results_Bust_Jointed.csv')
+check('male is told apart', api.exportFileName('Kaito', 'height', 'Male'),
+  'Kaito_Results_Height_Male.csv')
 
 console.log(failures === 0 ? '\nAll checks passed.\n' : `\n${failures} CHECK(S) FAILED.\n`)
 process.exitCode = failures === 0 ? 0 : 1

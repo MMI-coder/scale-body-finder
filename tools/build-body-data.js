@@ -49,9 +49,61 @@ function parseCsv(text) {
  * it in here beats asking at runtime: react-native-web has no
  * Image.resolveAssetSource, so there is no one call that works everywhere.
  */
-function jpegSize(file) {
+/**
+ * Image dimensions, read from the bytes rather than trusting the extension.
+ *
+ * Cards size their image tile from the real aspect ratio, so this has to work
+ * for whatever actually arrives. Files come from manufacturer sites and phone
+ * screenshots, and what a browser saves as ".jpg" is often not a JPEG at all -
+ * the first male body arrived as an AVIF with a .jpg name. Since images are
+ * used exactly as supplied, never re-encoded, the reader has to cope instead.
+ */
+function imageSize(file) {
   const b = fs.readFileSync(file)
-  if (b[0] !== 0xff || b[1] !== 0xd8) return null
+  if (b[0] === 0xff && b[1] === 0xd8) return jpegSize(b)
+  if (b.subarray(4, 8).toString('ascii') === 'ftyp') return isoBmffSize(b)
+  if (b.subarray(0, 8).toString('hex') === '89504e470d0a1a0a') {
+    return { width: b.readUInt32BE(16), height: b.readUInt32BE(20) }   // PNG IHDR
+  }
+  if (b.subarray(0, 4).toString('ascii') === 'RIFF' &&
+      b.subarray(8, 12).toString('ascii') === 'WEBP') return webpSize(b)
+  return null
+}
+
+/**
+ * AVIF and HEIC are ISO base media files. The picture's dimensions live in an
+ * 'ispe' box - name, four bytes of version and flags, then width and height.
+ *
+ * A file can hold several: thumbnails and alpha planes get their own. The
+ * largest is the picture itself.
+ */
+function isoBmffSize(b) {
+  let best = null
+  for (let i = 0; i < b.length - 16; i++) {
+    if (b[i] === 0x69 && b[i + 1] === 0x73 && b[i + 2] === 0x70 && b[i + 3] === 0x65) {
+      const width = b.readUInt32BE(i + 8)
+      const height = b.readUInt32BE(i + 12)
+      if (width > 0 && height > 0 && width < 100000 && height < 100000 &&
+          (!best || width * height > best.width * best.height)) {
+        best = { width, height }
+      }
+    }
+  }
+  return best
+}
+
+function webpSize(b) {
+  const fourcc = b.subarray(12, 16).toString('ascii')
+  if (fourcc === 'VP8X') return { width: 1 + b.readUIntLE(24, 3), height: 1 + b.readUIntLE(27, 3) }
+  if (fourcc === 'VP8 ') return { width: b.readUInt16LE(26) & 0x3fff, height: b.readUInt16LE(28) & 0x3fff }
+  if (fourcc === 'VP8L') {
+    const n = b.readUInt32LE(21)
+    return { width: (n & 0x3fff) + 1, height: ((n >> 14) & 0x3fff) + 1 }
+  }
+  return null
+}
+
+function jpegSize(b) {
   let i = 2
   while (i < b.length - 9) {
     if (b[i] !== 0xff) { i++; continue }
@@ -80,6 +132,49 @@ const HEAD_SIZES = [37.5, 38, 38.5]
  * warning and a clean build. A typo silently deletes a body.
  */
 const BODY_TYPES = ['Seamless', 'Jointed']
+
+/** The two catalogues. Nothing is ever mixed between them. */
+const GENDERS = ['Female', 'Male']
+
+/**
+ * Male builds. Required on a male body, meaningless on a female one.
+ *
+ * Male buyers ask "does it look the part" before anything else, so this is the
+ * label that answers it. It is shown and exported; it filters and sorts nothing.
+ */
+const BUILDS = [
+  'Super Tall/Athletic',
+  'Super Heavily Muscled',
+  'Heavily Muscled',
+  'Average Muscle Build',
+  'Average Build',
+  'Athletic',
+  'Asian Athletic',
+  'Heavy',
+]
+
+/**
+ * Male height, where the only figure published is a neck peg height.
+ *
+ * Female bodies are measured against three known bald 3D-printed heads. Male
+ * heads have no such standard - they are production sculpts with hair, based on
+ * whoever the licence was for, and they vary. So a male height is derived rather
+ * than measured: take the peg, add a head, and allow for the hips.
+ *
+ *   head        +11 to +15mm above the peg. Measured off a production sculpt
+ *               (Henry Cavill, 45mm chin to hair) at +13, widened either way to
+ *               cover the range of sculpts on the market. Applies to every male
+ *               body, seamless or jointed - everything wears a head.
+ *   hip travel  5mm, seamless only. Jointed male bodies are a fixed height.
+ *
+ * A published peg height is the tallest setting, so hip travel comes off the
+ * bottom rather than being added on top.
+ *
+ * Any of this is thrown away the moment a real measured height exists.
+ */
+const MALE_HEAD_MIN = 11
+const MALE_HEAD_MAX = 15
+const MALE_HIP_TRAVEL = 5
 
 /**
  * Height for each head option, derived from the one that was actually measured.
@@ -147,7 +242,9 @@ const C = {
   name: col('Product Name'),
   code: col('Product Code'),
   material: col('Material'),
+  gender: col('Gender'),
   bodyType: col('Body Type'),
+  build: col('Build'),
   bustPiece: col('Bust Piece'),
   pegMin: col('Neck Peg Min - Measured (mm)'),
   pegMax: col('Neck Peg Max - Measured (mm)'),
@@ -178,7 +275,9 @@ rows.slice(1).forEach((r, i) => {
     name: str(r[C.name]) || code,
     manufacturer: str(r[C.manufacturer]),
     material: str(r[C.material]),
+    gender: str(r[C.gender]),
     bodyType: str(r[C.bodyType]),
+    build: str(r[C.build]),
     bustPiece: str(r[C.bustPiece]),
     pegMin: num(r[C.pegMin]),
     pegMax: num(r[C.pegMax]),
@@ -207,8 +306,29 @@ rows.slice(1).forEach((r, i) => {
   //                   no range and no head options; the min in the CSV is an
   //                   owner-added hip-travel allowance, not a published figure
   //   estimated     - borrowed from a reference body, see HEIGHT_ESTIMATED_FROM
-  body.headSize = parseHeadSize(body.head)
-  if (body.headSize != null) {
+  if (body.gender === 'Male') {
+    body.headSize = null
+    body.heightsByHead = null
+    if (body.heightMax != null) {
+      // A real figure beats anything derived. If only one number was given it
+      // is a single height, not a range.
+      body.heightSource = 'measured'
+      body.maleHeight = { min: body.heightMin ?? body.heightMax, max: body.heightMax }
+    } else {
+      // Fall back to the peg. Measured beats published; a published peg is the
+      // tallest setting, so hip travel comes off the bottom.
+      const peg = body.pegMax ?? body.pegMfr
+      if (peg == null) {
+        body.heightSource = null
+        body.maleHeight = null
+      } else {
+        const low = body.pegMin ?? (body.bodyType === 'Seamless' ? peg - MALE_HIP_TRAVEL : peg)
+        body.heightSource = 'derived'
+        body.maleHeight = { min: low + MALE_HEAD_MIN, max: peg + MALE_HEAD_MAX }
+      }
+    }
+    // A null heightSource is already collected into the build's warning list.
+  } else if ((body.headSize = parseHeadSize(body.head)) != null) {
     body.heightSource = 'measured'
     body.heightsByHead = heightsByHead(body.headSize, body.heightMin, body.heightMax)
     if (!HEAD_SIZES.includes(body.headSize)) {
@@ -226,18 +346,53 @@ rows.slice(1).forEach((r, i) => {
     body.heightsByHead = null
   }
 
-  // Body Type decides which catalogue a body appears in, so a bad value takes it
-  // out of both. Blank is an error too: defaulting it to Seamless would quietly
-  // file a jointed body in the wrong section.
+  // Gender decides which catalogue a body appears in, so a bad value takes it
+  // out of both and the body simply never appears.
+  if (body.gender == null) {
+    problems.push(`${code}: no Gender - must be ${GENDERS.join(' or ')}`)
+  } else if (!GENDERS.includes(body.gender)) {
+    problems.push(`${code}: Gender "${body.gender}" is not ${GENDERS.join(' or ')}`)
+  }
+
+  // Build answers "does it look the part", which is the first thing asked of a
+  // male body - so it is required there. On a female body it means nothing and
+  // a value would just be noise on the card.
+  if (body.gender === 'Male') {
+    if (body.build == null) {
+      problems.push(`${code}: male bodies need a Build - one of: ${BUILDS.join(', ')}`)
+    } else if (!BUILDS.includes(body.build)) {
+      problems.push(`${code}: Build "${body.build}" is not one of: ${BUILDS.join(', ')}`)
+    }
+  } else if (body.build != null) {
+    problems.push(`${code}: Build is for male bodies only, found "${body.build}"`)
+  }
+
+  // Body Type is no longer what picks a catalogue - Gender is - but it still
+  // has to be right, because it is reported on the card and in the export.
   if (body.bodyType == null) {
     problems.push(`${code}: no Body Type - must be ${BODY_TYPES.join(' or ')}`)
   } else if (!BODY_TYPES.includes(body.bodyType)) {
     problems.push(`${code}: Body Type "${body.bodyType}" is not ${BODY_TYPES.join(' or ')}`)
   }
 
-  // Bust/waist/hips are what selection runs on - a row without them is unusable.
-  for (const k of ['bust', 'waist', 'hips']) {
-    if (body[k] == null) problems.push(`${code}: missing ${k}`)
+  // What a body has to carry to be usable differs by catalogue.
+  //
+  // Female bodies are compared on four measurements, so a row missing any of
+  // bust/waist/hips is unusable and gets rejected.
+  //
+  // Male bodies are published with a neck peg height and, very often, nothing
+  // else - chest, waist and hips rarely appear in manufacturer specs. Demanding
+  // them would reject almost every male body there is. There, the peg is what
+  // matters, and a body without any height at all is only a warning: it still
+  // has a name, a build and a picture, it just cannot be ranked on height.
+  if (body.gender === 'Male') {
+    if (body.maleHeight == null) {
+      problems.push(`${code}: male bodies need a neck peg height, or a height with head`)
+    }
+  } else {
+    for (const k of ['bust', 'waist', 'hips']) {
+      if (body[k] == null) problems.push(`${code}: missing ${k}`)
+    }
   }
   if (body.image) {
     const imgPath = path.join(IMG_DIR, body.image)
@@ -245,7 +400,7 @@ rows.slice(1).forEach((r, i) => {
       problems.push(`${code}: image not found - ${body.image}`)
     } else {
       images.add(body.image)
-      const size = jpegSize(imgPath)
+      const size = imageSize(imgPath)
       if (size) {
         body.imageW = size.width
         body.imageH = size.height
