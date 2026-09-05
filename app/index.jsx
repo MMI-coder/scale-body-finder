@@ -111,6 +111,25 @@ export default function Index() {
     // full set would be asking for numbers that change nothing.
     const needed = gender === 'Male' ? ['height'] : ['height', 'bust', 'waist', 'hips']
 
+    /**
+     * Switching catalogue starts a new character.
+     *
+     * You change section because you are looking for a different character, not
+     * to see the same one measured against bodies that were never made for
+     * them. Carrying Kasumi's bust and hips into the male list is noise at best
+     * and a wrong answer at worst.
+     *
+     * Preferences stay: units, scale, sort and how many results to show are
+     * about how you like to work, not about who you are looking for.
+     */
+    const changeGender = (next) => {
+        if (next === gender) return
+        setGender(next)
+        setName('')
+        setValues(emptyValues)
+        setExpanded({})
+    }
+
     const setField = (key, text) => setValues((v) => ({ ...v, [key]: text }))
     const toggleCard = (code) => setExpanded((e) => ({ ...e, [code]: !e[code] }))
 
@@ -176,7 +195,7 @@ export default function Index() {
                     <ThemedText style={[styles.label, { color: theme.muted }]}>
                         Choose which kind of body you are shopping for. Only that kind is searched.
                     </ThemedText>
-                    <SegmentedControl options={SECTION_OPTIONS} value={gender} onChange={setGender} />
+                    <SegmentedControl options={SECTION_OPTIONS} value={gender} onChange={changeGender} />
                     <Spacer height={10} />
                     <ThemedText style={[styles.sub, { color: theme.muted, marginTop: 0 }]}>
                         {SECTION_BLURB[gender]}
