@@ -572,8 +572,11 @@ export const BODIES = [
     "notes": "There are versions where a head sculpt is included. It adds \"(H)\" to the Product Name/Code",
     "headSize": null,
     "heightSource": "manufacturer",
-    "manufacturerHeight": 310,
     "heightsByHead": null,
+    "heightSpan": {
+      "min": 306,
+      "max": 310
+    },
     "imageW": 1200,
     "imageH": 1800
   },
@@ -604,8 +607,11 @@ export const BODIES = [
     "notes": "There are versions where a head sculpt is included. It adds \"(H)\" to the Product Name/Code",
     "headSize": null,
     "heightSource": "manufacturer",
-    "manufacturerHeight": 295,
     "heightsByHead": null,
+    "heightSpan": {
+      "min": 291,
+      "max": 295
+    },
     "imageW": 1200,
     "imageH": 1600
   },
@@ -636,8 +642,11 @@ export const BODIES = [
     "notes": "There are versions where a head sculpt is included. It adds \"(H)\" to the Product Name/Code",
     "headSize": null,
     "heightSource": "manufacturer",
-    "manufacturerHeight": 283,
     "heightsByHead": null,
+    "heightSpan": {
+      "min": 279,
+      "max": 283
+    },
     "imageW": 1200,
     "imageH": 1600
   },
@@ -668,8 +677,11 @@ export const BODIES = [
     "notes": "There are versions where a head sculpt is included. It adds \"(H)\" to the Product Name/Code",
     "headSize": null,
     "heightSource": "manufacturer",
-    "manufacturerHeight": 283,
     "heightsByHead": null,
+    "heightSpan": {
+      "min": 279,
+      "max": 283
+    },
     "imageW": 1200,
     "imageH": 1600
   },
@@ -700,8 +712,11 @@ export const BODIES = [
     "notes": "There are versions where a head sculpt is included. It adds \"(H)\" to the Product Name/Code",
     "headSize": null,
     "heightSource": "manufacturer",
-    "manufacturerHeight": 295,
     "heightsByHead": null,
+    "heightSpan": {
+      "min": 291,
+      "max": 295
+    },
     "imageW": 1500,
     "imageH": 2250
   },
@@ -732,8 +747,11 @@ export const BODIES = [
     "notes": null,
     "headSize": null,
     "heightSource": "manufacturer",
-    "manufacturerHeight": 285,
     "heightsByHead": null,
+    "heightSpan": {
+      "min": 285,
+      "max": 285
+    },
     "imageW": 1200,
     "imageH": 1600
   },
@@ -1098,8 +1116,8 @@ export const BODIES = [
     "notes": null,
     "headSize": null,
     "heightSource": "manufacturer",
-    "manufacturerHeight": 280,
     "heightsByHead": null,
+    "manufacturerHeight": 280,
     "imageW": 1500,
     "imageH": 1500
   },
@@ -1362,12 +1380,12 @@ export const BODIES = [
     "image": "TrickyMan DT06.jpg",
     "notes": "Waist and Hips are estimates based on the manufacturer's listed measurements",
     "headSize": null,
-    "heightSource": "measured",
+    "heightSource": "manufacturer",
+    "heightsByHead": null,
     "heightSpan": {
       "min": 290,
       "max": 295
     },
-    "heightsByHead": null,
     "imageW": 1440,
     "imageH": 1918
   },
@@ -1397,12 +1415,12 @@ export const BODIES = [
     "image": "TrickyMan DT02.jpg",
     "notes": "Waist and Hips are estimates based on the manufacturer's listed measurements",
     "headSize": null,
-    "heightSource": "measured",
+    "heightSource": "manufacturer",
+    "heightsByHead": null,
     "heightSpan": {
       "min": 280,
       "max": 284
     },
-    "heightsByHead": null,
     "imageW": 1440,
     "imageH": 1918
   },
@@ -1433,8 +1451,8 @@ export const BODIES = [
     "notes": null,
     "headSize": null,
     "heightSource": "manufacturer",
-    "manufacturerHeight": 254,
     "heightsByHead": null,
+    "manufacturerHeight": 254,
     "imageW": 1200,
     "imageH": 1200
   },
@@ -1465,8 +1483,8 @@ export const BODIES = [
     "notes": "Same measurements as the PS004PW",
     "headSize": null,
     "heightSource": "manufacturer",
-    "manufacturerHeight": 275,
     "heightsByHead": null,
+    "manufacturerHeight": 275,
     "imageW": 1200,
     "imageH": 1800
   }

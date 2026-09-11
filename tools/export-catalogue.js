@@ -40,7 +40,7 @@ const HINTS = {
   'Neck Peg Max - Measured (mm)': 'Your own measurement, if you have the body. N/A if not',
   'Neck Peg Max - Mfr Stated (mm)': "The manufacturer's published figure, taken as the TALLEST setting. Male bodies: this is the one measurement that matters, height is derived from it",
   'Head Used': 'Which head you measured with, e.g. Custom 38mm 3D Print. N/A if not measured',
-  'Height with Head (Min)': 'Measured height at the shortest hip setting. N/A if unknown',
+  'Height with Head (Min)': 'Height at the shortest hip setting - yours or the maker\'s. Taken at face value and becomes a range the body can be posed across, so leave it N/A rather than guessing',
   'Height with Head (max)': 'Measured height at the tallest hip setting. N/A if unknown',
   'Bust Piece': 'MODULAR BODIES ONLY - the cup name, e.g. A-cup. One row per piece. Leave blank otherwise',
   'Bust (mm)': 'Female: REQUIRED, body is dropped without it. Male: optional, this is the chest',

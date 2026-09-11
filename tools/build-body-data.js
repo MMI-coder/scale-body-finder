@@ -302,12 +302,9 @@ rows.slice(1).forEach((r, i) => {
   // as equally solid:
   //   measured      - owner measured it with one of the custom head sculpts,
   //                   so all three head options can be derived
-  //   measured span - owner measured the pegs but used a head that isn't one of
-  //                   the custom sculpts. The height range is real travel; there
-  //                   are just no head options to derive from it
-  //   manufacturer  - the maker's own figure with their own head. One number,
-  //                   no range and no head options; the min in the CSV is an
-  //                   owner-added hip-travel allowance, not a published figure
+  //   manufacturer  - a figure taken with the maker's own head rather than one
+  //                   of the custom sculpts, so nothing can be derived per head
+  //                   size. It may still carry a real range: see below
   //   estimated     - borrowed from a reference body, see HEIGHT_ESTIMATED_FROM
   if (body.gender === 'Male') {
     body.headSize = null
@@ -340,22 +337,22 @@ rows.slice(1).forEach((r, i) => {
     if (body.heightsByHead == null) {
       problems.push(`${code}: has head size ${body.headSize}mm but no measured height range`)
     }
-  } else if (body.pegMin != null && body.pegMax != null &&
-             body.heightMin != null && body.heightMax != null) {
-    // Measured pegs mean the hip travel was measured too, so the span between
-    // the two heights is real - it just can't be re-derived for other head
-    // sizes, because the head used wasn't one of the known sculpts.
-    //
-    // This is what separates it from the case below, where the min is the
-    // owner's own allowance on top of a single published figure. The tell is
-    // the pegs: if those were measured, so was the travel.
-    body.heightSource = 'measured'
-    body.heightSpan = { min: body.heightMin, max: body.heightMax }
-    body.heightsByHead = null
   } else if (body.heightMax != null) {
     body.heightSource = 'manufacturer'
-    body.manufacturerHeight = body.heightMax
     body.heightsByHead = null
+    // A minimum that is filled in is a real figure - measured, or published.
+    // Leave the cell blank rather than guessing at one, because anything here
+    // is taken at face value and becomes a range the body can be posed across.
+    //
+    // An earlier rule tried to infer this from whether the pegs had been
+    // measured. That was guesswork about provenance: TrickyMan publish their
+    // range outright, with no measuring involved, and the rule only got them
+    // right by accident.
+    if (body.heightMin != null) {
+      body.heightSpan = { min: body.heightMin, max: body.heightMax }
+    } else {
+      body.manufacturerHeight = body.heightMax
+    }
   } else {
     body.heightSource = null
     body.heightsByHead = null

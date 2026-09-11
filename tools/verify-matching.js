@@ -109,9 +109,23 @@ check('target 270 is below it -> pinned to 274', api.heightAgainst(byCode.S07C, 
 check('target 290 is above it -> pinned to 280', api.heightAgainst(byCode.S07C, 290), 280)
 check('S24A cannot reach 275, tops out at 267', api.heightAgainst(byCode.S24A, 275), 267)
 check('  so its height diff is -8', r2(s24a.deltas.height), -8)
+// A height minimum that is filled in is taken at face value, whoever supplied
+// it, and becomes a range the body can be posed across. A blank one leaves the
+// body pinned to the single figure. The cell is the whole tell - nothing is
+// inferred from whether the pegs were measured.
 const mfr = api.heightRange(byCode['SR-AD01'])
-check('a manufacturer body has no span', mfr.min === mfr.max, true)
-check('  and uses their figure', mfr.min, 310)
+check('a manufacturer figure with a minimum is a range', mfr.min !== mfr.max, true)
+check('  low end is the minimum given', mfr.min, 306)
+check('  high end is their figure', mfr.max, 310)
+check('  and it is still labelled as theirs', byCode['SR-AD01'].heightSource, 'manufacturer')
+
+const noMin = api.heightRange(byCode['86-TS01-A'])
+check('no minimum given means no span', noMin.min === noMin.max, true)
+check('  pinned to the one figure', noMin.max, 280)
+
+// TrickyMan publish a range outright, with no measuring involved.
+const tm = api.heightRange(byCode['DT06'])
+check('a published range survives', `${tm.min}-${tm.max}`, '290-295')
 
 // --- sorting ---------------------------------------------------------------
 console.log('\nSorting by difference in the chosen measurement')
