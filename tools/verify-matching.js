@@ -377,8 +377,14 @@ console.log('\nJointed: sorted on the fitted piece, not the frame')
 const byWaist = api.compareBodies(HONOKA, { workingScale: 6, priority: 'waist', gender: 'Female' })
 check('the jointed bodies are still returned under Waist',
   byWaist.results.filter(r => r.body.bodyType === 'Jointed').length, JOINTED)
-check('  and each still names a piece',
-  byWaist.results.filter(r => r.body.bodyType === 'Jointed').every(r => r.bustPiece != null), true)
+check('  and every modular one still names a piece',
+  byWaist.results.filter(r => r.bustOptions).every(r => r.bustPiece != null), true)
+check('  while a jointed body with a fixed bust names none',
+  byWaist.results.filter(r => r.body.bodyType === 'Jointed' && !r.bustOptions)
+         .every(r => r.bustPiece == null), true)
+check('jointed is not the same as modular',
+  bodies.filter(b => b.bodyType === 'Jointed').length >
+  bodies.filter(b => b.bustOptions).length, true)
 
 console.log('\nExport: the female file carries Bust Piece and Body Type')
 const femaleCsvRows = api.buildExportRows(HONOKA,

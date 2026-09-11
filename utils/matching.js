@@ -100,6 +100,9 @@ export function heightRange(body) {
     const r = body.heightsByHead[body.headSize]
     if (r) return { min: r.min, max: r.max }
   }
+  // Measured travel, but with a head that has no known size - so a real range
+  // with no per-head breakdown behind it.
+  if (body.heightSpan) return { min: body.heightSpan.min, max: body.heightSpan.max }
   if (body.manufacturerHeight != null) {
     return { min: body.manufacturerHeight, max: body.manufacturerHeight }
   }
