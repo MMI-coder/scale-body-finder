@@ -163,6 +163,10 @@ export const GLOSSARY = [
     "definition": "Bodies that fit the stereotypical tall, fit, muscular Asian male. Very idealized."
   },
   {
+    "term": "Asian Average",
+    "definition": "Bodies that fit the normally shorter Asian male height, and are of an average build. Not tall, not jacked."
+  },
+  {
     "term": "Heavy",
     "definition": "Bodies that fit the heavier set builds. Can range in height, but have a bit of size in either the gut or overall. Google Eddie Hall for the extreme of this."
   }

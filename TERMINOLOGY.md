@@ -206,7 +206,7 @@ them if you would rather write it your own way.
 
 ### Asian Average
 *Needs to say:* how it differs from Asian Athletic, which you defined as the "very idealized" one. Presumably the everyday build rather than the idealized one — but also worth saying whether the distinction is about physique, proportions, or the market a body is made for.
-**Definition:**
+**Definition:** Bodies that fit the normally shorter Asian male height, and are of an average build. Not tall, not jacked. 
 
 ### Heavy
 *Needs to say:* whether this means heavyset, tall and broad, or overweight — and how it sits against Average Build.
