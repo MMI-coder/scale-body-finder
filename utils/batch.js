@@ -15,30 +15,64 @@
  */
 
 import { BODIES } from '../data/bodies'
-import { buildExportRows, compareBodies, PRIORITIES } from './matching'
+import {
+  buildExportRows,
+  compareBodies,
+  DEFAULT_GENDER,
+  PRIORITIES_BY_GENDER,
+} from './matching'
 import { SCALE_STEPS, WORKING_SCALES, scaleName } from './scaleUtils'
 
-export const TEMPLATE_HEADERS = [
-  'Character Name',
-  'Scale Reference Selector',
-  'Height',
-  'Bust',
-  'Waist',
-  'Hips',
-  'Measurement Priority Field',
-  'Number of Results Requested',
-]
+/**
+ * The upload has no Gender column - a run uses whichever section is on screen -
+ * so the template itself differs instead. The male one asks for less, because
+ * male bodies are published with a height and rarely anything else.
+ *
+ * The third column is Bust on a female template and Chest on a male one, which
+ * is what the results export and the cards already call them. Both names are
+ * accepted on the way back in, so a file downloaded in one section still
+ * uploads in the other.
+ */
+export function templateHeaders(gender = DEFAULT_GENDER) {
+  return [
+    'Character Name',
+    'Scale Reference Selector',
+    'Height',
+    gender === 'Male' ? 'Chest' : 'Bust',
+    'Waist',
+    'Hips',
+    'Measurement Priority Field',
+    'Number of Results Requested',
+  ]
+}
 
-const TEMPLATE_HINTS = [
-  'Required',
-  'Required (must match available scale in the app)',
-  'Required (in mm)',
-  'Required (in mm)',
-  'Required (in mm)',
-  'Required (in mm)',
-  'Required (Height, Bust, Waist, Hips)',
-  'Required (3, 5, or All)',
-]
+/** Kept for the female shape, which is what existing files were built against. */
+export const TEMPLATE_HEADERS = templateHeaders('Female')
+
+/** Either spelling of the third measurement column. */
+const BUST_NAMES = ['Bust', 'Chest']
+
+/** Which measurements a row must carry, per section. */
+function requiredMeasures(gender) {
+  return gender === 'Male' ? ['Height'] : ['Height', 'Bust', 'Waist', 'Hips']
+}
+
+function templateHints(gender) {
+  const need = requiredMeasures(gender)
+  const mm = (key) => (need.includes(key) ? 'Required (in mm)' : 'Optional (in mm)')
+  const priorities = PRIORITIES_BY_GENDER[gender] ?? PRIORITIES_BY_GENDER.Female
+  const names = priorities.map(p => p.charAt(0).toUpperCase() + p.slice(1))
+  return [
+    'Required',
+    'Required (must match available scale in the app)',
+    mm('Height'),
+    mm('Bust'),
+    mm('Waist'),
+    mm('Hips'),
+    `Required (${names.join(', ')})`,
+    'Required (3, 5, or All)',
+  ]
+}
 
 /** Plausible 1:1 human measurements in mm. Outside these, something's wrong. */
 const BANDS = {
@@ -89,7 +123,7 @@ const near = (a, b) => Math.abs(a - b) < 1 / (SCALE_STEPS * 2)
  * Bad rows are named and skipped rather than aborting the run - one typo in a
  * roster of thirty shouldn't cost you the other twenty-nine.
  */
-export function parseCharacterCsv(text) {
+export function parseCharacterCsv(text, gender = DEFAULT_GENDER) {
   const rows = parseCsv(text)
   const jobs = []
   const errors = []
@@ -102,7 +136,12 @@ export function parseCharacterCsv(text) {
   if (!rows.length) return { jobs, errors: ['The file is empty.'] }
 
   const header = rows[0].map(h => h.trim())
-  const missing = TEMPLATE_HEADERS.filter(h => !header.includes(h))
+  // Bust and Chest are the same column under two names, so a template saved in
+  // either section is accepted here.
+  const bustName = BUST_NAMES.find(n => header.includes(n))
+  const wanted = templateHeaders(gender)
+    .map(h => (BUST_NAMES.includes(h) ? bustName ?? h : h))
+  const missing = wanted.filter(h => !header.includes(h))
   if (missing.length) {
     return {
       jobs: [],
@@ -110,7 +149,9 @@ export function parseCharacterCsv(text) {
                `Download the template and use its header row.`],
     }
   }
-  const at = name => header.indexOf(name)
+  const at = name => header.indexOf(BUST_NAMES.includes(name) ? bustName : name)
+  const need = requiredMeasures(gender)
+  const priorities = PRIORITIES_BY_GENDER[gender] ?? PRIORITIES_BY_GENDER.Female
 
   let body = rows.slice(1)
   // The template ships with a row of "Required (…)" hints. Skip it rather than
@@ -132,7 +173,12 @@ export function parseCharacterCsv(text) {
     for (const key of ['Height', 'Bust', 'Waist', 'Hips']) {
       const raw = (r[at(key)] || '').trim()
       const field = key.toLowerCase()
-      if (!raw) { rowErrors.push(`${label}: ${key} is required.`); continue }
+      const shown = key === 'Bust' && gender === 'Male' ? 'Chest' : key
+      if (!raw) {
+        // Optional measurements are simply not compared when left blank.
+        if (need.includes(key)) rowErrors.push(`${label}: ${shown} is required.`)
+        continue
+      }
       const n = Number(raw.replace(/,/g, ''))
       if (!Number.isFinite(n) || n <= 0) {
         rowErrors.push(`${label}: ${key} "${raw}" is not a number.`)
@@ -178,8 +224,16 @@ export function parseCharacterCsv(text) {
     const priorityRaw = (r[at('Measurement Priority Field')] || '').trim().toLowerCase()
     let priority = null
     if (!priorityRaw) rowErrors.push(`${label}: Measurement Priority Field is required.`)
-    else if (!PRIORITIES.includes(priorityRaw)) {
-      rowErrors.push(`${label}: "${r[at('Measurement Priority Field')].trim()}" is not one of Height, Bust, Waist, Hips.`)
+    else if (!priorities.includes(priorityRaw)) {
+      // Naming only what this section can actually sort on. Male bodies are not
+      // published with chest, waist or hips often enough to rank on them, so
+      // accepting Waist here would return a near-empty file and say nothing.
+      const names = priorities.map(p => p.charAt(0).toUpperCase() + p.slice(1))
+      rowErrors.push(
+        `${label}: "${r[at('Measurement Priority Field')].trim()}" is not ` +
+        `${names.length === 1 ? names[0] : 'one of ' + names.join(', ')}` +
+        `${gender === 'Male' ? ' - male bodies can only be sorted on Height.' : '.'}`
+      )
     } else priority = priorityRaw
 
     // --- how many results ---
@@ -259,8 +313,8 @@ export function runBatch(jobs, bodies = BODIES, gender = undefined) {
 }
 
 /** The blank template, hint row included - the importer skips it on the way back in. */
-export function templateCsv() {
-  return [TEMPLATE_HEADERS, TEMPLATE_HINTS]
+export function templateCsv(gender = DEFAULT_GENDER) {
+  return [templateHeaders(gender), templateHints(gender)]
     .map(r => r.map(c => (/[",\n]/.test(c) ? `"${c.replace(/"/g, '""')}"` : c)).join(','))
     .join('\n')
 }

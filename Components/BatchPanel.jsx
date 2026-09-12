@@ -24,9 +24,19 @@ const BatchPanel = ({ gender = DEFAULT_GENDER }) => {
     if (!BATCH_SUPPORTED) return null
 
     const downloadTemplate = () => {
-        saveCsv('Scale_Body_Finder_Character_Template.csv', templateCsv())
+        saveCsv(
+            gender === DEFAULT_GENDER
+                ? 'Scale_Body_Finder_Character_Template.csv'
+                : `Scale_Body_Finder_Character_Template_${gender}.csv`,
+            templateCsv(gender))
         setErrors([])
-        setStatus({ tone: 'ok', text: 'Template downloaded. Fill in a row per character — measurements in millimetres.' })
+        setStatus({
+            tone: 'ok',
+            text: `${gender} template downloaded. Fill in a row per character — measurements in millimetres.` +
+                  (gender === 'Male'
+                      ? ' Height is the only one required, and the only one it sorts on.'
+                      : ''),
+        })
     }
 
     const upload = async () => {
@@ -41,7 +51,7 @@ const BatchPanel = ({ gender = DEFAULT_GENDER }) => {
         }
         if (!file) return
 
-        const { jobs, errors: problems, fatal } = parseCharacterCsv(file.text)
+        const { jobs, errors: problems, fatal } = parseCharacterCsv(file.text, gender)
 
         if (fatal || !jobs.length) {
             setErrors(problems)
@@ -85,15 +95,18 @@ const BatchPanel = ({ gender = DEFAULT_GENDER }) => {
                 All measurements must be in millimetres. A height of 158 will be rejected — it wants 1580.
             </ThemedText>
             <ThemedText style={[styles.sub, { color: theme.muted }]}>
-                The file has no Gender column. The run uses the Gender selected at the top of the page
-                — currently {gender} — so to see both, run the same file once in each.
+                The file has no Gender column. The template you get and the run you upload both follow
+                the Gender selected at the top of the page — currently {gender}.
+                {gender === 'Male'
+                    ? ' A male roster needs a height and nothing else, and sorts on Height only.'
+                    : ' A female roster needs height, bust, waist and hips on every row.'}
             </ThemedText>
 
             <Spacer height={16} />
 
             <View style={styles.row}>
                 <ThemedButton onPress={downloadTemplate} style={[styles.btn, { backgroundColor: theme.uiBackground }]}>
-                    <ThemedText style={styles.btnAltText}>Download character template</ThemedText>
+                    <ThemedText style={styles.btnAltText}>Download {gender.toLowerCase()} character template</ThemedText>
                 </ThemedButton>
                 <ThemedButton onPress={upload} style={styles.btn}>
                     <ThemedText style={styles.btnText}>Upload characters</ThemedText>

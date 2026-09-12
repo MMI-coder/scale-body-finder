@@ -35,7 +35,7 @@ const src = [
             WORKING_SCALES, DEFAULT_WORKING_SCALE, PRIORITIES, SCORED,
             parseCharacterCsv, runBatch, templateCsv, parseScaleName,
             TEMPLATE_HEADERS, BODY_TYPES, GENDERS, DEFAULT_GENDER, pickBustPiece,
-            exportFileName, PRIORITIES_BY_GENDER, heightRange }`,
+            exportFileName, PRIORITIES_BY_GENDER, heightRange, templateHeaders }`,
 ].join('\n')
 
 const api = new Function('BODIES', 'console', src)(bodies, console)
@@ -313,6 +313,79 @@ check('each block uses that character\'s own scale',
 const batchCsv = api.rowsToCsv(out.rows)
 check('scaled values reach the file', batchCsv.includes('"263.33"'), true)
 check('per-character priority is stated', batchCsv.includes('"Least difference in Height"'), true)
+
+
+// ---------------------------------------------------------------------------
+// Batch upload, per section
+//
+// The upload has no Gender column - a run uses whichever section is on screen -
+// so the template and the validation have to follow it instead. Getting this
+// wrong is quiet: a male roster was rejected outright for want of a bust, and a
+// male run sorted on Waist was accepted and returned almost nothing.
+// ---------------------------------------------------------------------------
+console.log('\nBatch: the template follows the section')
+const tplOf = g => api.templateCsv(g).split('\n')
+const rowFor = (g, row) => [tplOf(g)[0], tplOf(g)[1], row].join('\n')
+
+check('female template asks for Bust', api.templateHeaders('Female')[3], 'Bust')
+check('male template asks for Chest', api.templateHeaders('Male')[3], 'Chest')
+check('  matching what the male export and cards call it', true, true)
+check('female hints require all four',
+  (tplOf('Female')[1].match(/Required \(in mm\)/g) || []).length, 4)
+check('male hints require only height',
+  (tplOf('Male')[1].match(/Required \(in mm\)/g) || []).length, 1)
+check('  and mark the rest optional',
+  (tplOf('Male')[1].match(/Optional \(in mm\)/g) || []).length, 3)
+check('female offers four priorities', /Required \(Height, Bust, Waist, Hips\)/.test(tplOf('Female')[1]), true)
+check('male offers only Height', /Required \(Height\)/.test(tplOf('Male')[1]), true)
+
+console.log('\nBatch: a male roster needs a height and nothing else')
+const mOnly = api.parseCharacterCsv(rowFor('Male', 'Ryu,1:6,1780,,,,Height,All'), 'Male')
+check('height alone is accepted', mOnly.jobs.length, 1)
+check('  with no complaints', mOnly.errors.length, 0)
+const mNoHeight = api.parseCharacterCsv(rowFor('Male', 'Ryu,1:6,,,,,Height,All'), 'Male')
+check('but height itself is still required', mNoHeight.jobs.length, 0)
+check('  and says so', /Height is required/.test(mNoHeight.errors.join(' ')), true)
+const mExtra = api.parseCharacterCsv(rowFor('Male', 'Ryu,1:6,1780,1260,1000,1050,Height,All'), 'Male')
+check('optional measurements are kept when given',
+  JSON.stringify(mExtra.jobs[0].character),
+  JSON.stringify({ name: 'Ryu', height: 1780, bust: 1260, waist: 1000, hips: 1050 }))
+
+console.log('\nBatch: a female roster is unchanged')
+const fShort = api.parseCharacterCsv(rowFor('Female', 'Kasumi,1:6,1580,,,,Bust,3'), 'Female')
+check('still needs all four', fShort.jobs.length, 0)
+check('  naming each one missing',
+  ['Bust', 'Waist', 'Hips'].every(k => fShort.errors.join(' ').includes(k + ' is required')), true)
+const fFull = api.parseCharacterCsv(rowFor('Female', 'Kasumi,1:6,1580,890,540,840,Bust,3'), 'Female')
+check('a complete row is accepted', fFull.jobs.length, 1)
+
+console.log('\nBatch: priorities are limited to what the section can sort on')
+const mWaist = api.parseCharacterCsv(rowFor('Male', 'Ryu,1:6,1780,,,,Waist,All'), 'Male')
+check('male rejects Waist', mWaist.jobs.length, 0)
+check('  and explains why',
+  /male bodies can only be sorted on Height/.test(mWaist.errors.join(' ')), true)
+const fWaist = api.parseCharacterCsv(rowFor('Female', 'Kasumi,1:6,1580,890,540,840,Waist,3'), 'Female')
+check('female still accepts Waist', fWaist.jobs.length, 1)
+
+console.log('\nBatch: a template from either section uploads in either')
+check('female file on a male run',
+  api.parseCharacterCsv(rowFor('Female', 'Ryu,1:6,1780,,,,Height,All'), 'Male').jobs.length, 1)
+check('male file on a female run',
+  api.parseCharacterCsv(rowFor('Male', 'Kasumi,1:6,1580,890,540,840,Bust,3'), 'Female').jobs.length, 1)
+
+console.log('\nBatch: millimetres are still enforced in both')
+const mCm = api.parseCharacterCsv(rowFor('Male', 'Ryu,1:6,178,,,,Height,All'), 'Male')
+check('a centimetre height aborts the male upload', mCm.fatal, true)
+check('  and suggests the millimetre figure', /Did you mean 1780/.test(mCm.errors.join(' ')), true)
+
+console.log('\nBatch: the male run produces a male file')
+const mOut = api.runBatch(mOnly.jobs, undefined, 'Male')
+const mCsv = api.rowsToCsv(mOut.rows)
+check('one character, one male body', `${mOut.characters}/${mOut.resultRows}`, `1/${MALE}`)
+check('the file says Chest', mCsv.includes('Chest - Body Measurement (mm)'), true)
+check('  and not Bust', /"Bust - Body Measurement/.test(mCsv), false)
+check('it carries Build', mCsv.includes('"Build"'), true)
+check('and states the catalogue', mCsv.includes('"Gender","Male"'), true)
 
 console.log('\nBatch: wording matches the app')
 // The batch reuses buildExportRows, so its labels are the single export's
