@@ -35,7 +35,7 @@ const HINTS = {
   'Material': 'Required - TPE, Silicone or Plastic',
   'Gender': 'REQUIRED - exactly "Female" or "Male". Decides which catalogue the body lands in',
   'Body Type': 'REQUIRED - exactly "Seamless" or "Jointed", nothing else',
-  'Build': 'MALE ONLY, and required there. One of: Super Tall/Athletic, Super Heavily Muscled, Heavily Muscled, Average Muscle Build, Average Build, Athletic, Asian Athletic, Heavy. Leave blank for female bodies',
+  'Build': 'MALE ONLY, and required there. One of: Super Tall/Athletic, Super Heavily Muscled, Heavily Muscled, Average Muscle Build, Average Build, Athletic, Asian Athletic, Asian Average, Heavy. Leave blank for female bodies',
   'Neck Peg Min - Measured (mm)': 'Your own measurement, if you have the body. N/A if not',
   'Neck Peg Max - Measured (mm)': 'Your own measurement, if you have the body. N/A if not',
   'Neck Peg Max - Mfr Stated (mm)': "The manufacturer's published figure, taken as the TALLEST setting. Male bodies: this is the one measurement that matters, height is derived from it",

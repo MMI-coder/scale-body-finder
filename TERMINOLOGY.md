@@ -204,6 +204,10 @@ them if you would rather write it your own way.
 *Needs to say:* what it actually denotes. The hobby knows this term; someone reading the glossary cold will not. Worth being explicit about whether it describes a build, a market, or a manufacturer's line.
 **Definition:** Bodies that fit the stereotypical tall, fit, muscular Asian male. Very idealized.
 
+### Asian Average
+*Needs to say:* how it differs from Asian Athletic, which you defined as the "very idealized" one. Presumably the everyday build rather than the idealized one — but also worth saying whether the distinction is about physique, proportions, or the market a body is made for.
+**Definition:**
+
 ### Heavy
 *Needs to say:* whether this means heavyset, tall and broad, or overweight — and how it sits against Average Build.
 **Definition:** Bodies that fit the heavier set builds. Can range in height, but have a bit of size in either the gut or overall. Google Eddie Hall for the extreme of this.

@@ -15,7 +15,7 @@
 
 const fs = require('fs')
 const path = require('path')
-const { loadBodies, parseCsv } = require('./build-body-data')
+const { loadBodies, parseCsv, BUILDS } = require('./build-body-data')
 
 const ROOT = path.join(__dirname, '..')
 
@@ -408,6 +408,9 @@ check('every body has a valid Gender',
   bodies.filter(b => !api.GENDERS.includes(b.gender)).map(b => b.code).join(',') || '(all valid)',
   '(all valid)')
 check('female + male accounts for every body', FEMALE + MALE, bodies.length)
+check('every build is one the importer accepts',
+  bodies.filter(b => b.build && !BUILDS.includes(b.build)).map(b => b.code).join(',') || '(all valid)',
+  '(all valid)')
 check('Build is male-only',
   bodies.filter(b => b.gender === 'Female' && b.build != null).length, 0)
 // A Body Type matching neither name is filtered out of both sections and never

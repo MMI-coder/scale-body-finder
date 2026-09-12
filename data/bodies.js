@@ -56,6 +56,7 @@ const IMAGES = {
   "WB AT020.jpg": require("../images/WB AT020.jpg"),
   "WB AT027.jpg": require("../images/WB AT027.jpg"),
   "WB AT030.jpg": require("../images/WB AT030.jpg"),
+  "WB AT042.jpg": require("../images/WB AT042.jpg"),
   "WB AT044.jpg": require("../images/WB AT044.jpg"),
   "WorldBox AT-201.jpg": require("../images/WorldBox AT-201.jpg"),
   "WorldBox AT-203.jpg": require("../images/WorldBox AT-203.jpg"),
@@ -1739,6 +1740,41 @@ export const BODIES = [
     },
     "imageW": 1200,
     "imageH": 1200
+  },
+  {
+    "code": "AT042",
+    "name": "AT042",
+    "manufacturer": "WorldBox",
+    "material": "Plastic",
+    "gender": "Male",
+    "bodyType": "Jointed",
+    "build": "Asian Average",
+    "bustPiece": null,
+    "pegMin": null,
+    "pegMax": null,
+    "pegMfr": null,
+    "head": null,
+    "heightMin": null,
+    "heightMax": 285,
+    "bust": null,
+    "underbust": null,
+    "waist": null,
+    "hips": null,
+    "shoulder": null,
+    "arm": null,
+    "inseam": null,
+    "feet": "Removable",
+    "image": "WB AT042.jpg",
+    "notes": "Height is an estimate based on available data",
+    "headSize": null,
+    "heightsByHead": null,
+    "heightSource": "measured",
+    "maleHeight": {
+      "min": 285,
+      "max": 285
+    },
+    "imageW": 900,
+    "imageH": 1198
   }
 ]
 

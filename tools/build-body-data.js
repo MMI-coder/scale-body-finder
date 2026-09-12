@@ -150,6 +150,7 @@ const BUILDS = [
   'Average Build',
   'Athletic',
   'Asian Athletic',
+  'Asian Average',
   'Heavy',
 ]
 
@@ -557,5 +558,5 @@ if (problems.length) {
 console.log(`\nwrote ${path.relative(ROOT, OUT)}`)
 }
 
-module.exports = { loadBodies, parseCsv }
+module.exports = { loadBodies, parseCsv, BUILDS, GENDERS, BODY_TYPES }
 if (require.main === module) main()
