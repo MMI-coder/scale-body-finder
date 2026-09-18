@@ -218,6 +218,7 @@ const HEIGHT_ESTIMATED_FROM = {
   'VCD-02': 'S07C',
   'VCD-06': 'S07C',
   'VCD-07': 'S07C',
+  'VCD-08': 'S07C',
 }
 
 const blank = v => v == null || v.trim() === '' || v.trim().toUpperCase() === 'N/A'

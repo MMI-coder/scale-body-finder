@@ -1046,7 +1046,7 @@ export const BODIES = [
     "bustPiece": null,
     "pegMin": null,
     "pegMax": null,
-    "pegMfr": 265,
+    "pegMfr": 260,
     "head": null,
     "heightMin": null,
     "heightMax": null,
@@ -1060,11 +1060,26 @@ export const BODIES = [
     "feet": "Removable",
     "image": "VeryCool VCD-08.jpg",
     "notes": null,
-    "headSize": null,
-    "heightSource": null,
-    "heightsByHead": null,
+    "headSize": 38,
+    "heightSource": "estimated",
+    "heightsByHead": {
+      "38": {
+        "min": 274,
+        "max": 280
+      },
+      "37.5": {
+        "min": 273.5,
+        "max": 279.5
+      },
+      "38.5": {
+        "min": 274.5,
+        "max": 280.5
+      }
+    },
     "imageW": 2910,
-    "imageH": 2160
+    "imageH": 2160,
+    "heightEstimatedFrom": "S07C",
+    "manufacturerHeight": null
   },
   {
     "code": "LSJS-TS01",
