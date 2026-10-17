@@ -35,7 +35,8 @@ const src = [
             WORKING_SCALES, DEFAULT_WORKING_SCALE, PRIORITIES, SCORED,
             parseCharacterCsv, runBatch, templateCsv, parseScaleName,
             TEMPLATE_HEADERS, BODY_TYPES, GENDERS, DEFAULT_GENDER, pickBustPiece,
-            exportFileName, PRIORITIES_BY_GENDER, heightRange, templateHeaders }`,
+            exportFileName, PRIORITIES_BY_GENDER, heightRange, templateHeaders,
+            MALE_CATALOGUE }`,
 ].join('\n')
 
 const api = new Function('BODIES', 'console', src)(bodies, console)
@@ -45,6 +46,40 @@ const SEAMLESS = bodies.filter(b => b.gender === 'Female' && b.bodyType === 'Sea
 const JOINTED = bodies.filter(b => b.gender === 'Female' && b.bodyType === 'Jointed').length
 const FEMALE = bodies.filter(b => b.gender === 'Female').length
 const MALE = bodies.filter(b => b.gender === 'Male').length
+
+/**
+ * Male fixtures.
+ *
+ * The male catalogue is parked (parked/README.md), so these are the only male
+ * bodies in the build. Everything that exercises a male code path runs against
+ * them, which is what stops that code rotting while it is switched off.
+ *
+ * peg 295, published, therefore the tallest setting.
+ *   seamless -> hips take 5 off the bottom, head adds 11..15  => 301..310
+ *   jointed  -> fixed height, head adds 11..15                => 306..310
+ */
+// peg 295, published, therefore the tallest setting.
+//   seamless -> hips take 5 off the bottom, head adds 11..15  => 301..310
+//   jointed  -> fixed height, head adds 11..15                => 306..310
+const maleBody = (over) => ({
+  manufacturer: 'TestCo', name: over.code, code: over.code,
+  gender: 'Male', bodyType: 'Seamless', build: 'Athletic', material: 'TPE',
+  bust: null, underbust: null, waist: null, hips: null,
+  heightsByHead: null, headSize: null, manufacturerHeight: null,
+  feet: 'Removable', notes: null, ...over,
+})
+const derive = (peg, type) => {
+  const low = type === 'Seamless' ? peg - 5 : peg
+  return { min: low + 11, max: peg + 15 }
+}
+
+const mSeamless = maleBody({ code: 'M-SEAM', bodyType: 'Seamless', maleHeight: derive(295, 'Seamless') })
+const mJointed  = maleBody({ code: 'M-JOINT', bodyType: 'Jointed', build: 'Heavy', maleHeight: derive(292, 'Jointed') })
+const mMeasured = maleBody({ code: 'M-MEAS', bodyType: 'Seamless', build: 'Heavy', maleHeight: { min: 308, max: 308 } })
+const mFull     = maleBody({ code: 'M-FULL', bodyType: 'Seamless', build: 'Average Build',
+                             maleHeight: derive(293, 'Seamless'), bust: 160, waist: 120, hips: 150 })
+const maleSet = [mSeamless, mJointed, mMeasured, mFull,
+                 ...bodies.filter(b => b.gender === 'Female')]
 
 let failures = 0
 function check(label, actual, expected, tol = 0) {
@@ -379,9 +414,9 @@ check('a centimetre height aborts the male upload', mCm.fatal, true)
 check('  and suggests the millimetre figure', /Did you mean 1780/.test(mCm.errors.join(' ')), true)
 
 console.log('\nBatch: the male run produces a male file')
-const mOut = api.runBatch(mOnly.jobs, undefined, 'Male')
+const mOut = api.runBatch(mOnly.jobs, maleSet, 'Male')
 const mCsv = api.rowsToCsv(mOut.rows)
-check('one character, one male body', `${mOut.characters}/${mOut.resultRows}`, `1/${MALE}`)
+check('one character, four fixture bodies', `${mOut.characters}/${mOut.resultRows}`, '1/4')
 check('the file says Chest', mCsv.includes('Chest - Body Measurement (mm)'), true)
 check('  and not Bust', /"Bust - Body Measurement/.test(mCsv), false)
 check('it carries Build', mCsv.includes('"Build"'), true)
@@ -427,7 +462,12 @@ const femaleOut = api.compareBodies(HONOKA, { workingScale: 6, priority: 'bust',
 const seamlessOut = femaleOut
 const jointedOut = femaleOut
 
-check('catalogues offered', api.GENDERS.join(','), 'Female,Male')
+check('male catalogue is parked', api.MALE_CATALOGUE, false)
+check('  so only one catalogue is offered', api.GENDERS.join(','), 'Female')
+check('  and the engine still knows how to search a male one',
+  api.compareBodies({ name: 'x', height: 1830 },
+    { workingScale: 6, priority: 'height', gender: 'Male', bodies: maleSet }).results.length, 4)
+check('  with male priorities intact', api.PRIORITIES_BY_GENDER.Male.join(','), 'height')
 check('female is the default', api.DEFAULT_GENDER, 'Female')
 check('every female body is returned together', femaleOut.results.length, FEMALE)
 check('  seamless among them', femaleOut.results.filter(r => r.body.bodyType === 'Seamless').length, SEAMLESS)
@@ -519,28 +559,6 @@ check('  and both constructions in it',
 // ---------------------------------------------------------------------------
 console.log('\nMale: height is derived from the neck peg')
 
-// peg 295, published, therefore the tallest setting.
-//   seamless -> hips take 5 off the bottom, head adds 11..15  => 301..310
-//   jointed  -> fixed height, head adds 11..15                => 306..310
-const maleBody = (over) => ({
-  manufacturer: 'TestCo', name: over.code, code: over.code,
-  gender: 'Male', bodyType: 'Seamless', build: 'Athletic', material: 'TPE',
-  bust: null, underbust: null, waist: null, hips: null,
-  heightsByHead: null, headSize: null, manufacturerHeight: null,
-  feet: 'Removable', notes: null, ...over,
-})
-const derive = (peg, type) => {
-  const low = type === 'Seamless' ? peg - 5 : peg
-  return { min: low + 11, max: peg + 15 }
-}
-
-const mSeamless = maleBody({ code: 'M-SEAM', bodyType: 'Seamless', maleHeight: derive(295, 'Seamless') })
-const mJointed  = maleBody({ code: 'M-JOINT', bodyType: 'Jointed', build: 'Heavy', maleHeight: derive(292, 'Jointed') })
-const mMeasured = maleBody({ code: 'M-MEAS', bodyType: 'Seamless', build: 'Heavy', maleHeight: { min: 308, max: 308 } })
-const mFull     = maleBody({ code: 'M-FULL', bodyType: 'Seamless', build: 'Average Build',
-                             maleHeight: derive(293, 'Seamless'), bust: 160, waist: 120, hips: 150 })
-const maleSet = [mSeamless, mJointed, mMeasured, mFull,
-                 ...bodies.filter(b => b.gender === 'Female')]
 
 check('seamless male window is 9mm',
   `${mSeamless.maleHeight.min}-${mSeamless.maleHeight.max}`, '301-310')

@@ -189,20 +189,26 @@ export default function Index() {
 
                 <Spacer height={22} />
 
-                {/* ---------------- which catalogue ---------------- */}
-                <ThemedCard>
-                    <ThemedText style={styles.controlName}>Gender</ThemedText>
-                    <ThemedText style={[styles.label, { color: theme.muted }]}>
-                        Choose which kind of body you are shopping for. Only that kind is searched.
-                    </ThemedText>
-                    <SegmentedControl options={SECTION_OPTIONS} value={gender} onChange={changeGender} />
-                    <Spacer height={10} />
-                    <ThemedText style={[styles.sub, { color: theme.muted, marginTop: 0 }]}>
-                        {SECTION_BLURB[gender]}
-                    </ThemedText>
-                </ThemedCard>
+                {/* ---------------- which catalogue ----------------
+                    Only shown when there is more than one to choose between.
+                    The male catalogue is parked; see parked/README.md. */}
+                {SECTION_OPTIONS.length > 1 ? (
+                    <>
+                        <ThemedCard>
+                            <ThemedText style={styles.controlName}>Gender</ThemedText>
+                            <ThemedText style={[styles.label, { color: theme.muted }]}>
+                                Choose which kind of body you are shopping for. Only that kind is searched.
+                            </ThemedText>
+                            <SegmentedControl options={SECTION_OPTIONS} value={gender} onChange={changeGender} />
+                            <Spacer height={10} />
+                            <ThemedText style={[styles.sub, { color: theme.muted, marginTop: 0 }]}>
+                                {SECTION_BLURB[gender]}
+                            </ThemedText>
+                        </ThemedCard>
 
-                <Spacer height={20} />
+                        <Spacer height={20} />
+                    </>
+                ) : null}
 
                 {/* ---------------- how to use ---------------- */}
                 <ThemedCard>
@@ -347,7 +353,7 @@ export default function Index() {
                         {/* ---------------- results ---------------- */}
                         <ThemedText style={styles.h2}>Results</ThemedText>
                         <ThemedText style={[styles.sub, { color: theme.muted }]}>
-                            {outcome.results.length} {gender.toLowerCase()} result
+                            {outcome.results.length}{SECTION_OPTIONS.length > 1 ? ' ' + gender.toLowerCase() : ''} result
                             {outcome.results.length === 1 ? '' : 's'} based on the data
                             you provided, compared at {scaleLabel} and sorted by{' '}
                             {cap(sort)} difference in {cap(activePriority)}.

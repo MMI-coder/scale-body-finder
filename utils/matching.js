@@ -33,7 +33,16 @@ export const SORTS = ['least', 'greatest']
  * split moved to Gender and Seamless/Jointed became a note on the card. Female
  * results now mix the two, which they did not before.
  */
-export const GENDERS = ['Female', 'Male']
+/**
+ * The male catalogue is parked - see parked/README.md.
+ *
+ * Switched off rather than deleted: the bodies and their images live in
+ * parked/, and every male code path below is still here and still tested. Set
+ * this true and move the files back to have it again.
+ */
+export const MALE_CATALOGUE = false
+
+export const GENDERS = MALE_CATALOGUE ? ['Female', 'Male'] : ['Female']
 export const DEFAULT_GENDER = 'Female'
 
 /** Construction. Reported, never filtered on. */
