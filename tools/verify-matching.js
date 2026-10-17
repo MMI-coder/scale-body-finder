@@ -36,7 +36,7 @@ const src = [
             parseCharacterCsv, runBatch, templateCsv, parseScaleName,
             TEMPLATE_HEADERS, BODY_TYPES, GENDERS, DEFAULT_GENDER, pickBustPiece,
             exportFileName, PRIORITIES_BY_GENDER, heightRange, templateHeaders,
-            MALE_CATALOGUE }`,
+            MALE_CATALOGUE, BATCH_RESULT_COUNT }`,
 ].join('\n')
 
 const api = new Function('BODIES', 'console', src)(bodies, console)
@@ -96,9 +96,9 @@ check('6 -> name', api.scaleName(6), '1:6')
 check('5.5 -> name', api.scaleName(5.5), '1:5 1/2')
 check('working scales are all in range', api.WORKING_SCALES.every(api.scaleInRange), true)
 check('default working scale', api.DEFAULT_WORKING_SCALE, 6)
-check('scale list starts at 1:5 1/2', api.scaleName(api.WORKING_SCALES[0]), '1:5 1/2')
-check('scale list ends at 1:6 1/2', api.scaleName(api.WORKING_SCALES[api.WORKING_SCALES.length - 1]), '1:6 1/2')
-check('scale list is 1/64 steps', api.WORKING_SCALES.length, 65)
+check('scale list starts at 1:5', api.scaleName(api.WORKING_SCALES[0]), '1:5')
+check('scale list ends at 1:7', api.scaleName(api.WORKING_SCALES[api.WORKING_SCALES.length - 1]), '1:7')
+check('scale list is 1/64 steps across two whole scales', api.WORKING_SCALES.length, 2 * 64 + 1)
 check('1:6 is in the list', api.WORKING_SCALES.includes(6), true)
 
 // --- the Example character, the case from the screenshots -------------------
@@ -298,8 +298,21 @@ check('hint row is skipped automatically', good.jobs.length, 3)
 check('no errors on a clean file', good.errors.length, 0)
 check('per-row scale kept', good.jobs.map(j => j.workingScale).join(','), '6,5.75,6.25')
 check('per-row priority kept', good.jobs.map(j => j.priority).join(','), 'bust,height,hips')
-check('All becomes unlimited', good.jobs[2].count, null)
-check('3 and 5 kept', `${good.jobs[0].count},${good.jobs[1].count}`, '3,5')
+// The per-row count is gone. A file gets the top ten per character; the screen
+// gets everything. Nobody ever wanted a top three in a spreadsheet.
+check('every row gets the same count', good.jobs.map(j => j.count).join(','),
+  good.jobs.map(() => api.BATCH_RESULT_COUNT).join(','))
+check('  which is ten', api.BATCH_RESULT_COUNT, 10)
+check('the template no longer asks for it',
+  api.templateHeaders('Female').includes('Number of Results Requested'), false)
+check('  nor mentions 3, 5 or All', /3, 5, or All/.test(api.templateCsv('Female')), false)
+
+console.log('\nBatch: an older template still uploads')
+const OLDHEAD = 'Character Name,Scale Reference Selector,Height,Bust,Waist,Hips,Measurement Priority Field,Number of Results Requested'
+const oldFile = [OLDHEAD, 'Kasumi,1:6,1580,890,540,840,Bust,3'].join('\n')
+const oldRun = api.parseCharacterCsv(oldFile, 'Female')
+check('the stale column is ignored, not rejected', oldRun.jobs.length, 1)
+check('  and it gets the current count', oldRun.jobs[0].count, api.BATCH_RESULT_COUNT)
 
 console.log('\nBatch: centimetres are rejected outright')
 const cm = api.parseCharacterCsv(csvOf(
@@ -331,7 +344,7 @@ const out = api.runBatch(good.jobs, bodies)
 const firstCell = out.rows.map(r => (r[0] == null ? '' : String(r[0])))
 check('file title', out.rows[0][0], 'Scale Body Finder - batch results')
 check('three characters processed', out.characters, 3)
-check(`3 + 5 + ${FEMALE} results`, out.resultRows, 3 + 5 + FEMALE)
+check('ten per character', out.resultRows, 3 * api.BATCH_RESULT_COUNT)
 check('a block per character', firstCell.filter(c => c === 'Scale Body Finder - results').length, 3)
 check('each block names its character', firstCell.filter(c => c === 'Character').length, 3)
 

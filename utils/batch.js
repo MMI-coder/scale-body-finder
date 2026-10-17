@@ -42,9 +42,17 @@ export function templateHeaders(gender = DEFAULT_GENDER) {
     'Waist',
     'Hips',
     'Measurement Priority Field',
-    'Number of Results Requested',
   ]
 }
+
+/**
+ * How many bodies a batch run returns per character.
+ *
+ * The template used to carry this per row - 3, 5 or All - and nobody ever
+ * wanted anything but the top of the list. On screen you get everything; in a
+ * file you want a shortlist you can read.
+ */
+export const BATCH_RESULT_COUNT = 10
 
 /** Kept for the female shape, which is what existing files were built against. */
 export const TEMPLATE_HEADERS = templateHeaders('Female')
@@ -70,7 +78,6 @@ function templateHints(gender) {
     mm('Waist'),
     mm('Hips'),
     `Required (${names.join(', ')})`,
-    'Required (3, 5, or All)',
   ]
 }
 
@@ -236,21 +243,13 @@ export function parseCharacterCsv(text, gender = DEFAULT_GENDER) {
       )
     } else priority = priorityRaw
 
-    // --- how many results ---
-    const countRaw = (r[at('Number of Results Requested')] || '').trim().toLowerCase()
-    let count
-    if (!countRaw) rowErrors.push(`${label}: Number of Results Requested is required.`)
-    else if (countRaw === 'all') count = null
-    else if (countRaw === '3' || countRaw === '5') count = Number(countRaw)
-    else rowErrors.push(`${label}: "${countRaw}" is not 3, 5 or All.`)
-
     if (rowErrors.length) { errors.push(...rowErrors); return }
 
     jobs.push({
       character: { name, ...measures },
       workingScale,
       priority,
-      count,
+      count: BATCH_RESULT_COUNT,
       line: lineNo,
     })
   })

@@ -144,6 +144,40 @@ const EXAMPLES = {
 const cell = v => (/[",\n]/.test(String(v ?? '')) ? `"${String(v).replace(/"/g, '""')}"` : String(v ?? ''))
 const toCsv = rows => rows.map(r => r.map(cell).join(',')).join('\r\n') + '\r\n'
 
+/**
+ * The body-addition template, as rows.
+ *
+ * Shared so the file written to disk and the copy the app offers for download
+ * are the same thing. A second hand-kept list is exactly how the schema drifted
+ * last time.
+ */
+function templateRows(header) {
+  return [
+    header,
+    header.map(h => HINTS[h] ?? '(no guidance written for this column)'),
+    header.map(h => EXAMPLES.seamless[h] ?? ''),
+    header.map(h => EXAMPLES.jointed[h] ?? ''),
+    header.map(h => EXAMPLES.male[h] ?? ''),
+  ]
+}
+
+/** Checks the worked examples against the rules the importer enforces. */
+function checkExamples(log) {
+  const GEND = ['Female', 'Male']
+  const BT = ['Seamless', 'Jointed']
+  let bad = 0
+  for (const [name, ex] of Object.entries(EXAMPLES)) {
+    if (!GEND.includes(ex['Gender'])) { log(`example "${name}" has Gender "${ex['Gender']}"`); bad++ }
+    if (!BT.includes(ex['Body Type'])) { log(`example "${name}" has Body Type "${ex['Body Type']}"`); bad++ }
+    if ((ex['Gender'] === 'Male') !== Boolean(ex['Build'])) {
+      log(`example "${name}" Build should be ${ex['Gender'] === 'Male' ? 'set' : 'blank'}`); bad++
+    }
+  }
+  return bad
+}
+
+module.exports = { HINTS, EXAMPLES, templateRows, checkExamples, toCsv, cell }
+
 function main() {
   const outDir = process.argv[2] ? path.resolve(process.argv[2]) : path.join(ROOT, 'exports')
   fs.mkdirSync(outDir, { recursive: true })
@@ -164,14 +198,8 @@ function main() {
     console.log('Add them to HINTS in tools/export-catalogue.js.')
     process.exitCode = 1
   }
-  const templatePath = path.join(outDir, 'Scale_Body_Finder_New_Body_Template.csv')
-  fs.writeFileSync(templatePath, '﻿' + toCsv([
-    header,
-    header.map(h => HINTS[h] ?? '(no guidance written for this column)'),
-    header.map(h => EXAMPLES.seamless[h] ?? ''),
-    header.map(h => EXAMPLES.jointed[h] ?? ''),
-    header.map(h => EXAMPLES.male[h] ?? ''),
-  ]), 'utf8')
+  const templatePath = path.join(outDir, 'Scale Body Addition Template.csv')
+  fs.writeFileSync(templatePath, '﻿' + toCsv(templateRows(header)), 'utf8')
 
   // The examples get copied, so a bad value in one would propagate. Check them
   // against the same lists the importer validates against.

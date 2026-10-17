@@ -104,11 +104,14 @@ export const SIXTH = 1 / 6
  *
  * A fixed list rather than free entry: everything downstream assumes a sane
  * scale, and there's no reason to let someone type 1:0.3 and get nonsense.
- * 1/64 steps between 1:5 1/2 and 1:6 1/2 - the same fractions as the scale
- * chart, narrowed to the band these bodies actually land in.
+ * 1/64 steps between 1:5 and 1:7 - the same fractions as the scale chart.
+ *
+ * Widened from 1:5 1/2 - 1:6 1/2 in October 2026. The narrow band covered where
+ * the bodies sit; it did not cover where characters sit, and a short character
+ * compared at the bottom of the old range still ran out of room.
  */
-export const WORKING_SCALE_MIN = 5.5
-export const WORKING_SCALE_MAX = 6.5
+export const WORKING_SCALE_MIN = 5
+export const WORKING_SCALE_MAX = 7
 export const WORKING_SCALES = (() => {
   const out = []
   for (let n = WORKING_SCALE_MIN * SCALE_STEPS; n <= WORKING_SCALE_MAX * SCALE_STEPS; n++) {

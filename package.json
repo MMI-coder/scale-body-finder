@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "expo-router/entry",
   "scripts": {
-    "data": "node tools/build-body-data.js && node tools/build-glossary.js",
+    "data": "node tools/build-body-data.js && node tools/build-glossary.js && node tools/build-body-template.js",
     "verify": "node tools/verify-matching.js",
     "prestart": "npm run data",
     "start": "expo start",

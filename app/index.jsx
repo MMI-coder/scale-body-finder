@@ -67,12 +67,6 @@ const SORT_OPTIONS = [
     { value: 'greatest', label: 'Greatest difference' },
 ]
 
-const COUNT_OPTIONS = [
-    { value: 3, label: '3' },
-    { value: 5, label: '5' },
-    { value: 0, label: 'All' },
-]
-
 const emptyValues = { height: '', bust: '', waist: '', hips: '' }
 
 /** Defined terms keep their capital in prose, so the page and the CSV agree. */
@@ -90,7 +84,6 @@ export default function Index() {
     const [priority, setPriority] = useState('bust')
     const [workingScale, setWorkingScale] = useState(DEFAULT_WORKING_SCALE)
     const [sort, setSort] = useState('least')
-    const [count, setCount] = useState(3)
     const [expanded, setExpanded] = useState({})
 
     const columns = width >= 1250 ? 3 : width >= 850 ? 2 : 1
@@ -160,10 +153,10 @@ export default function Index() {
     }, [values, unit, name])
 
     const ready = needed.every((k) => character[k])
-    const opts = { workingScale, priority: activePriority, sort, count: count || null, gender, bodies: BODIES }
+    const opts = { workingScale, priority: activePriority, sort, count: null, gender, bodies: BODIES }
     const outcome = useMemo(
         () => (ready ? compareBodies(character, opts) : null),
-        [character, workingScale, activePriority, sort, count, gender, ready]
+        [character, workingScale, activePriority, sort, gender, ready]
     )
 
     const onExport = async () => {
@@ -288,10 +281,6 @@ export default function Index() {
                         <View>
                             <ThemedText style={[styles.label, { color: theme.muted }]}>Sort by</ThemedText>
                             <SegmentedControl options={SORT_OPTIONS} value={sort} onChange={setSort} />
-                        </View>
-                        <View>
-                            <ThemedText style={[styles.label, { color: theme.muted }]}>Show</ThemedText>
-                            <SegmentedControl options={COUNT_OPTIONS} value={count} onChange={setCount} />
                         </View>
                     </View>
 

@@ -19,4 +19,8 @@ export function saveCsv() {
   throw new Error(message)
 }
 
+export function readDroppedFile() {
+  return Promise.reject(new Error(message))
+}
+
 export const BATCH_SUPPORTED = false
