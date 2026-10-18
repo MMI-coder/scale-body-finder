@@ -185,13 +185,32 @@ const MALE_HIP_TRAVEL = 5
  * other two options arithmetic rather than data entry, which is worth doing:
  * six hand-kept columns per body would be six more things to drift.
  */
-function heightsByHead(measuredHead, min, max) {
-  if (measuredHead == null || min == null || max == null) return null
+/**
+ * How much each head sculpt adds above the neck peg.
+ *
+ * Measured: a 38mm sculpt on an S07C gives 274mm over a 260mm peg. A clean 14,
+ * and the other two follow from it because head height adds 1:1 - the peg
+ * socket depth does not change between sizes.
+ *
+ * This replaced a per-body measured total. Those totals had the head adding
+ * anywhere from +14 to +20, which is head seating rather than real difference
+ * between bodies: the peg is the stable thing, so it is what gets measured to.
+ */
+const HEAD_ADDS = { 37.5: 13.5, 38: 14, 38.5: 14.5 }
+
+/**
+ * Height for each head sculpt, derived from the peg.
+ *
+ * The span between min and max is hip travel - real posable range - so it
+ * carries through unchanged. Only the head allowance differs between sizes,
+ * and only by half a millimetre either way.
+ */
+function heightsByHead(pegMin, pegMax) {
+  if (pegMin == null || pegMax == null) return null
   const round = n => Math.round(n * 100) / 100
   const out = {}
   for (const size of HEAD_SIZES) {
-    const delta = size - measuredHead
-    out[size] = { min: round(min + delta), max: round(max + delta) }
+    out[size] = { min: round(pegMin + HEAD_ADDS[size]), max: round(pegMax + HEAD_ADDS[size]) }
   }
   return out
 }
@@ -341,13 +360,16 @@ rows.slice(1).forEach((r, i) => {
     }
     // A null heightSource is already collected into the build's warning list.
   } else if ((body.headSize = parseHeadSize(body.head)) != null) {
+    // Naming a printed sculpt is what says "derive this from the peg". A body
+    // whose Head Used reads Manufacturer keeps their published figure instead,
+    // which is why TrickyMan's own 290-295 survives below.
     body.heightSource = 'measured'
-    body.heightsByHead = heightsByHead(body.headSize, body.heightMin, body.heightMax)
+    body.heightsByHead = heightsByHead(body.pegMin, body.pegMax)
     if (!HEAD_SIZES.includes(body.headSize)) {
       problems.push(`${code}: head size ${body.headSize}mm is not one of ${HEAD_SIZES.join('/')}`)
     }
     if (body.heightsByHead == null) {
-      problems.push(`${code}: has head size ${body.headSize}mm but no measured height range`)
+      problems.push(`${code}: names a ${body.headSize}mm sculpt but has no measured neck peg to derive from`)
     }
   } else if (body.heightMax != null) {
     body.heightSource = 'manufacturer'

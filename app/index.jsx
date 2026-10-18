@@ -22,7 +22,15 @@ import { Colors } from '../Constants/Colors'
 import { BODIES } from '../data/bodies'
 import { GLOSSARY } from '../data/glossary'
 import { exportResults } from '../utils/exportCsv'
-import { DEFAULT_GENDER, GENDERS, PRIORITIES_BY_GENDER, PROPORTIONS, compareBodies } from '../utils/matching'
+import {
+    DEFAULT_GENDER,
+    DEFAULT_HEAD_SIZE,
+    GENDERS,
+    HEAD_SIZES,
+    PRIORITIES_BY_GENDER,
+    PROPORTIONS,
+    compareBodies,
+} from '../utils/matching'
 import {
     DEFAULT_UNIT,
     DEFAULT_WORKING_SCALE,
@@ -62,6 +70,8 @@ const SECTION_BLURB = {
     Male: 'Male bodies, seamless and jointed together. Height is the question here - manufacturers rarely publish chest, waist or hips - so height is what these sort on, and each card carries a build so you can see whether it looks the part.',
 }
 
+const HEAD_OPTIONS = HEAD_SIZES.map((v) => ({ value: v, label: `${v}mm` }))
+
 const SORT_OPTIONS = [
     { value: 'least', label: 'Least difference' },
     { value: 'greatest', label: 'Greatest difference' },
@@ -81,6 +91,7 @@ export default function Index() {
     const { width } = useWindowDimensions()
 
     const [gender, setGender] = useState(DEFAULT_GENDER)
+    const [headSize, setHeadSize] = useState(DEFAULT_HEAD_SIZE)
     const [name, setName] = useState('')
     const [unit, setUnit] = useState(DEFAULT_UNIT)
     const [values, setValues] = useState(emptyValues)
@@ -156,10 +167,10 @@ export default function Index() {
     }, [values, unit, name])
 
     const ready = needed.every((k) => character[k])
-    const opts = { workingScale, priority: activePriority, sort, count: null, gender, bodies: BODIES }
+    const opts = { workingScale, priority: activePriority, sort, count: null, gender, headSize, bodies: BODIES }
     const outcome = useMemo(
         () => (ready ? compareBodies(character, opts) : null),
-        [character, workingScale, activePriority, sort, gender, ready]
+        [character, workingScale, activePriority, sort, gender, headSize, ready]
     )
 
     const onExport = async () => {
@@ -324,6 +335,16 @@ export default function Index() {
                         onChange={setWorkingScale}
                         width={190}
                     />
+
+                    <Spacer height={18} />
+                    <ThemedText style={styles.controlName}>Head Sculpt</ThemedText>
+                    <ThemedText style={[styles.label, { color: theme.muted }]}>
+                        Which sculpt you intend to fit. Height is measured to the top of the neck
+                        peg, so the head you choose sets every body's height at once — a shorter
+                        character wants the smaller sculpt. Bodies listed with a manufacturer's own
+                        height are unaffected.
+                    </ThemedText>
+                    <SegmentedControl options={HEAD_OPTIONS} value={headSize} onChange={setHeadSize} />
                 </ThemedCard>
 
                 <Spacer height={22} />

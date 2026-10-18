@@ -143,16 +143,16 @@ export const BODIES = [
     "heightSource": "measured",
     "heightsByHead": {
       "38": {
-        "min": 277,
-        "max": 283
+        "min": 276,
+        "max": 282
       },
       "37.5": {
-        "min": 276.5,
-        "max": 282.5
+        "min": 275.5,
+        "max": 281.5
       },
       "38.5": {
-        "min": 277.5,
-        "max": 283.5
+        "min": 276.5,
+        "max": 282.5
       }
     },
     "imageW": 3835,
@@ -192,16 +192,16 @@ export const BODIES = [
     "heightSource": "measured",
     "heightsByHead": {
       "38": {
-        "min": 280,
-        "max": 283
+        "min": 279,
+        "max": 282
       },
       "37.5": {
-        "min": 279.5,
-        "max": 282.5
+        "min": 278.5,
+        "max": 281.5
       },
       "38.5": {
-        "min": 280.5,
-        "max": 283.5
+        "min": 279.5,
+        "max": 282.5
       }
     },
     "imageW": 3839,
@@ -241,16 +241,16 @@ export const BODIES = [
     "heightSource": "measured",
     "heightsByHead": {
       "38": {
-        "min": 280,
-        "max": 284
+        "min": 278,
+        "max": 282
       },
       "37.5": {
-        "min": 279.5,
-        "max": 283.5
+        "min": 277.5,
+        "max": 281.5
       },
       "38.5": {
-        "min": 280.5,
-        "max": 284.5
+        "min": 278.5,
+        "max": 282.5
       }
     },
     "imageW": 3839,
@@ -290,15 +290,15 @@ export const BODIES = [
     "heightSource": "measured",
     "heightsByHead": {
       "38": {
-        "min": 278,
+        "min": 276,
         "max": 282
       },
       "37.5": {
-        "min": 277.5,
+        "min": 275.5,
         "max": 281.5
       },
       "38.5": {
-        "min": 278.5,
+        "min": 276.5,
         "max": 282.5
       }
     },
@@ -339,16 +339,16 @@ export const BODIES = [
     "heightSource": "measured",
     "heightsByHead": {
       "38": {
-        "min": 262.5,
-        "max": 267.5
+        "min": 259,
+        "max": 264
       },
       "37.5": {
-        "min": 262,
-        "max": 267
+        "min": 258.5,
+        "max": 263.5
       },
       "38.5": {
-        "min": 263,
-        "max": 268
+        "min": 259.5,
+        "max": 264.5
       }
     },
     "imageW": 3839,
@@ -388,16 +388,16 @@ export const BODIES = [
     "heightSource": "measured",
     "heightsByHead": {
       "38": {
-        "min": 263.5,
-        "max": 269.5
+        "min": 260,
+        "max": 266
       },
       "37.5": {
-        "min": 263,
-        "max": 269
+        "min": 259.5,
+        "max": 265.5
       },
       "38.5": {
-        "min": 264,
-        "max": 270
+        "min": 260.5,
+        "max": 266.5
       }
     },
     "imageW": 3839,
@@ -437,16 +437,16 @@ export const BODIES = [
     "heightSource": "measured",
     "heightsByHead": {
       "38": {
-        "min": 291.5,
-        "max": 297.5
+        "min": 286,
+        "max": 292
       },
       "37.5": {
-        "min": 291,
-        "max": 297
+        "min": 285.5,
+        "max": 291.5
       },
       "38.5": {
-        "min": 292,
-        "max": 298
+        "min": 286.5,
+        "max": 292.5
       }
     },
     "imageW": 3839,
@@ -486,16 +486,16 @@ export const BODIES = [
     "heightSource": "measured",
     "heightsByHead": {
       "38": {
-        "min": 260.5,
-        "max": 268.5
+        "min": 259,
+        "max": 267
       },
       "37.5": {
-        "min": 260,
-        "max": 268
+        "min": 258.5,
+        "max": 266.5
       },
       "38.5": {
-        "min": 261,
-        "max": 269
+        "min": 259.5,
+        "max": 267.5
       }
     },
     "imageW": 3839,
@@ -535,16 +535,16 @@ export const BODIES = [
     "heightSource": "measured",
     "heightsByHead": {
       "38": {
-        "min": 278.5,
-        "max": 284.5
+        "min": 276,
+        "max": 282
       },
       "37.5": {
-        "min": 278,
-        "max": 284
+        "min": 275.5,
+        "max": 281.5
       },
       "38.5": {
-        "min": 279,
-        "max": 285
+        "min": 276.5,
+        "max": 282.5
       }
     },
     "imageW": 3839,
@@ -584,16 +584,16 @@ export const BODIES = [
     "heightSource": "measured",
     "heightsByHead": {
       "38": {
-        "min": 291.5,
-        "max": 297.5
+        "min": 286,
+        "max": 292
       },
       "37.5": {
-        "min": 291,
-        "max": 297
+        "min": 285.5,
+        "max": 291.5
       },
       "38.5": {
-        "min": 292,
-        "max": 298
+        "min": 286.5,
+        "max": 292.5
       }
     },
     "imageW": 3839,
@@ -975,15 +975,15 @@ export const BODIES = [
     "heightSource": "measured",
     "heightsByHead": {
       "38": {
-        "min": 278,
+        "min": 276,
         "max": 284
       },
       "37.5": {
-        "min": 277.5,
+        "min": 275.5,
         "max": 283.5
       },
       "38.5": {
-        "min": 278.5,
+        "min": 276.5,
         "max": 284.5
       }
     },
@@ -1024,16 +1024,16 @@ export const BODIES = [
     "heightSource": "measured",
     "heightsByHead": {
       "38": {
-        "min": 284,
-        "max": 290
+        "min": 282,
+        "max": 288
       },
       "37.5": {
-        "min": 283.5,
-        "max": 289.5
+        "min": 281.5,
+        "max": 287.5
       },
       "38.5": {
-        "min": 284.5,
-        "max": 290.5
+        "min": 282.5,
+        "max": 288.5
       }
     },
     "imageW": 2266,
@@ -1299,16 +1299,16 @@ export const BODIES = [
     "heightSource": "measured",
     "heightsByHead": {
       "38": {
-        "min": 266,
-        "max": 266
+        "min": 262,
+        "max": 262
       },
       "37.5": {
-        "min": 265.5,
-        "max": 265.5
+        "min": 261.5,
+        "max": 261.5
       },
       "38.5": {
-        "min": 266.5,
-        "max": 266.5
+        "min": 262.5,
+        "max": 262.5
       }
     },
     "imageW": 850,
@@ -1370,16 +1370,16 @@ export const BODIES = [
     "heightSource": "measured",
     "heightsByHead": {
       "38": {
-        "min": 274,
-        "max": 274
+        "min": 270,
+        "max": 270
       },
       "37.5": {
-        "min": 273.5,
-        "max": 273.5
+        "min": 269.5,
+        "max": 269.5
       },
       "38.5": {
-        "min": 274.5,
-        "max": 274.5
+        "min": 270.5,
+        "max": 270.5
       }
     },
     "imageW": 750,
@@ -1441,16 +1441,16 @@ export const BODIES = [
     "heightSource": "measured",
     "heightsByHead": {
       "38": {
-        "min": 266,
-        "max": 266
+        "min": 262,
+        "max": 262
       },
       "37.5": {
-        "min": 265.5,
-        "max": 265.5
+        "min": 261.5,
+        "max": 261.5
       },
       "38.5": {
-        "min": 266.5,
-        "max": 266.5
+        "min": 262.5,
+        "max": 262.5
       }
     },
     "imageW": 900,

@@ -78,8 +78,31 @@ export const BODY_TYPES = ['Seamless', 'Jointed']
  * waist and hips are rarely stated - so height is the only thing there is
  * enough data to rank on. More can be added when the measurements exist.
  */
+/**
+ * Head sculpts, and which one the comparison uses.
+ *
+ * Height is derived from the neck peg plus a head, so which head you intend to
+ * fit changes every body's height at once. That makes it a choice about the
+ * character, not a property of a body - a short character wants the small
+ * sculpt, a tall one the large - so it lives next to the scale rather than
+ * being inherited per body from whatever happened to be used when measuring.
+ */
+export const HEAD_SIZES = [37.5, 38, 38.5]
+export const DEFAULT_HEAD_SIZE = 38
+
+/**
+ * What each catalogue can be sorted on.
+ *
+ * Height came off the female list in October 2026. It is the only measurement
+ * you can change after buying - hip pose, head sculpt, shoes - and ranking a
+ * purchase on the adjustable axis is backwards. It is still compared and still
+ * shown; it just stopped deciding the order.
+ *
+ * Male keeps it because male bodies are published with a peg height and little
+ * else. That catalogue is parked; see parked/README.md.
+ */
 export const PRIORITIES_BY_GENDER = {
-  Female: ['height', 'bust', 'waist', 'hips'],
+  Female: ['bust', 'waist', 'hips'],
   Male: ['height'],
 }
 
@@ -123,13 +146,14 @@ export function atSixth(character) {
 }
 
 /** The height range a body can actually be posed to, for its default head. */
-export function heightRange(body) {
+export function heightRange(body, headSize = null) {
   // Male heights are a span in their own right: the head allowance, plus hip
   // travel on a seamless body. Never keyed by head size - male sculpts have no
   // standard sizes to key on.
   if (body.maleHeight) return { min: body.maleHeight.min, max: body.maleHeight.max }
   if (body.heightsByHead) {
-    const r = body.heightsByHead[body.headSize]
+    // The chosen sculpt, falling back to whichever the body was measured with.
+    const r = body.heightsByHead[headSize] ?? body.heightsByHead[body.headSize]
     if (r) return { min: r.min, max: r.max }
   }
   // Measured travel, but with a head that has no known size - so a real range
@@ -149,8 +173,8 @@ export function heightRange(body) {
  * range, the body is pinned to whichever end is closest and the shortfall is
  * what's left over.
  */
-export function heightAgainst(body, targetHeight) {
-  const r = heightRange(body)
+export function heightAgainst(body, targetHeight, headSize = null) {
+  const r = heightRange(body, headSize)
   if (!r || targetHeight == null) return null
   if (targetHeight < r.min) return r.min
   if (targetHeight > r.max) return r.max
@@ -158,8 +182,8 @@ export function heightAgainst(body, targetHeight) {
 }
 
 /** The shortest height genuinely known for a body. Used for its closest scale. */
-export function heightAnchor(body) {
-  const r = heightRange(body)
+export function heightAnchor(body, headSize = null) {
+  const r = heightRange(body, headSize)
   return r ? r.min : null
 }
 
@@ -179,6 +203,7 @@ export function compareBodies(character, opts = {}) {
     sort = 'least',
     count = null,
     gender = DEFAULT_GENDER,
+    headSize = DEFAULT_HEAD_SIZE,
     bodies = BODIES,
   } = opts
 
@@ -209,7 +234,7 @@ export function compareBodies(character, opts = {}) {
     const deltas = {}
     let totalOff = 0
     for (const k of usable) {
-      const bodyVal = k === 'height' ? heightAgainst(body, scaled.height)
+      const bodyVal = k === 'height' ? heightAgainst(body, scaled.height, headSize)
                     : k === 'bust'   ? chosen.bust
                     : body[k]
       if (bodyVal == null) { deltas[k] = null; continue }
@@ -228,7 +253,7 @@ export function compareBodies(character, opts = {}) {
 
     // Closest scale: where this body's priority measurement would land exactly.
     // Reference only - it doesn't affect the comparison above.
-    const bodyPriority = priority === 'height' ? heightAnchor(body)
+    const bodyPriority = priority === 'height' ? heightAnchor(body, headSize)
                        : priority === 'bust'   ? chosen.bust
                        : body[priority]
     const charPriority = character[priority]
@@ -251,8 +276,9 @@ export function compareBodies(character, opts = {}) {
       scaled,                                   // character at the working scale
       deltas,                                   // body minus that, per measurement
       totalOff,                                 // sum of |delta| across all scored
-      heightUsed: heightAgainst(body, scaled.height),
-      heightRange: heightRange(body),
+      heightUsed: heightAgainst(body, scaled.height, headSize),
+      heightRange: heightRange(body, headSize),
+      headSize,
       proportions: PROPORTIONS.map(({ key, label }) => ({
         key,
         label,

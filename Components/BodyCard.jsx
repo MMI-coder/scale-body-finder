@@ -263,26 +263,11 @@ const BodyCard = ({ result, unit, expanded, onToggle }) => {
                             labelStyle={[styles.extraLabel, { color: theme.muted }]}
                         />
                         <ThemedText style={styles.heightPrimary}>{rangeText}</ThemedText>
-                        {body.heightsByHead ? (
-                            <View style={styles.headList}>
-                                {Object.keys(body.heightsByHead)
-                                    .map(Number)
-                                    .sort((a, b) => a - b)
-                                    .map((size) => {
-                                        const r = body.heightsByHead[size]
-                                        return (
-                                            <View key={size} style={styles.heightRow}>
-                                                <ThemedText style={[styles.heightHead, { color: theme.muted }]}>
-                                                    {size}mm head
-                                                </ThemedText>
-                                                <ThemedText style={[styles.heightAlt, { color: theme.muted }]}>
-                                                    {fmtMM(r.min, unit)}–{fmtMM(r.max, unit)}{unit}
-                                                </ThemedText>
-                                            </View>
-                                        )
-                                    })}
-                            </View>
-                        ) : null}
+                        <ThemedText style={[styles.heightHead, { color: theme.muted }]}>
+                            {body.heightsByHead
+                                ? `neck peg plus the ${result.headSize}mm sculpt`
+                                : "the manufacturer's own figure, with their head"}
+                        </ThemedText>
                     </View>
 
                     {extras.length ? (

@@ -142,8 +142,10 @@ check('target 275 sits inside it', api.heightAgainst(byCode.S07C, 275), 275)
 check('  so the diff is zero', r2(s07c.deltas.height), 0)
 check('target 270 is below it -> pinned to 274', api.heightAgainst(byCode.S07C, 270), 274)
 check('target 290 is above it -> pinned to 280', api.heightAgainst(byCode.S07C, 290), 280)
-check('S24A cannot reach 275, tops out at 267', api.heightAgainst(byCode.S24A, 275), 267)
-check('  so its height diff is -8', r2(s24a.deltas.height), -8)
+check('S24A cannot reach 275, tops out at 264', api.heightAgainst(byCode.S24A, 275, 38), 264)
+check('  on the small sculpt it tops out lower still', api.heightAgainst(byCode.S24A, 275, 37.5), 263.5)
+check('  and the large one is half a mm over the 38', api.heightAgainst(byCode.S24A, 275, 38.5), 264.5)
+check('  so its height diff is -11', r2(s24a.deltas.height), -11)
 // A height minimum that is filled in is taken at face value, whoever supplied
 // it, and becomes a range the body can be posed across. A blank one leaves the
 // body pinned to the single figure. The cell is the whole tell - nothing is
@@ -195,6 +197,26 @@ check('still present under Bust', byBust.results.filter(r => noHeightCodes.inclu
   noHeightCodes.length)
 
 // --- working scale changes the answer --------------------------------------
+console.log('\nHeight is still compared, just not sortable')
+const stillShown = api.compareBodies(example, { workingScale: 6, priority: 'bust', bodies })
+check('every result still carries a height difference',
+  stillShown.results.filter(r => r.deltas.height != null).length,
+  stillShown.results.filter(r => api.heightRange(r.body, 38) != null).length)
+check('  and a height range to show it against',
+  stillShown.results.every(r => r.heightRange !== undefined), true)
+check('the head size reaches the result', stillShown.results[0].headSize, 38)
+
+console.log('\nThe head sculpt moves every body at once')
+const small = api.compareBodies(example, { workingScale: 6, priority: 'bust', headSize: 37.5, bodies })
+const large = api.compareBodies(example, { workingScale: 6, priority: 'bust', headSize: 38.5, bodies })
+const s07small = small.results.find(r => r.body.code === 'S07C').heightRange
+const s07large = large.results.find(r => r.body.code === 'S07C').heightRange
+check('S07C on the small sculpt', `${s07small.min}-${s07small.max}`, '273.5-279.5')
+check('S07C on the large sculpt', `${s07large.min}-${s07large.max}`, '274.5-280.5')
+check('  a whole millimetre between the two', r2(s07large.min - s07small.min), 1)
+check('ordering is untouched by the head',
+  small.results.map(r => r.body.code).join(',') === large.results.map(r => r.body.code).join(','), true)
+
 console.log('\nChanging the working scale re-sorts')
 const seen = {}
 for (const s of [5.5, 6, 6.75]) {
@@ -295,13 +317,13 @@ const csvOf = (...rows) => [HEAD, HINT, ...rows].join('\n')
 console.log('\nBatch: parsing')
 const good = api.parseCharacterCsv(csvOf(
   'Kasumi,1:6,1580,890,540,840,Bust,3',
-  'Honoka,1:5 3/4,1500,990,580,910,Height,5',
+  'Honoka,1:5 3/4,1500,990,580,910,Waist,5',
   'Ayane,1:6 1/4,1570,930,560,850,Hips,All'
 ))
 check('hint row is skipped automatically', good.jobs.length, 3)
 check('no errors on a clean file', good.errors.length, 0)
 check('per-row scale kept', good.jobs.map(j => j.workingScale).join(','), '6,5.75,6.25')
-check('per-row priority kept', good.jobs.map(j => j.priority).join(','), 'bust,height,hips')
+check('per-row priority kept', good.jobs.map(j => j.priority).join(','), 'bust,waist,hips')
 // The per-row count is gone. A file gets the top ten per character; the screen
 // gets everything. Nobody ever wanted a top three in a spreadsheet.
 check('every row gets the same count', good.jobs.map(j => j.count).join(','),
@@ -321,7 +343,7 @@ check('  and it gets the current count', oldRun.jobs[0].count, api.BATCH_RESULT_
 console.log('\nBatch: centimetres are rejected outright')
 const cm = api.parseCharacterCsv(csvOf(
   'Kasumi,1:6,158,89,54,84,Bust,3',
-  'Honoka,1:6,1500,990,580,910,Height,3'
+  'Honoka,1:6,1500,990,580,910,Waist,3'
 ))
 check('the whole upload is fatal', cm.fatal, true)
 check('nothing is processed', cm.jobs.length, 0)
@@ -340,7 +362,9 @@ const mixed = api.parseCharacterCsv(csvOf(
 check('good rows survive', mixed.jobs.map(j => j.character.name).join(','), 'Kasumi,Ayane')
 check('not fatal', !!mixed.fatal, false)
 check('out-of-range scale named', mixed.errors.some(e => /outside the scales/.test(e)), true)
-check('bad priority named', mixed.errors.some(e => /not one of Height, Bust, Waist, Hips/.test(e)), true)
+check('bad priority named', mixed.errors.some(e => /not one of Bust, Waist, Hips/.test(e)), true)
+check('  and Height is no longer offered to a female roster',
+  api.parseCharacterCsv(csvOf('X,1:6,1580,890,540,840,Height,3'), 'Female').jobs.length, 0)
 mixed.errors.forEach(e => console.log('    ' + e))
 
 console.log('\nBatch: one block per character, same layout as a manual export')
@@ -364,7 +388,7 @@ check('each block uses that character\'s own scale',
 
 const batchCsv = api.rowsToCsv(out.rows)
 check('scaled values reach the file', batchCsv.includes('"263.33"'), true)
-check('per-character priority is stated', batchCsv.includes('"Least difference in Height"'), true)
+check('per-character priority is stated', batchCsv.includes('"Least difference in Waist"'), true)
 
 
 // ---------------------------------------------------------------------------
@@ -388,7 +412,8 @@ check('male hints require only height',
   (tplOf('Male')[1].match(/Required \(in mm\)/g) || []).length, 1)
 check('  and mark the rest optional',
   (tplOf('Male')[1].match(/Optional \(in mm\)/g) || []).length, 3)
-check('female offers four priorities', /Required \(Height, Bust, Waist, Hips\)/.test(tplOf('Female')[1]), true)
+check('female offers three priorities', /Required \(Bust, Waist, Hips\)/.test(tplOf('Female')[1]), true)
+check('  with Height not among them', /Required \([^)]*Height/.test(tplOf('Female')[1]), false)
 check('male offers only Height', /Required \(Height\)/.test(tplOf('Male')[1]), true)
 
 console.log('\nBatch: a male roster needs a height and nothing else')
@@ -636,7 +661,7 @@ check('  because a measured height is a point, not a window',
   r2(maleOut.results.find(r => r.body.code === 'M-MEAS').deltas.height), 3)
 
 console.log('\nMale: height is the only priority offered')
-check('female can sort four ways', api.PRIORITIES_BY_GENDER.Female.join(','), 'height,bust,waist,hips')
+check('female can sort three ways', api.PRIORITIES_BY_GENDER.Female.join(','), 'bust,waist,hips')
 check('male can sort one way', api.PRIORITIES_BY_GENDER.Male.join(','), 'height')
 
 console.log('\nMale: the export is its own shape')
