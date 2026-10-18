@@ -31,6 +31,7 @@ const src = [
   strip(fs.readFileSync(path.join(ROOT, 'utils', 'matching.js'), 'utf8')),
   strip(fs.readFileSync(path.join(ROOT, 'utils', 'csv.js'), 'utf8')),
   strip(fs.readFileSync(path.join(ROOT, 'utils', 'roster.js'), 'utf8')),
+  strip(fs.readFileSync(path.join(ROOT, 'utils', 'scene.js'), 'utf8')),
   `return { compareBodies, scaleCharacter, atSixth, heightRange, heightAgainst, heightAnchor,
             scaleName, snapDivisor, scaleInRange, buildExportRows, rowsToCsv,
             WORKING_SCALES, DEFAULT_WORKING_SCALE, PRIORITIES, SCORED,
@@ -38,7 +39,8 @@ const src = [
             BODY_TYPES, GENDERS, DEFAULT_GENDER, pickBustPiece,
             exportFileName, PRIORITIES_BY_GENDER, heightRange,
             MALE_CATALOGUE, HEAD_SIZES, DEFAULT_HEAD_SIZE, PROPORTIONS,
-            toMM, fromMM }`,
+            toMM, fromMM, parseScale, describeScale, scaledMM, itemHasContent,
+            MAX_ITEMS_PER_GROUP }`,
 ].join('\n')
 
 const api = new Function('BODIES', 'console', src)(bodies, console)
@@ -587,6 +589,50 @@ const comma = api.rosterToCsv([withValues('Ayane, the ninja', { height: '1570', 
 check('a comma in a name is quoted', /"Ayane, the ninja"/.test(comma), true)
 check('  and comes back whole',
   api.rosterFromCsv(comma, 'Female', api.fromMM, 'mm').entries[0].name, 'Ayane, the ninja')
+
+console.log('\nScene: reading a typed scale')
+check('the app\'s own name', api.parseScale('1:5 13/16'), 5.8125)
+check('a decimal ratio', api.parseScale('1:5.8125'), 5.8125)
+check('a multiplier, as the scale tool took it', api.parseScale('0.172'), 1 / 0.172, 1e-12)
+check('a bare divisor', api.parseScale('6'), 6)
+check('spaces are forgiven', api.parseScale('  1 : 5  13/16 '), 5.8125)
+check('outside the working range is fine', api.parseScale('1:12'), 12)
+check('blank is not a scale', api.parseScale(''), null)
+check('words are not a scale', api.parseScale('sixth'), null)
+check('zero is not a scale', api.parseScale('0'), null)
+check('1:0 is not a scale', api.parseScale('1:0'), null)
+check('a zero denominator is not a scale', api.parseScale('1:5 1/0'), null)
+
+console.log('\nScene: naming a typed scale')
+check('on the chart, the chart name', api.describeScale(5.8125), '1:5 13/16')
+check('a whole scale', api.describeScale(12), '1:12')
+check('off the chart, not snapped to a near name', api.describeScale(5.83), '1:5.83')
+check('the multiplier form round-trips to a plain decimal', api.describeScale(1 / 0.172), '1:5.814')
+
+console.log('\nScene: units an item can arrive in')
+check('inches', api.toMM(1, 'in'), 25.4)
+check('feet', api.toMM(1, 'ft'), 304.8)
+check('and back', api.fromMM(304.8, 'ft'), 1)
+check('cm still cm', api.toMM(1, 'cm'), 10)
+check('mm still mm', api.toMM(1, 'mm'), 1)
+
+console.log('\nScene: scaling an item')
+check('a 70in refrigerator at 1:6', r2(api.scaledMM('70', 'in', 6)), 296.33)
+check('a 15cm phone at 1:5 13/16', r2(api.scaledMM('15', 'cm', 5.8125)), 25.81)
+check('a 6ft door at 1:6, in feet, is a foot', api.fromMM(api.scaledMM('6', 'ft', 6), 'ft'), 1)
+check('blank stays blank', api.scaledMM('', 'cm', 6), null)
+check('no scale, no size', api.scaledMM('15', 'cm', null), null)
+check('nonsense stays blank', api.scaledMM('abc', 'cm', 6), null)
+check('a thousands comma is read', r2(api.scaledMM('1,200', 'mm', 6)), 200)
+
+console.log('\nScene: what counts as worth keeping')
+const bare = { name: '', h: '', w: '', d: '', unit: 'cm', notes: '' }
+check('a blank item is not', api.itemHasContent(bare), false)
+check('changing only the unit is not', api.itemHasContent({ ...bare, unit: 'in' }), false)
+check('a name is', api.itemHasContent({ ...bare, name: 'Phone' }), true)
+check('a single dimension is', api.itemHasContent({ ...bare, d: '1' }), true)
+check('a note is', api.itemHasContent({ ...bare, notes: 'x' }), true)
+check('ten items per group', api.MAX_ITEMS_PER_GROUP, 10)
 
 console.log(failures === 0 ? '\nAll checks passed.\n' : `\n${failures} CHECK(S) FAILED.\n`)
 process.exitCode = failures === 0 ? 0 : 1

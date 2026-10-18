@@ -69,6 +69,13 @@ jobs:
       - name: Add .nojekyll
         run: touch dist/.nojekyll
 
+      # The app is one page that draws every route itself, so only index.html
+      # exists. Refreshing on /scene would ask Pages for a file that isn't
+      # there and get Pages' own 404. Pages serves 404.html for anything
+      # missing, so making that the app means the app gets to answer.
+      - name: Add 404.html
+        run: cp dist/index.html dist/404.html
+
       - name: Configure Pages
         uses: actions/configure-pages@v5
 

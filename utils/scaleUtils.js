@@ -6,6 +6,10 @@
  * Millimetres are the internal unit everywhere. Centimetres are only ever a
  * display format - 0.1cm and 1mm are the same number, so switching between
  * them moves a decimal point and loses nothing.
+ *
+ * Inches and feet exist for one reason: scene items. A refrigerator's spec
+ * sheet says 70 inches, and making you convert it by hand first is a chance
+ * to get it wrong. Characters and bodies stay metric.
  */
 
 // ---------------------------------------------------------------------------
@@ -15,12 +19,17 @@
 export const UNITS = ['cm', 'mm']
 export const DEFAULT_UNIT = 'cm'
 
+/** What a scene item's real-world size can be typed in. */
+export const ITEM_UNITS = ['mm', 'cm', 'in', 'ft']
+
+const MM_PER = { mm: 1, cm: 10, in: 25.4, ft: 304.8 }
+
 export function toMM(value, unit) {
-  return unit === 'cm' ? value * 10 : value
+  return value * (MM_PER[unit] ?? 1)
 }
 
 export function fromMM(mm, unit) {
-  return unit === 'cm' ? mm / 10 : mm
+  return mm / (MM_PER[unit] ?? 1)
 }
 
 // ---------------------------------------------------------------------------
@@ -94,6 +103,49 @@ export function parseScaleName(text) {
   const frac = m[2] ? Number(m[2]) / Number(m[3]) : 0
   if (m[2] && Number(m[3]) === 0) return null
   return whole + frac
+}
+
+/**
+ * A scale typed by hand, as a divisor. Returns null if it isn't one.
+ *
+ * Takes the three ways a scale gets written down:
+ *   "1:5 13/16"  - the app's own names
+ *   "1:5.8125"   - a ratio with a decimal
+ *   "0.172"      - a multiplier, the way the Scale Conversion Tool took it
+ * A bare number above 1 is read as the divisor, so "6" is 1:6.
+ *
+ * Deliberately not limited to the working-scale range. A scene can be any
+ * scale at all; nothing here is compared against the catalogue.
+ */
+export function parseScale(text) {
+  const s = String(text ?? '').trim()
+  if (!s) return null
+  const named = parseScaleName(s)
+  if (named != null) return named > 0 ? named : null
+  const ratio = /^1\s*:\s*(\d*\.?\d+)$/.exec(s)
+  if (ratio) {
+    const d = Number(ratio[1])
+    return d > 0 ? d : null
+  }
+  if (/^\d*\.?\d+$/.test(s)) {
+    const n = Number(s)
+    if (n > 0 && n <= 1) return 1 / n
+    if (n > 1) return n
+  }
+  return null
+}
+
+/**
+ * Name any divisor.
+ *
+ * On the 1/64 chart it gets the chart's name. Off it, the plain decimal -
+ * snapping 1:5.83 to "1:5 53/64" would name a scale nobody asked for.
+ */
+export function describeScale(divisor) {
+  if (!Number.isFinite(divisor) || divisor <= 0) return '—'
+  return Math.abs(snapDivisor(divisor) - divisor) < 1e-9
+    ? scaleName(divisor)
+    : `1:${parseFloat(divisor.toFixed(4))}`
 }
 
 /** Divisor snapped to the nearest 1/64, for showing alongside the name. */

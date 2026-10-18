@@ -13,13 +13,14 @@ import {
 import BatchPanel from '../Components/BatchPanel'
 import BodyCard from '../Components/BodyCard'
 import Dropdown from '../Components/Dropdown'
+import PageNav from '../Components/PageNav'
 import SegmentedControl from '../Components/SegmentedControl'
 import Spacer from '../Components/Spacer'
 import ThemedButton from '../Components/ThemedButton'
 import ThemedCard from '../Components/ThemedCard'
 import ThemedText from '../Components/ThemedText'
 import ThemedTextInput from '../Components/ThemedTextInput'
-import { blankEntry, newId, useWorkspace } from '../Components/WorkspaceProvider'
+import { blankEntry, newId, useWorkspace } from '../state/workspace'
 import { Colors } from '../Constants/Colors'
 import { BODIES, bodyImage } from '../data/bodies'
 import { GLOSSARY } from '../data/glossary'
@@ -100,7 +101,7 @@ export default function Index() {
     const theme = Colors[colorScheme] ?? Colors.light
     const { width } = useWindowDimensions()
 
-    const { gender, setGender, unit, setUnit, roster, setRoster, active, setActive } = useWorkspace()
+    const { gender, setGender, unit, changeUnit, roster, setRoster, active, setActive } = useWorkspace()
     const [expanded, setExpanded] = useState({})
 
     /**
@@ -114,7 +115,7 @@ export default function Index() {
      *
      * Units and catalogue stay outside: those are about how you like to work.
      *
-     * Held in the WorkspaceProvider rather than here, so it survives a trip to
+     * Held in state/workspace.js rather than here, so it survives a trip to
      * the scene page and back.
      */
     const entry = roster[Math.min(active, roster.length - 1)] ?? blankEntry()
@@ -263,24 +264,6 @@ export default function Index() {
     const setField = (key, text) => setValues((v) => ({ ...v, [key]: text }))
     const toggleCard = (code) => setExpanded((e) => ({ ...e, [code]: !e[code] }))
 
-    // Switching units rewrites what's in the boxes, so the measurement itself
-    // stays put rather than silently changing size.
-    const changeUnit = (next) => {
-        if (next === unit) return
-        const convert = (v) => {
-            const out = { ...v }
-            for (const { key } of [...FIELDS, ...PROPORTIONS]) {
-                const n = parseFloat(v[key])
-                out[key] = Number.isFinite(n)
-                    ? String(parseFloat(fromMM(toMM(n, unit), next).toFixed(4)))
-                    : v[key]
-            }
-            return out
-        }
-        setRoster((r) => r.map((e) => ({ ...e, values: convert(e.values) })))
-        setUnit(next)
-    }
-
     const character = useMemo(() => {
         const mm = {}
         for (const { key } of [...FIELDS, ...PROPORTIONS]) {
@@ -317,6 +300,9 @@ export default function Index() {
                 <ThemedText style={[styles.lede, { color: theme.muted }]}>
                     Find the best body for your project!
                 </ThemedText>
+
+                <Spacer height={16} />
+                <PageNav />
 
                 <Spacer height={22} />
 
