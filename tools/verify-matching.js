@@ -29,14 +29,16 @@ const { bodies } = loadBodies()
 const src = [
   strip(fs.readFileSync(path.join(ROOT, 'utils', 'scaleUtils.js'), 'utf8')),
   strip(fs.readFileSync(path.join(ROOT, 'utils', 'matching.js'), 'utf8')),
-  strip(fs.readFileSync(path.join(ROOT, 'utils', 'batch.js'), 'utf8')),
+  strip(fs.readFileSync(path.join(ROOT, 'utils', 'csv.js'), 'utf8')),
+  strip(fs.readFileSync(path.join(ROOT, 'utils', 'roster.js'), 'utf8')),
   `return { compareBodies, scaleCharacter, atSixth, heightRange, heightAgainst, heightAnchor,
             scaleName, snapDivisor, scaleInRange, buildExportRows, rowsToCsv,
             WORKING_SCALES, DEFAULT_WORKING_SCALE, PRIORITIES, SCORED,
-            parseCharacterCsv, runBatch, templateCsv, parseScaleName,
-            TEMPLATE_HEADERS, BODY_TYPES, GENDERS, DEFAULT_GENDER, pickBustPiece,
-            exportFileName, PRIORITIES_BY_GENDER, heightRange, templateHeaders,
-            MALE_CATALOGUE, BATCH_RESULT_COUNT }`,
+            parseScaleName, parseCsv, rosterToCsv, rosterFromCsv, ROSTER_HEADERS,
+            BODY_TYPES, GENDERS, DEFAULT_GENDER, pickBustPiece,
+            exportFileName, PRIORITIES_BY_GENDER, heightRange,
+            MALE_CATALOGUE, HEAD_SIZES, DEFAULT_HEAD_SIZE, PROPORTIONS,
+            toMM, fromMM }`,
 ].join('\n')
 
 const api = new Function('BODIES', 'console', src)(bodies, console)
@@ -304,182 +306,6 @@ csvLabels.forEach(l => {
 check(`all ${csvLabels.length} CSV labels are app terms`, unknown.length, 0)
 
 // --- batch upload -----------------------------------------------------------
-console.log('\nBatch: the template round-trips')
-const template = api.templateCsv()
-check('template has the expected columns', api.parseCharacterCsv(template).errors[0],
-  'The file has a header but no character rows.')
-check('template header matches', template.split('\n')[0].startsWith('Character Name,Scale Reference Selector'), true)
-
-const HEAD = api.TEMPLATE_HEADERS.join(',')
-const HINT = template.split('\n')[1]
-const csvOf = (...rows) => [HEAD, HINT, ...rows].join('\n')
-
-console.log('\nBatch: parsing')
-const good = api.parseCharacterCsv(csvOf(
-  'Kasumi,1:6,1580,890,540,840,Bust,3',
-  'Honoka,1:5 3/4,1500,990,580,910,Waist,5',
-  'Ayane,1:6 1/4,1570,930,560,850,Hips,All'
-))
-check('hint row is skipped automatically', good.jobs.length, 3)
-check('no errors on a clean file', good.errors.length, 0)
-check('per-row scale kept', good.jobs.map(j => j.workingScale).join(','), '6,5.75,6.25')
-check('per-row priority kept', good.jobs.map(j => j.priority).join(','), 'bust,waist,hips')
-// The per-row count is gone. A file gets the top ten per character; the screen
-// gets everything. Nobody ever wanted a top three in a spreadsheet.
-check('every row gets the same count', good.jobs.map(j => j.count).join(','),
-  good.jobs.map(() => api.BATCH_RESULT_COUNT).join(','))
-check('  which is ten', api.BATCH_RESULT_COUNT, 10)
-check('the template no longer asks for it',
-  api.templateHeaders('Female').includes('Number of Results Requested'), false)
-check('  nor mentions 3, 5 or All', /3, 5, or All/.test(api.templateCsv('Female')), false)
-
-console.log('\nBatch: an older template still uploads')
-const OLDHEAD = 'Character Name,Scale Reference Selector,Height,Bust,Waist,Hips,Measurement Priority Field,Number of Results Requested'
-const oldFile = [OLDHEAD, 'Kasumi,1:6,1580,890,540,840,Bust,3'].join('\n')
-const oldRun = api.parseCharacterCsv(oldFile, 'Female')
-check('the stale column is ignored, not rejected', oldRun.jobs.length, 1)
-check('  and it gets the current count', oldRun.jobs[0].count, api.BATCH_RESULT_COUNT)
-
-console.log('\nBatch: centimetres are rejected outright')
-const cm = api.parseCharacterCsv(csvOf(
-  'Kasumi,1:6,158,89,54,84,Bust,3',
-  'Honoka,1:6,1500,990,580,910,Waist,3'
-))
-check('the whole upload is fatal', cm.fatal, true)
-check('nothing is processed', cm.jobs.length, 0)
-check('says it must be millimetres', cm.errors.some(e => /must be in millimetres/.test(e)), true)
-check('suggests the right number', cm.errors.some(e => /Did you mean 1580\?/.test(e)), true)
-console.log('    ' + cm.errors[0])
-console.log('    ' + cm.errors[1])
-
-console.log('\nBatch: a bad row is skipped, the rest still run')
-const mixed = api.parseCharacterCsv(csvOf(
-  'Kasumi,1:6,1580,890,540,840,Bust,3',
-  'Broken,1:9,1580,890,540,840,Bust,3',
-  'AlsoBroken,1:6,1580,890,540,840,Elbow,3',
-  'Ayane,1:6,1570,930,560,850,Hips,3'
-))
-check('good rows survive', mixed.jobs.map(j => j.character.name).join(','), 'Kasumi,Ayane')
-check('not fatal', !!mixed.fatal, false)
-check('out-of-range scale named', mixed.errors.some(e => /outside the scales/.test(e)), true)
-check('bad priority named', mixed.errors.some(e => /not one of Bust, Waist, Hips/.test(e)), true)
-check('  and Height is no longer offered to a female roster',
-  api.parseCharacterCsv(csvOf('X,1:6,1580,890,540,840,Height,3'), 'Female').jobs.length, 0)
-mixed.errors.forEach(e => console.log('    ' + e))
-
-console.log('\nBatch: one block per character, same layout as a manual export')
-const out = api.runBatch(good.jobs, bodies)
-const firstCell = out.rows.map(r => (r[0] == null ? '' : String(r[0])))
-check('file title', out.rows[0][0], 'Scale Body Finder - batch results')
-check('three characters processed', out.characters, 3)
-check('ten per character', out.resultRows, 3 * api.BATCH_RESULT_COUNT)
-check('a block per character', firstCell.filter(c => c === 'Scale Body Finder - results').length, 3)
-check('each block names its character', firstCell.filter(c => c === 'Character').length, 3)
-
-// The thing that was missing before: the character at their own chosen scale.
-// "(1:1)" is the unscaled row, so it has to be excluded explicitly.
-const scaledRows = out.rows.filter(r => /^Character Measurements \((?!1:1\))1:/.test(String(r[0] || '')))
-check('a 1:1 row per character', out.rows.filter(r => r[0] === 'Character Measurements (1:1)').length, 3)
-check('a scaled row per character', scaledRows.length, 3)
-scaledRows.forEach(r => console.log('    ' + r[0] + '   ' + r.slice(1).join(' ')))
-check('each block uses that character\'s own scale',
-  scaledRows.map(r => r[0]).join(' | '),
-  'Character Measurements (1:6) | Character Measurements (1:5 3/4) | Character Measurements (1:6 1/4)')
-
-const batchCsv = api.rowsToCsv(out.rows)
-check('scaled values reach the file', batchCsv.includes('"263.33"'), true)
-check('per-character priority is stated', batchCsv.includes('"Least difference in Waist"'), true)
-
-
-// ---------------------------------------------------------------------------
-// Batch upload, per section
-//
-// The upload has no Gender column - a run uses whichever section is on screen -
-// so the template and the validation have to follow it instead. Getting this
-// wrong is quiet: a male roster was rejected outright for want of a bust, and a
-// male run sorted on Waist was accepted and returned almost nothing.
-// ---------------------------------------------------------------------------
-console.log('\nBatch: the template follows the section')
-const tplOf = g => api.templateCsv(g).split('\n')
-const rowFor = (g, row) => [tplOf(g)[0], tplOf(g)[1], row].join('\n')
-
-check('female template asks for Bust', api.templateHeaders('Female')[3], 'Bust')
-check('male template asks for Chest', api.templateHeaders('Male')[3], 'Chest')
-check('  matching what the male export and cards call it', true, true)
-check('female hints require all four',
-  (tplOf('Female')[1].match(/Required \(in mm\)/g) || []).length, 4)
-check('male hints require only height',
-  (tplOf('Male')[1].match(/Required \(in mm\)/g) || []).length, 1)
-check('  and mark the rest optional',
-  (tplOf('Male')[1].match(/Optional \(in mm\)/g) || []).length, 3)
-check('female offers three priorities', /Required \(Bust, Waist, Hips\)/.test(tplOf('Female')[1]), true)
-check('  with Height not among them', /Required \([^)]*Height/.test(tplOf('Female')[1]), false)
-check('male offers only Height', /Required \(Height\)/.test(tplOf('Male')[1]), true)
-
-console.log('\nBatch: a male roster needs a height and nothing else')
-const mOnly = api.parseCharacterCsv(rowFor('Male', 'Ryu,1:6,1780,,,,Height,All'), 'Male')
-check('height alone is accepted', mOnly.jobs.length, 1)
-check('  with no complaints', mOnly.errors.length, 0)
-const mNoHeight = api.parseCharacterCsv(rowFor('Male', 'Ryu,1:6,,,,,Height,All'), 'Male')
-check('but height itself is still required', mNoHeight.jobs.length, 0)
-check('  and says so', /Height is required/.test(mNoHeight.errors.join(' ')), true)
-const mExtra = api.parseCharacterCsv(rowFor('Male', 'Ryu,1:6,1780,1260,1000,1050,Height,All'), 'Male')
-check('optional measurements are kept when given',
-  JSON.stringify(mExtra.jobs[0].character),
-  JSON.stringify({ name: 'Ryu', height: 1780, bust: 1260, waist: 1000, hips: 1050 }))
-
-console.log('\nBatch: a female roster is unchanged')
-const fShort = api.parseCharacterCsv(rowFor('Female', 'Kasumi,1:6,1580,,,,Bust,3'), 'Female')
-check('still needs all four', fShort.jobs.length, 0)
-check('  naming each one missing',
-  ['Bust', 'Waist', 'Hips'].every(k => fShort.errors.join(' ').includes(k + ' is required')), true)
-const fFull = api.parseCharacterCsv(rowFor('Female', 'Kasumi,1:6,1580,890,540,840,Bust,3'), 'Female')
-check('a complete row is accepted', fFull.jobs.length, 1)
-
-console.log('\nBatch: priorities are limited to what the section can sort on')
-const mWaist = api.parseCharacterCsv(rowFor('Male', 'Ryu,1:6,1780,,,,Waist,All'), 'Male')
-check('male rejects Waist', mWaist.jobs.length, 0)
-check('  and explains why',
-  /male bodies can only be sorted on Height/.test(mWaist.errors.join(' ')), true)
-const fWaist = api.parseCharacterCsv(rowFor('Female', 'Kasumi,1:6,1580,890,540,840,Waist,3'), 'Female')
-check('female still accepts Waist', fWaist.jobs.length, 1)
-
-console.log('\nBatch: a template from either section uploads in either')
-check('female file on a male run',
-  api.parseCharacterCsv(rowFor('Female', 'Ryu,1:6,1780,,,,Height,All'), 'Male').jobs.length, 1)
-check('male file on a female run',
-  api.parseCharacterCsv(rowFor('Male', 'Kasumi,1:6,1580,890,540,840,Bust,3'), 'Female').jobs.length, 1)
-
-console.log('\nBatch: millimetres are still enforced in both')
-const mCm = api.parseCharacterCsv(rowFor('Male', 'Ryu,1:6,178,,,,Height,All'), 'Male')
-check('a centimetre height aborts the male upload', mCm.fatal, true)
-check('  and suggests the millimetre figure', /Did you mean 1780/.test(mCm.errors.join(' ')), true)
-
-console.log('\nBatch: the male run produces a male file')
-const mOut = api.runBatch(mOnly.jobs, maleSet, 'Male')
-const mCsv = api.rowsToCsv(mOut.rows)
-check('one character, four fixture bodies', `${mOut.characters}/${mOut.resultRows}`, '1/4')
-check('the file says Chest', mCsv.includes('Chest - Body Measurement (mm)'), true)
-check('  and not Bust', /"Bust - Body Measurement/.test(mCsv), false)
-check('it carries Build', mCsv.includes('"Build"'), true)
-check('and states the catalogue', mCsv.includes('"Gender","Male"'), true)
-
-console.log('\nBatch: wording matches the app')
-// The batch reuses buildExportRows, so its labels are the single export's
-// labels - already checked above. This guards the two file-level rows.
-const batchOnly = ['Scale Body Finder - batch results', 'Characters']
-check('batch-only labels are structural', batchOnly.every(l => firstCell.includes(l)), true)
-
-
-// ---------------------------------------------------------------------------
-// Jointed bodies
-//
-// Two things have to hold at once. The jointed catalogue has to work - modular
-// bodies get the chest piece nearest the character, and that piece is what the
-// comparison and Actual Body Scale are built from. And the seamless side has to
-// be untouched by any of it: its export feeds another tool, so its shape is a
-// contract.
-// ---------------------------------------------------------------------------
 console.log('\nEvery body lands in exactly one catalogue')
 check('every body has a valid Gender',
   bodies.filter(b => !api.GENDERS.includes(b.gender)).map(b => b.code).join(',') || '(all valid)',
@@ -580,25 +406,6 @@ check('a seamless row leaves the piece blank', seamlessDataRow[fh.indexOf('Bust 
 check('the file states which catalogue was searched',
   femaleCsvRows.some(r => r[0] === 'Gender' && r[1] === 'Female'), true)
 
-console.log('\nBatch: runs against whichever section is on screen')
-const oneJob = () => [{ character: HONOKA, workingScale: 6, priority: 'bust', count: null, line: 2 }]
-const femaleBatch = api.runBatch(oneJob(), undefined, 'Female')
-check(`the roster run female gives ${FEMALE}`, femaleBatch.resultRows, FEMALE)
-check('  with a Bust Piece column', api.rowsToCsv(femaleBatch.rows).includes('"Bust Piece"'), true)
-check('  and both constructions in it',
-  api.rowsToCsv(femaleBatch.rows).includes('"WorldBox"') &&
-  api.rowsToCsv(femaleBatch.rows).includes('"TBLeague"'), true)
-
-
-// ---------------------------------------------------------------------------
-// Male bodies
-//
-// There are none in the catalogue yet, so these run against fixtures built the
-// way the importer builds them. What matters is that the male path is genuinely
-// its own: height derived from a peg rather than measured against a known head,
-// no requirement to carry chest/waist/hips, height the only thing to sort on,
-// and ties broken by which window sits most centred on the character.
-// ---------------------------------------------------------------------------
 console.log('\nMale: height is derived from the neck peg')
 
 
@@ -697,6 +504,89 @@ check('  and with no gender given at all',
   api.exportFileName('Honoka', 'bust'), 'Honoka_Results_Bust.csv')
 check('male is told apart', api.exportFileName('Kaito', 'height', 'Male'),
   'Kaito_Results_Height_Male.csv')
+
+
+// ---------------------------------------------------------------------------
+// The roster
+//
+// Characters are typed into the app and saved to a file, rather than filled
+// into a template by hand. That makes the file the app's own format, so what
+// matters is that it round-trips exactly and that a damaged one costs you as
+// little as possible.
+// ---------------------------------------------------------------------------
+console.log('\nRoster: what the file carries')
+const entry = (over) => ({
+  name: 'X', values: Object.fromEntries(
+    ['height', 'bust', 'waist', 'hips', ...api.PROPORTIONS.map(p => p.key)].map(k => [k, ''])),
+  workingScale: 6, headSize: 38, priority: 'bust', sort: 'least', ...over,
+})
+const withValues = (name, v, over) =>
+  entry({ name, values: { ...entry().values, ...v }, ...over })
+
+check('header starts with the character', api.ROSTER_HEADERS[0], 'Character Name')
+check('it carries the four', api.ROSTER_HEADERS.filter(h => /^(Height|Bust|Waist|Hips) \(mm\)$/.test(h)).length, 4)
+check('and all six proportions',
+  api.PROPORTIONS.every(pr => api.ROSTER_HEADERS.includes(pr.label + ' (mm)')), true)
+check('and the per-character settings',
+  ['Scale', 'Head Sculpt (mm)', 'Priority', 'Sort'].every(h => api.ROSTER_HEADERS.includes(h)), true)
+
+console.log('\nRoster: a round trip changes nothing')
+const three = [
+  withValues('Elise', { height: '1680', bust: '940', waist: '580', hips: '900' }, { headSize: 38.5, workingScale: 5.75 }),
+  withValues('Kasumi', { height: '1580', bust: '890', waist: '540', hips: '850', breastHeight: '148.6', shoulder: '351.03' }),
+  withValues('Koharu', { height: '1510', bust: '830', waist: '540', hips: '850' }, { headSize: 37.5, priority: 'hips', sort: 'greatest' }),
+]
+const csvOut = api.rosterToCsv(three, 'mm', api.toMM)
+const backIn = api.rosterFromCsv(csvOut, 'Female', api.fromMM, 'mm')
+check('all three come back', backIn.entries.length, 3)
+check('  with no complaints', backIn.errors.length, 0)
+check('names survive', backIn.entries.map(e => e.name).join(','), 'Elise,Kasumi,Koharu')
+check('measurements survive', backIn.entries[0].values.height, '1680')
+check('proportions survive', backIn.entries[1].values.breastHeight, '148.6')
+check('  including shoulder width', backIn.entries[1].values.shoulder, '351.03')
+check('blanks stay blank, not zero', backIn.entries[0].values.breastDepth, '')
+check('head sculpts survive', backIn.entries.map(e => e.headSize).join(','), '38.5,38,37.5')
+check('scales survive', backIn.entries.map(e => api.scaleName(e.workingScale)).join(','), '1:5 3/4,1:6,1:6')
+check('priority and sort survive',
+  backIn.entries[2].priority + '/' + backIn.entries[2].sort, 'hips/greatest')
+
+console.log('\nRoster: millimetres whatever the screen shows')
+// Saved while the form is in centimetres, loaded back into centimetres.
+const inCm = api.rosterToCsv(
+  [withValues('Kasumi', { height: '158', bust: '89', waist: '54', hips: '85' })], 'cm', api.toMM)
+check('the file holds millimetres', /,1580,890,540,850,/.test(inCm), true)
+const cmBack = api.rosterFromCsv(inCm, 'Female', api.fromMM, 'cm')
+check('  and comes back as centimetres', cmBack.entries[0].values.height, '158')
+const mmBack = api.rosterFromCsv(inCm, 'Female', api.fromMM, 'mm')
+check('  or millimetres, if that is what is on screen', mmBack.entries[0].values.height, '1580')
+
+console.log('\nRoster: one bad cell does not cost you the file')
+const broken = api.rosterToCsv(three, 'mm', api.toMM)
+  .replace('1:5 3/4', '1:99')
+  .replace(',38.5,', ',41,')
+  .replace(',hips,greatest', ',elbow,sideways')
+const salvaged = api.rosterFromCsv(broken, 'Female', api.fromMM, 'mm')
+check('every character still loads', salvaged.entries.length, 3)
+check('an impossible scale falls back', api.scaleName(salvaged.entries[0].workingScale), '1:6')
+check('  and says so', /not one the app offers/.test(salvaged.errors.join(' ')), true)
+check('an unknown head falls back', salvaged.entries[0].headSize, api.DEFAULT_HEAD_SIZE)
+check('an unknown priority falls back', salvaged.entries[2].priority, api.PRIORITIES_BY_GENDER.Female[0])
+check('an unknown sort falls back', salvaged.entries[2].sort, 'least')
+
+console.log('\nRoster: a file that is not a roster')
+check('no Character Name column is refused',
+  api.rosterFromCsv('a,b,c\n1,2,3', 'Female', api.fromMM, 'mm').entries.length, 0)
+check('  and says why', /does not look like a saved roster/.test(
+  api.rosterFromCsv('a,b,c\n1,2,3', 'Female', api.fromMM, 'mm').errors.join(' ')), true)
+check('an empty file is refused', api.rosterFromCsv('', 'Female', api.fromMM, 'mm').entries.length, 0)
+check('a header with no rows is refused',
+  api.rosterFromCsv(api.ROSTER_HEADERS.join(','), 'Female', api.fromMM, 'mm').entries.length, 0)
+
+console.log('\nRoster: quoting survives a spreadsheet')
+const comma = api.rosterToCsv([withValues('Ayane, the ninja', { height: '1570', bust: '930', waist: '560', hips: '850' })], 'mm', api.toMM)
+check('a comma in a name is quoted', /"Ayane, the ninja"/.test(comma), true)
+check('  and comes back whole',
+  api.rosterFromCsv(comma, 'Female', api.fromMM, 'mm').entries[0].name, 'Ayane, the ninja')
 
 console.log(failures === 0 ? '\nAll checks passed.\n' : `\n${failures} CHECK(S) FAILED.\n`)
 process.exitCode = failures === 0 ? 0 : 1

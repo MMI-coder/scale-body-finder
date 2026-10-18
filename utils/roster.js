@@ -15,8 +15,14 @@
  */
 
 import { DEFAULT_HEAD_SIZE, HEAD_SIZES, PRIORITIES_BY_GENDER, PROPORTIONS } from './matching'
-import { DEFAULT_WORKING_SCALE, WORKING_SCALES, SCALE_STEPS, scaleName } from './scaleUtils'
-import { parseCsv, parseScaleName } from './batch'
+import {
+  DEFAULT_WORKING_SCALE,
+  SCALE_STEPS,
+  WORKING_SCALES,
+  parseScaleName,
+  scaleName,
+} from './scaleUtils'
+import { parseCsv, toCsvRow } from './csv'
 
 const MEASURES = ['height', 'bust', 'waist', 'hips', ...PROPORTIONS.map(p => p.key)]
 
@@ -33,8 +39,6 @@ export const ROSTER_HEADERS = [
   'Priority',
   'Sort',
 ]
-
-const cell = v => (/[",\n]/.test(String(v ?? '')) ? `"${String(v).replace(/"/g, '""')}"` : String(v ?? ''))
 
 /**
  * Entries out.
@@ -58,7 +62,7 @@ export function rosterToCsv(entries, unit, toMM) {
       e.sort,
     ])
   }
-  return rows.map(r => r.map(cell).join(',')).join('\n')
+  return rows.map(toCsvRow).join('\n')
 }
 
 const near = (a, b) => Math.abs(a - b) < 1 / (SCALE_STEPS * 2)

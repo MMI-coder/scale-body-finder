@@ -86,6 +86,16 @@ export function scaleName(divisor) {
   return `1:${whole} ${n / g}/${SCALE_STEPS / g}`
 }
 
+/** "1:5 3/4" -> 5.75. Returns null if it isn't a scale. */
+export function parseScaleName(text) {
+  const m = /^1\s*:\s*(\d+)(?:\s+(\d+)\s*\/\s*(\d+))?$/.exec(String(text ?? '').trim())
+  if (!m) return null
+  const whole = Number(m[1])
+  const frac = m[2] ? Number(m[2]) / Number(m[3]) : 0
+  if (m[2] && Number(m[3]) === 0) return null
+  return whole + frac
+}
+
 /** Divisor snapped to the nearest 1/64, for showing alongside the name. */
 export function snapDivisor(divisor) {
   return Math.round(divisor * SCALE_STEPS) / SCALE_STEPS
