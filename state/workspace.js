@@ -56,8 +56,19 @@ export const blankGroup = (unit = DEFAULT_UNIT) => ({
     items: [blankItem(unit)],
 })
 
+/**
+ * A fresh scene.
+ *
+ * focusId is the character the scene is built around - optional, and set by
+ * "Use for scene" on a body card. source records where the scale came from at
+ * the moment it was copied: body, character, priority and the scale itself.
+ * It is a record, not a link - change the priority afterwards and the card's
+ * scale moves, but the scene's does not.
+ */
 export const blankScene = () => ({
     scaleText: '',
+    focusId: null,
+    source: null,
     groups: [blankGroup()],
 })
 

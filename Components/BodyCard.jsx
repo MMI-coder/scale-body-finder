@@ -41,7 +41,7 @@ export const HEIGHT_INFO =
  * to the full comparison. The image has its own control to pop out full size,
  * so tapping it doesn't fight with the expand.
  */
-const BodyCard = ({ result, unit, expanded, onToggle }) => {
+const BodyCard = ({ result, unit, expanded, onToggle, onUseForScene, inScene }) => {
     const colorScheme = useColorScheme()
     const theme = Colors[colorScheme] ?? Colors.light
     const { width, height: winH } = useWindowDimensions()
@@ -148,6 +148,24 @@ const BodyCard = ({ result, unit, expanded, onToggle }) => {
                             <ThemedText style={[styles.scaleLabel, { color: theme.muted }]}>
                                 Scale Multiplier ×{closest.multiplier.toFixed(5)}
                             </ThemedText>
+                        ) : null}
+                        {/* Copies the scale as named above - the 1/64 name, which is
+                            what gets built to - into the scene, once. */}
+                        {closest && onUseForScene ? (
+                            <Pressable
+                                onPress={onUseForScene}
+                                accessibilityRole="button"
+                                accessibilityState={{ selected: !!inScene }}
+                                style={[
+                                    styles.sceneBtn,
+                                    { borderColor: Colors.primary },
+                                    inScene && { backgroundColor: Colors.primary },
+                                ]}
+                            >
+                                <ThemedText style={[styles.sceneBtnText, { color: inScene ? '#ffffff' : Colors.primary }]}>
+                                    {inScene ? '✓ Scene scale' : 'Use for scene'}
+                                </ThemedText>
+                            </Pressable>
                         ) : null}
                     </View>
 
@@ -343,6 +361,8 @@ const styles = StyleSheet.create({
     scaleBox: { borderWidth: 1, borderRadius: 8, paddingVertical: 12, paddingHorizontal: 12, alignItems: 'center' },
     scaleLabel: { fontSize: 12 },
     scaleValue: { fontSize: 24, fontWeight: '800', marginVertical: 4 },
+    sceneBtn: { marginTop: 10, borderWidth: 1, borderRadius: 8, paddingVertical: 8, paddingHorizontal: 16 },
+    sceneBtnText: { fontSize: 14, fontWeight: '700' },
 
     table: { marginTop: 2 },
     tr: { flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, paddingVertical: 8 },

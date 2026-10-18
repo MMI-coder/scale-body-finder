@@ -101,7 +101,9 @@ export default function Index() {
     const theme = Colors[colorScheme] ?? Colors.light
     const { width } = useWindowDimensions()
 
-    const { gender, setGender, unit, changeUnit, roster, setRoster, active, setActive } = useWorkspace()
+    const {
+        gender, setGender, unit, changeUnit, roster, setRoster, active, setActive, scene, setScene,
+    } = useWorkspace()
     const [expanded, setExpanded] = useState({})
 
     /**
@@ -289,6 +291,39 @@ export default function Index() {
             else Alert.alert('Export failed', msg)
         }
     }
+
+    /**
+     * "Use for scene": copy this body's Actual Body Scale into the scene, and
+     * make this character the one the scene is about.
+     *
+     * A copy, not a link. Actual Body Scale is the character's priority
+     * measurement over the body's, so it moves when the priority does - and
+     * switching to Hips just to have a look should not resize every prop in
+     * the scene. The scene field stays editable afterwards.
+     */
+    const chooseForScene = (r) => {
+        if (!r.closest) return
+        setScene((s) => ({
+            ...s,
+            scaleText: r.closest.name,
+            focusId: entry.id,
+            source: {
+                scaleText: r.closest.name,
+                bodyName: r.body.name,
+                characterName: name.trim() || `Character ${active + 1}`,
+                priority: activePriority,
+            },
+        }))
+    }
+
+    // Lit only while the scene still holds exactly what this card would give
+    // it - same character, same body, same scale. Change the priority and the
+    // card's scale moves, so it stops claiming to be the scene's.
+    const isSceneScale = (r) =>
+        !!r.closest &&
+        scene.focusId === entry.id &&
+        scene.source?.bodyName === r.body.name &&
+        scene.scaleText.trim() === r.closest.name
 
     const scaleLabel = scaleName(workingScale)
     const isSixth = workingScale === 6
@@ -588,6 +623,8 @@ export default function Index() {
                                         unit={unit}
                                         expanded={!!expanded[r.body.code]}
                                         onToggle={() => toggleCard(r.body.code)}
+                                        onUseForScene={() => chooseForScene(r)}
+                                        inScene={isSceneScale(r)}
                                     />
                                 </View>
                             ))}

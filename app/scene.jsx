@@ -29,7 +29,7 @@ import {
 export default function Scene() {
     const colorScheme = useColorScheme()
     const theme = Colors[colorScheme] ?? Colors.light
-    const { unit, changeUnit, scene, setScene } = useWorkspace()
+    const { unit, changeUnit, scene, setScene, roster } = useWorkspace()
 
     // A group waiting on its second tap before it goes. Same two-tap rule the
     // scale tool used for Start Over: ten items should not vanish on a stray click.
@@ -37,6 +37,18 @@ export default function Scene() {
 
     const divisor = parseScale(scene.scaleText)
     const typed = scene.scaleText.trim() !== ''
+
+    // Everyone on the roster is in the scene for reference; the focus, if one
+    // was set, is the one whose scale it is. Unnamed, empty slots are left out.
+    const cast = roster
+        .map((e, i) => ({ id: e.id, name: e.name.trim() || (Object.values(e.values).some(Boolean) ? `Character ${i + 1}` : '') }))
+        .filter((c) => c.name)
+    const focus = cast.find((c) => c.id === scene.focusId)
+
+    // Where the number came from - only claimed while the field still holds
+    // what was copied. Edit it and it says so, with what it was.
+    const src = scene.source
+    const fromCard = src && scene.scaleText.trim() === src.scaleText
 
     const setScaleText = (t) => setScene((s) => ({ ...s, scaleText: t }))
 
@@ -135,11 +147,44 @@ export default function Scene() {
                             <ThemedText style={[styles.label, { color: theme.muted, marginBottom: 0, marginTop: 4 }]}>
                                 Real World Equivalent: 1{unit} = {realWorldEquivalent(divisor).toFixed(2)}{unit} in 1:1 scale
                             </ThemedText>
+                            {src ? (
+                                <ThemedText style={[styles.label, { color: theme.muted, marginBottom: 0, marginTop: 4 }]}>
+                                    {fromCard
+                                        ? `From the ${src.bodyName} for ${src.characterName}, on ${cap(src.priority)}.`
+                                        : `Changed by hand. It was ${src.scaleText}, from the ${src.bodyName} for ${src.characterName}.`}
+                                </ThemedText>
+                            ) : null}
                         </>
                     ) : typed ? (
                         <ThemedText style={[styles.error, { color: Colors.warning }]}>
                             That isn't a scale this can read. Try 1:5 13/16, 1:5.8125 or 0.172.
                         </ThemedText>
+                    ) : (
+                        <ThemedText style={[styles.label, { color: theme.muted, marginBottom: 0, marginTop: 10 }]}>
+                            Or open a body card on the Body Finder and press Use for scene.
+                        </ThemedText>
+                    )}
+
+                    {cast.length ? (
+                        <>
+                            <Spacer height={14} />
+                            <ThemedText style={[styles.label, { color: theme.muted, marginBottom: 2 }]}>
+                                Characters
+                            </ThemedText>
+                            <ThemedText style={styles.cast}>
+                                {cast.map((c, i) => (
+                                    <ThemedText key={c.id}>
+                                        {i ? '  ·  ' : ''}
+                                        <ThemedText style={c.id === focus?.id ? styles.castFocus : null}>
+                                            {c.name}
+                                        </ThemedText>
+                                        {c.id === focus?.id ? (
+                                            <ThemedText style={[styles.castTag, { color: Colors.primary }]}> (focus)</ThemedText>
+                                        ) : null}
+                                    </ThemedText>
+                                ))}
+                            </ThemedText>
+                        </>
                     ) : null}
                 </ThemedCard>
 
@@ -221,6 +266,9 @@ export default function Scene() {
         </ScrollView>
     )
 }
+
+/** Defined terms keep their capital in prose, as on the finder. */
+const cap = (w) => (w ? w.charAt(0).toUpperCase() + w.slice(1) : w)
 
 /**
  * One thing in the scene.
@@ -313,6 +361,9 @@ const styles = StyleSheet.create({
     label: { fontSize: 12, marginBottom: 6, fontWeight: '600' },
     controlName: { fontSize: 15, fontWeight: '700', marginBottom: 3 },
     error: { fontSize: 13, fontWeight: '600', marginTop: 10 },
+    cast: { fontSize: 14 },
+    castFocus: { fontWeight: '800' },
+    castTag: { fontSize: 12, fontWeight: '700' },
 
     fieldRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 20, alignItems: 'flex-end' },
     scaleField: { flexGrow: 1, maxWidth: 320, minWidth: 200 },
