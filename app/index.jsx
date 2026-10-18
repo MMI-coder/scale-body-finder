@@ -22,7 +22,7 @@ import { Colors } from '../Constants/Colors'
 import { BODIES } from '../data/bodies'
 import { GLOSSARY } from '../data/glossary'
 import { exportResults } from '../utils/exportCsv'
-import { DEFAULT_GENDER, GENDERS, PRIORITIES_BY_GENDER, compareBodies } from '../utils/matching'
+import { DEFAULT_GENDER, GENDERS, PRIORITIES_BY_GENDER, PROPORTIONS, compareBodies } from '../utils/matching'
 import {
     DEFAULT_UNIT,
     DEFAULT_WORKING_SCALE,
@@ -67,7 +67,10 @@ const SORT_OPTIONS = [
     { value: 'greatest', label: 'Greatest difference' },
 ]
 
-const emptyValues = { height: '', bust: '', waist: '', hips: '' }
+const emptyValues = {
+    height: '', bust: '', waist: '', hips: '',
+    ...Object.fromEntries(PROPORTIONS.map((p) => [p.key, ''])),
+}
 
 /** Defined terms keep their capital in prose, so the page and the CSV agree. */
 const cap = (w) => (w ? w.charAt(0).toUpperCase() + w.slice(1) : w)
@@ -145,7 +148,7 @@ export default function Index() {
 
     const character = useMemo(() => {
         const mm = {}
-        for (const { key } of FIELDS) {
+        for (const { key } of [...FIELDS, ...PROPORTIONS]) {
             const n = parseFloat(values[key])
             mm[key] = Number.isFinite(n) && n > 0 ? toMM(n, unit) : null
         }
@@ -254,6 +257,31 @@ export default function Index() {
                                 <ThemedText style={[styles.label, { color: theme.muted }]}>
                                     {gender === 'Male' && f.key === 'bust' ? 'Chest' : f.label} ({unit})
                                     {needed.includes(f.key) ? '' : ' — optional'}
+                                </ThemedText>
+                                <ThemedTextInput
+                                    value={values[f.key]}
+                                    onChangeText={(t) => setField(f.key, t)}
+                                    placeholder="—"
+                                    keyboardType="decimal-pad"
+                                    inputMode="decimal"
+                                />
+                            </View>
+                        ))}
+                    </View>
+
+                    <Spacer height={18} />
+
+                    <ThemedText style={styles.controlName}>Proportions</ThemedText>
+                    <ThemedText style={[styles.label, { color: theme.muted }]}>
+                        All optional. These describe shape rather than size, and never affect the
+                        ordering — they are shown on each card so you can see how close the
+                        proportions are once the bust, waist and hips have got you close on size.
+                    </ThemedText>
+                    <View style={styles.measureRow}>
+                        {PROPORTIONS.map((f) => (
+                            <View key={f.key} style={styles.measureField}>
+                                <ThemedText style={[styles.label, { color: theme.muted }]}>
+                                    {f.label} ({unit})
                                 </ThemedText>
                                 <ThemedTextInput
                                     value={values[f.key]}

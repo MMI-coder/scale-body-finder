@@ -48,6 +48,11 @@ const BodyCard = ({ result, unit, expanded, onToggle }) => {
     const [lightbox, setLightbox] = useState(false)
 
     const { body, priority, scaled, deltas, heightRange, heightUsed, closest, bustOptions } = result
+
+    // Shape, as against the size the table above measures. Shown whenever the
+    // body has any of them - a body's own figure is worth seeing even with
+    // nothing to compare it to.
+    const proportions = (result.proportions || []).filter((p) => p.body != null)
     const labels = body.gender === 'Male' ? MALE_LABELS : LABELS
 
     // Modular bodies open on the piece nearest the character and can be cycled
@@ -65,9 +70,10 @@ const BodyCard = ({ result, unit, expanded, onToggle }) => {
     const src = bodyImage(body.image)
     const ratio = body.imageW && body.imageH ? body.imageW / body.imageH : 0.75
 
+    // Shoulder Width lives in the Proportions block now, with a comparison
+    // beside it. Repeating it here as a bare number says less, twice.
     const extras = [
         ['Underbust', body.underbust],
-        ['Shoulder Width', body.shoulder],
         ['Arm Length', body.arm],
         ['Leg Inseam', body.inseam],
     ].filter(([, v]) => v != null)
@@ -175,6 +181,26 @@ const BodyCard = ({ result, unit, expanded, onToggle }) => {
                             )
                         })}
                     </View>
+
+                    {proportions.length ? (
+                        <View style={[styles.table, styles.proportions, { borderColor: theme.cardBorder }]}>
+                            <ThemedText style={[styles.extraLabel, styles.proportionsHead, { color: theme.muted }]}>
+                                Proportions
+                            </ThemedText>
+                            {proportions.map((p) => (
+                                <View key={p.key} style={[styles.tr, { borderColor: theme.cardBorder }]}>
+                                    <ThemedText style={[styles.td, styles.colName]}>{p.label}</ThemedText>
+                                    <ThemedText style={styles.td}>{fmtMM(p.body, unit)}</ThemedText>
+                                    <ThemedText style={[styles.td, { color: theme.muted }]}>
+                                        {fmtMM(p.character, unit)}
+                                    </ThemedText>
+                                    <ThemedText style={[styles.td, styles.diff]}>
+                                        {p.diff == null ? '—' : fmtDelta(p.diff, unit)}
+                                    </ThemedText>
+                                </View>
+                            ))}
+                        </View>
+                    ) : null}
 
                     {bustOptions ? (
                         <View style={[styles.pieces, { borderColor: theme.cardBorder }]}>
@@ -302,6 +328,8 @@ export default BodyCard
 
 const styles = StyleSheet.create({
     build: { fontSize: 13, fontWeight: '700', marginTop: 2 },
+    proportions: { marginTop: 14, borderTopWidth: StyleSheet.hairlineWidth, paddingTop: 10 },
+    proportionsHead: { marginBottom: 4 },
     pieces: { borderTopWidth: StyleSheet.hairlineWidth, paddingTop: 12, marginTop: 12 },
     pieceRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 6 },
     pieceChip: { borderWidth: 1, borderRadius: 8, paddingVertical: 6, paddingHorizontal: 10, alignItems: 'center' },

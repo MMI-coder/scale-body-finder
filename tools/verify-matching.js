@@ -228,9 +228,12 @@ check('names a body', csv.includes('S07C'), true)
 // drifting away from the page when something gets renamed.
 console.log('\nCSV wording matches the app')
 const glossaryTerms = [
-  ...fs.readFileSync(path.join(ROOT, 'data', 'glossary.js'), 'utf8')
-    .matchAll(/"term": "([^"]+)"/g),
-].map(m => m[1])
+  ...[...fs.readFileSync(path.join(ROOT, 'data', 'glossary.js'), 'utf8')
+       .matchAll(/"term": "([^"]+)"/g)].map(m => m[1]),
+  // Headings count too - a stub awaiting a definition is still a known term.
+  ...[...fs.readFileSync(path.join(ROOT, 'TERMINOLOGY.md'), 'utf8')
+       .matchAll(/^###\s+(.+)$/gm)].map(m => m[1].trim()).filter(Boolean),
+]
 
 const STRUCTURAL = [
   'Scale Body Finder - results', 'Character', 'Character Measurements', 'Notes', 'Sort by',
@@ -242,7 +245,8 @@ const normalise = l =>
    .replace(/\s*-\s*(Body|Character) Measurements?$/, ' $1 Measurements')
    .replace(/\s*-\s*Difference$/, '')
    .replace(/\s+(?:Low|High)$/, '')
-   .replace(/^(?:Height|Bust|Waist|Hips)\s+(Body|Character) Measurements$/, '$1 Measurements')
+   // The six proportions are cells of the same two groups the four are.
+   .replace(/^(?:Height|Bust|Waist|Hips|Breast Height|Breast Width|Breast Depth|Waist Width|Hip Width|Shoulder Width)\s+(Body|Character) Measurements$/, '$1 Measurements')
    .trim()
 
 // Everything a body row can contribute is a value, not a label - product names,

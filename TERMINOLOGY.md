@@ -21,6 +21,30 @@ These are the ones a user meets on a data card or a control and can't guess.
 *Currently:* male bodies only. The physique of the body — the "does it look the part" question, which is what male buyers ask first. Shown on the card and in the export. One of the eight values in Part 4. Does not filter or sort anything.
 **Definition:** Male bodies only. This is a general description of the look of the body. Example, the TBL M35 is "Super Heavily Muscled" as it is, well, super heavily muscled.
 
+### Proportions
+*Currently:* the block under the measurement table on a card. Six flat-plane measurements that describe the body's shape, where Bust/Waist/Hips describe its size. Shown and compared, never sorted on. Partial by nature — a body measured off a front-view product image has no depth.
+**Definition:**
+
+### Breast Height
+*Currently:* bottom of the breast up to where it meets the chest. Measured flat, not around.
+**Definition:**
+
+### Breast Width
+*Currently:* one breast across, not both.
+**Definition:**
+
+### Breast Depth
+*Currently:* the breast itself, front to where it meets the body — not through to the back.
+**Definition:**
+
+### Waist Width
+*Currently:* across the waist at its narrowest. A width, not a circumference — the Waist entry above is the circumference.
+**Definition:**
+
+### Hip Width
+*Currently:* across the hips at their widest. Again a width, not the Hips circumference.
+**Definition:**
+
 ### Body Type
 *Currently:* the control at the very top of the page. Picks which catalogue is searched — Seamless or Jointed. Nothing is ever mixed between the two, and everything below it works the same either way.
 **Definition:** Seamless or Jointed body type. 

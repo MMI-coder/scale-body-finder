@@ -27,6 +27,29 @@ export const SCORED = ['height', 'bust', 'waist', 'hips']
 export const SORTS = ['least', 'greatest']
 
 /**
+ * Proportions - shape, as against the size that bust/waist/hips measure.
+ *
+ * Flat-plane measurements, taken the way scale modellers take them. They are
+ * never circumferences and nothing derives one from the other.
+ *
+ * These are shown and compared but never sorted on: bust/waist/hips stay the
+ * anchor. Their job is to answer "is this the right shape" once the
+ * circumferences have said "this is roughly the right size" - the question that
+ * separates the S07C from the VCD-03, which share a bust to within 0.1mm.
+ *
+ * Coverage is partial by nature. A body measured off a front-view product image
+ * has no depth, and nothing should invent one.
+ */
+export const PROPORTIONS = [
+  { key: 'breastHeight', label: 'Breast Height' },
+  { key: 'breastWidth', label: 'Breast Width' },
+  { key: 'breastDepth', label: 'Breast Depth' },
+  { key: 'waistWidth', label: 'Waist Width' },
+  { key: 'hipWidth', label: 'Hip Width' },
+  { key: 'shoulder', label: 'Shoulder Width' },
+]
+
+/**
  * The two catalogues. A search only ever looks in one of them.
  *
  * This used to be Seamless/Jointed. Male bodies span both constructions, so the
@@ -88,7 +111,7 @@ export function pickBustPiece(body, target) {
 /** A character's measurements at a given scale divisor. */
 export function scaleCharacter(character, divisor) {
   const out = {}
-  for (const k of ['height', 'bust', 'waist', 'hips']) {
+  for (const k of ['height', 'bust', 'waist', 'hips', ...PROPORTIONS.map(p => p.key)]) {
     out[k] = character[k] == null ? null : character[k] / divisor
   }
   return out
@@ -230,6 +253,13 @@ export function compareBodies(character, opts = {}) {
       totalOff,                                 // sum of |delta| across all scored
       heightUsed: heightAgainst(body, scaled.height),
       heightRange: heightRange(body),
+      proportions: PROPORTIONS.map(({ key, label }) => ({
+        key,
+        label,
+        body: body[key] ?? null,
+        character: scaled[key] ?? null,
+        diff: body[key] != null && scaled[key] != null ? body[key] - scaled[key] : null,
+      })),
       bust: chosen.bust,            // the chosen piece's measurement
       bustPiece: chosen.piece,      // null on a fixed-bust body
       bustOptions: chosen.options,  // null on a fixed-bust body
@@ -308,7 +338,10 @@ export function buildExportRows(character, opts, outcome) {
       `${male ? 'Chest' : 'Bust'} - Body Measurement (mm)`, `${male ? 'Chest' : 'Bust'} - Difference (mm)`,
       'Waist - Body Measurement (mm)', 'Waist - Difference (mm)',
       'Hips - Body Measurement (mm)', 'Hips - Difference (mm)',
-      'Underbust (mm)', 'Shoulder Width (mm)', 'Arm Length (mm)', 'Leg Inseam (mm)',
+      'Underbust (mm)',
+      ...PROPORTIONS.map(p => `${p.label} - Body Measurement (mm)`),
+      ...PROPORTIONS.map(p => `${p.label} - Difference (mm)`),
+      'Arm Length (mm)', 'Leg Inseam (mm)',
       'Feet Type', 'Notes',
     ],
   ]
@@ -326,7 +359,13 @@ export function buildExportRows(character, opts, outcome) {
       mm(r.bust ?? b.bust), mm(r.deltas.bust),
       mm(b.waist), mm(r.deltas.waist),
       mm(b.hips), mm(r.deltas.hips),
-      mm(b.underbust), mm(b.shoulder), mm(b.arm), mm(b.inseam),
+      mm(b.underbust),
+      ...PROPORTIONS.map(p => mm(b[p.key])),
+      ...PROPORTIONS.map(p => {
+        const r2 = r.proportions?.find(x => x.key === p.key)
+        return mm(r2 ? r2.diff : null)
+      }),
+      mm(b.arm), mm(b.inseam),
       b.feet || '', b.notes || '',
     ])
   }
