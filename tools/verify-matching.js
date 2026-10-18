@@ -40,7 +40,7 @@ const src = [
             exportFileName, PRIORITIES_BY_GENDER, heightRange,
             MALE_CATALOGUE, HEAD_SIZES, DEFAULT_HEAD_SIZE, PROPORTIONS,
             toMM, fromMM, parseScale, describeScale, scaledMM, itemHasContent,
-            MAX_ITEMS_PER_GROUP }`,
+            MAX_ITEMS_PER_GROUP, sceneToCsv, sceneFromCsv, sceneFileName }`,
 ].join('\n')
 
 const api = new Function('BODIES', 'console', src)(bodies, console)
@@ -633,6 +633,80 @@ check('a name is', api.itemHasContent({ ...bare, name: 'Phone' }), true)
 check('a single dimension is', api.itemHasContent({ ...bare, d: '1' }), true)
 check('a note is', api.itemHasContent({ ...bare, notes: 'x' }), true)
 check('ten items per group', api.MAX_ITEMS_PER_GROUP, 10)
+
+console.log('\nScene file: a round trip')
+const it = (name, h, w, d, unit, notes = '') => ({ name, h, w, d, unit, notes })
+const kitchen = {
+  scaleText: '1:5 13/16',
+  focusId: 1,
+  source: { scaleText: '1:5 13/16', bodyName: 'S07C', characterName: 'Kasumi', priority: 'bust' },
+  groups: [
+    { name: 'Kitchen', items: [it('Refrigerator', '70', '36', '30', 'in', 'Stainless, two door'), it('', '', '', '', 'cm')] },
+    { name: 'Accessories', items: [it('Phone', '15', '7', '0.8', 'cm'), it('Kunai', '', '', '', 'cm', 'length TBC')] },
+    { name: '', items: [it('Door', '6.5', '3', '', 'ft')] },
+    { name: 'Empty but named', items: [it('', '', '', '', 'cm')] },
+  ],
+}
+const kcsv = api.sceneToCsv(kitchen, { cast: ['Kasumi', 'Honoka'], focusName: 'Kasumi', unit: 'cm' })
+const back = api.sceneFromCsv(kcsv)
+check('no errors on its own file', back.errors.length, 0)
+check('scale comes back', back.scene.scaleText, '1:5 13/16')
+check('where it came from comes back', JSON.stringify(back.scene.source), JSON.stringify(kitchen.source))
+check('focus comes back by name', back.scene.focusName, 'Kasumi')
+check('groups in order', back.scene.groups.map(g => g.name).join('|'), 'Kitchen|Accessories|Group 3|Empty but named')
+check('blank items are not saved', back.scene.groups[0].items.length, 1)
+check('the fridge whole', JSON.stringify(back.scene.groups[0].items[0]), JSON.stringify(kitchen.groups[0].items[0]))
+check('an item with only a note survives', back.scene.groups[1].items[1].notes, 'length TBC')
+check('feet survive', back.scene.groups[2].items[0].unit, 'ft')
+check('a named empty group survives, empty', back.scene.groups[3].items.length, 0)
+check('the roster is listed for reference', /^Characters,Kasumi,Honoka$/m.test(kcsv), true)
+check('scaled sizes are written, in the unit asked for', /Refrigerator,70,36,30,in,30\.59,15\.73,13\.11,/.test(kcsv), true)
+check('a comma in a note is quoted', /"Stainless, two door"/.test(kcsv), true)
+check('mm when asked', /Refrigerator,70,36,30,in,305\.89,/.test(api.sceneToCsv(kitchen, { unit: 'mm' })), true)
+
+console.log('\nScene file: where the scale came from')
+const edited = { ...kitchen, scaleText: '1:6' }
+const ecsv = api.sceneToCsv(edited, {})
+check('changed by hand: the card is not claimed', /Scale From Body/.test(ecsv), false)
+check('  and none comes back', api.sceneFromCsv(ecsv).scene.source, null)
+check('  the typed scale is kept', api.sceneFromCsv(ecsv).scene.scaleText, '1:6')
+check('no scale at all: no multiplier, still loads',
+  api.sceneFromCsv(api.sceneToCsv({ ...kitchen, scaleText: '', source: null }, {})).scene.groups.length, 4)
+
+console.log('\nScene file: after a spreadsheet has had it')
+const H = 'Group,Item,Height,Width,Depth,Unit,Notes'
+const handmade = [
+  'Scene Scale,1:6', '', H,
+  'Kitchen,Kettle,20,15,15,cm,',
+  ',Toaster,18,28,16,cm,',             // blank group: carries on Kitchen
+  'Bedroom,Lamp,abc,,,cm,',            // not a size
+  'Bedroom,Rug,200,140,,yards,',       // not a unit
+  'Bedroom,Bed,200,,,,',               // no unit at all
+].join('\n')
+const hm = api.sceneFromCsv(handmade)
+check('a blank group carries on the one above', hm.scene.groups[0].items.map(i => i.name).join('|'), 'Kettle|Toaster')
+check('a bad size is left blank', hm.scene.groups[1].items[0].h, '')
+check('  and named', hm.errors.some(e => /Lamp.*"abc" isn't a size/.test(e)), true)
+check('a bad unit falls back to cm', hm.scene.groups[1].items[1].unit, 'cm')
+check('  and is named', hm.errors.some(e => /Rug.*"yards"/.test(e)), true)
+check('a missing unit is named', hm.errors.some(e => /Bed.*no unit/.test(e)), true)
+check('scaled columns are optional', hm.scene.groups.length, 2)
+
+const big = ['Scene Scale,1:6', H, ...Array.from({ length: 23 }, (_, i) => `Kitchen,Thing ${i + 1},10,,,cm,`)].join('\n')
+const bg = api.sceneFromCsv(big)
+check('23 in one group splits into three', bg.scene.groups.map(g => `${g.name}:${g.items.length}`).join(' '), 'Kitchen:10 Kitchen (2):10 Kitchen (3):3')
+check('  nothing is lost', bg.scene.groups.reduce((n, g) => n + g.items.length, 0), 23)
+check('  and it says so', bg.errors.some(e => /split into 3/.test(e)), true)
+
+check('a scale it cannot read is kept and named',
+  api.sceneFromCsv('Scene Scale,sixth\n' + H).errors.some(e => /"sixth" can't be read/.test(e)), true)
+check('a roster is not a scene', api.sceneFromCsv(api.ROSTER_HEADERS.join(',')).scene, null)
+check('an empty file is not a scene', api.sceneFromCsv('').scene, null)
+
+console.log('\nScene file: its name')
+check('named for the focus', api.sceneFileName('Kasumi'), 'Kasumi_Scene.csv')
+check('punctuation made safe', api.sceneFileName('Ayane, the ninja'), 'Ayane_the_ninja_Scene.csv')
+check('no focus, plain', api.sceneFileName(null), 'Scene.csv')
 
 console.log(failures === 0 ? '\nAll checks passed.\n' : `\n${failures} CHECK(S) FAILED.\n`)
 process.exitCode = failures === 0 ? 0 : 1

@@ -20,7 +20,7 @@ import ThemedButton from '../Components/ThemedButton'
 import ThemedCard from '../Components/ThemedCard'
 import ThemedText from '../Components/ThemedText'
 import ThemedTextInput from '../Components/ThemedTextInput'
-import { blankEntry, newId, useWorkspace } from '../state/workspace'
+import { blankEntry, isFocus, newId, useWorkspace } from '../state/workspace'
 import { Colors } from '../Constants/Colors'
 import { BODIES, bodyImage } from '../data/bodies'
 import { GLOSSARY } from '../data/glossary'
@@ -307,6 +307,7 @@ export default function Index() {
             ...s,
             scaleText: r.closest.name,
             focusId: entry.id,
+            focusName: name.trim() || null,
             source: {
                 scaleText: r.closest.name,
                 bodyName: r.body.name,
@@ -321,7 +322,7 @@ export default function Index() {
     // card's scale moves, so it stops claiming to be the scene's.
     const isSceneScale = (r) =>
         !!r.closest &&
-        scene.focusId === entry.id &&
+        isFocus(scene, entry) &&
         scene.source?.bodyName === r.body.name &&
         scene.scaleText.trim() === r.closest.name
 

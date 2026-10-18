@@ -60,7 +60,8 @@ export const blankGroup = (unit = DEFAULT_UNIT) => ({
  * A fresh scene.
  *
  * focusId is the character the scene is built around - optional, and set by
- * "Use for scene" on a body card. source records where the scale came from at
+ * "Use for scene" on a body card. focusName is the same character by name,
+ * which is all a saved file can carry: ids only last as long as the tab. source records where the scale came from at
  * the moment it was copied: body, character, priority and the scale itself.
  * It is a record, not a link - change the priority afterwards and the card's
  * scale moves, but the scene's does not.
@@ -68,9 +69,23 @@ export const blankGroup = (unit = DEFAULT_UNIT) => ({
 export const blankScene = () => ({
     scaleText: '',
     focusId: null,
+    focusName: null,
     source: null,
     groups: [blankGroup()],
 })
+
+/**
+ * Is this roster entry the scene's focus?
+ *
+ * By id when the button was pressed in this tab. By name when the scene came
+ * from a file - so loading a roster and a scene, in either order, finds
+ * Kasumi again without her having to be picked twice.
+ */
+export function isFocus(scene, entry) {
+    if (scene.focusId != null) return scene.focusId === entry.id
+    const want = (scene.focusName || '').trim().toLowerCase()
+    return !!want && entry.name.trim().toLowerCase() === want
+}
 
 // ---------------------------------------------------------------------------
 // The store

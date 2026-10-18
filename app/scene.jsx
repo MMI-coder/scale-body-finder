@@ -1,15 +1,26 @@
 import { useState } from 'react'
 import { Pressable, ScrollView, StyleSheet, View, useColorScheme } from 'react-native'
 
+import LoadCsvModal from '../Components/LoadCsvModal'
 import PageNav from '../Components/PageNav'
 import SegmentedControl from '../Components/SegmentedControl'
 import Spacer from '../Components/Spacer'
+import ThemedButton from '../Components/ThemedButton'
 import ThemedCard from '../Components/ThemedCard'
 import ThemedText from '../Components/ThemedText'
 import ThemedTextInput from '../Components/ThemedTextInput'
-import { blankGroup, blankItem, useWorkspace } from '../state/workspace'
+import { blankGroup, blankItem, isFocus, newId, useWorkspace } from '../state/workspace'
 import { Colors } from '../Constants/Colors'
-import { DIMENSIONS, MAX_ITEMS_PER_GROUP, itemHasContent, scaledMM } from '../utils/scene'
+import { BATCH_SUPPORTED, saveCsv } from '../utils/batchFile'
+import {
+    DIMENSIONS,
+    MAX_ITEMS_PER_GROUP,
+    itemHasContent,
+    sceneFileName,
+    sceneFromCsv,
+    sceneToCsv,
+    scaledMM,
+} from '../utils/scene'
 import {
     ITEM_UNITS,
     UNITS,
@@ -34,6 +45,7 @@ export default function Scene() {
     // A group waiting on its second tap before it goes. Same two-tap rule the
     // scale tool used for Start Over: ten items should not vanish on a stray click.
     const [confirmRemove, setConfirmRemove] = useState(null)
+    const [loading, setLoading] = useState(false)
 
     const divisor = parseScale(scene.scaleText)
     const typed = scene.scaleText.trim() !== ''
@@ -43,7 +55,16 @@ export default function Scene() {
     const cast = roster
         .map((e, i) => ({ id: e.id, name: e.name.trim() || (Object.values(e.values).some(Boolean) ? `Character ${i + 1}` : '') }))
         .filter((c) => c.name)
-    const focus = cast.find((c) => c.id === scene.focusId)
+    const focusEntry = roster.find((e) => isFocus(scene, e))
+    const focus = focusEntry ? cast.find((c) => c.id === focusEntry.id) : null
+
+    // A scene loaded from a file knows its focus by name before any roster is
+    // loaded. Show it anyway - it is still whose scale this is.
+    const shown = !focus && scene.focusName
+        ? [{ id: 'focus', name: scene.focusName }, ...cast]
+        : cast
+    const focusId = focus ? focus.id : scene.focusName ? 'focus' : null
+    const focusName = focus?.name ?? scene.focusName ?? null
 
     // Where the number came from - only claimed while the field still holds
     // what was copied. Edit it and it says so, with what it was.
@@ -83,6 +104,41 @@ export default function Scene() {
     const addGroup = () => {
         setScene((s) => ({ ...s, groups: [...s.groups, blankGroup(unit)] }))
         setConfirmRemove(null)
+    }
+
+    // ---- the file: what you read, and what you load back to carry on ----
+
+    const hasContent = scene.scaleText.trim() !== '' ||
+        scene.groups.some((g) => g.name.trim() !== '' || g.items.some(itemHasContent))
+
+    const saveScene = () =>
+        saveCsv(
+            sceneFileName(focusName),
+            sceneToCsv(scene, { cast: cast.map((c) => c.name), focusName, unit })
+        )
+
+    const loadScene = (text) => {
+        const { scene: loaded, errors } = sceneFromCsv(text)
+        if (!loaded) return { ok: false, message: errors[0] || 'Nothing could be read from that file.' }
+        const groups = loaded.groups.map((g) => ({
+            id: newId(),
+            name: g.name,
+            items: g.items.length ? g.items.map((it) => ({ ...it, id: newId() })) : [blankItem(unit)],
+        }))
+        setScene({
+            scaleText: loaded.scaleText,
+            focusId: null,
+            focusName: loaded.focusName,
+            source: loaded.source,
+            groups: groups.length ? groups : [blankGroup(unit)],
+        })
+        setConfirmRemove(null)
+        const n = loaded.groups.reduce((k, g) => k + g.items.length, 0)
+        return {
+            ok: true,
+            message: `${n} item${n === 1 ? '' : 's'} in ${groups.length} group${groups.length === 1 ? '' : 's'} loaded.`,
+            errors,
+        }
     }
 
     const removeGroup = (g) => {
@@ -165,20 +221,20 @@ export default function Scene() {
                         </ThemedText>
                     )}
 
-                    {cast.length ? (
+                    {shown.length ? (
                         <>
                             <Spacer height={14} />
                             <ThemedText style={[styles.label, { color: theme.muted, marginBottom: 2 }]}>
                                 Characters
                             </ThemedText>
                             <ThemedText style={styles.cast}>
-                                {cast.map((c, i) => (
+                                {shown.map((c, i) => (
                                     <ThemedText key={c.id}>
                                         {i ? '  ·  ' : ''}
-                                        <ThemedText style={c.id === focus?.id ? styles.castFocus : null}>
+                                        <ThemedText style={c.id === focusId ? styles.castFocus : null}>
                                             {c.name}
                                         </ThemedText>
-                                        {c.id === focus?.id ? (
+                                        {c.id === focusId ? (
                                             <ThemedText style={[styles.castTag, { color: Colors.primary }]}> (focus)</ThemedText>
                                         ) : null}
                                     </ThemedText>
@@ -260,6 +316,36 @@ export default function Scene() {
                 >
                     <ThemedText style={[styles.addBtnText, { color: theme.text }]}>+ Add group</ThemedText>
                 </Pressable>
+
+                {BATCH_SUPPORTED ? (
+                    <>
+                        <Spacer height={30} />
+                        <View style={styles.fileRow}>
+                            {hasContent ? (
+                                <ThemedButton onPress={saveScene} style={styles.fileBtn}>
+                                    <ThemedText style={styles.fileBtnText}>Save scene as CSV</ThemedText>
+                                </ThemedButton>
+                            ) : null}
+                            <ThemedButton
+                                onPress={() => setLoading(true)}
+                                style={[styles.fileBtn, { backgroundColor: theme.uiBackground }]}
+                            >
+                                <ThemedText style={styles.fileBtnAlt}>Load Saved Scene</ThemedText>
+                            </ThemedButton>
+                        </View>
+                        <ThemedText style={[styles.label, { color: theme.muted, marginTop: 8, fontWeight: '400', fontSize: 13 }]}>
+                            One spreadsheet with every item, real and scaled, grouped - and the same file
+                            loads back here to carry on. Closing the tab clears the scene, so save it first.
+                        </ThemedText>
+                        <LoadCsvModal
+                            visible={loading}
+                            onClose={() => setLoading(false)}
+                            title="Load a saved scene"
+                            blurb="Drop in a scene you saved earlier and its scale, groups and items come back. This replaces the scene on screen rather than adding to it. Your characters are not touched - load the roster on the Body Finder for those."
+                            onLoad={loadScene}
+                        />
+                    </>
+                ) : null}
 
                 <Spacer height={40} />
             </View>
@@ -395,4 +481,9 @@ const styles = StyleSheet.create({
     },
     addBtnText: { fontSize: 14, fontWeight: '600' },
     addGroup: { marginTop: 0 },
+
+    fileRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
+    fileBtn: { marginVertical: 0, paddingHorizontal: 22 },
+    fileBtnText: { color: '#ffffff', fontWeight: '700', fontSize: 15 },
+    fileBtnAlt: { fontWeight: '700', fontSize: 15 },
 })
