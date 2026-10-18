@@ -2,9 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import { Modal, Platform, Pressable, ScrollView, StyleSheet, View, useColorScheme } from 'react-native'
 import { Colors } from '../Constants/Colors'
 import { BODY_TEMPLATE_CSV, BODY_TEMPLATE_FILENAME } from '../data/bodyTemplate'
-import { parseCharacterCsv, runBatch, templateCsv } from '../utils/batch'
 import { BATCH_SUPPORTED, pickCsvFile, readDroppedFile, saveCsv } from '../utils/batchFile'
-import { DEFAULT_GENDER, rowsToCsv } from '../utils/matching'
+import { DEFAULT_GENDER } from '../utils/matching'
 import Spacer from './Spacer'
 import ThemedButton from './ThemedButton'
 import ThemedCard from './ThemedCard'
@@ -13,15 +12,15 @@ import ThemedText from './ThemedText'
 /**
  * The two file jobs, kept off the main page.
  *
- * Running a roster is a sequence - get the template, fill it in, send it back -
- * and it reads better as steps in one place than as two buttons with a
- * paragraph of explanation permanently parked under the results.
+ * Loading a roster puts characters back in the app after a refresh. It used to
+ * be a template you filled in by hand, which meant a new column every time the
+ * app learned something. The app writes the file now, so there is nothing to
+ * author and nothing to get wrong.
  *
- * The body-addition template is the other job entirely: it is not uploaded
- * anywhere, it is downloaded and handed over, so it gets its own button and no
- * ceremony.
+ * The body-addition template is the other job entirely: not uploaded anywhere,
+ * just downloaded and handed over, so it gets its own button and no ceremony.
  */
-const BatchPanel = ({ gender = DEFAULT_GENDER }) => {
+const BatchPanel = ({ gender = DEFAULT_GENDER, onLoadRoster }) => {
     const colorScheme = useColorScheme()
     const theme = Colors[colorScheme] ?? Colors.light
     const [open, setOpen] = useState(false)
@@ -61,16 +60,6 @@ const BatchPanel = ({ gender = DEFAULT_GENDER }) => {
 
     if (!BATCH_SUPPORTED) return null
 
-    const downloadCharacterTemplate = () => {
-        saveCsv(
-            gender === DEFAULT_GENDER
-                ? 'Scale_Body_Finder_Character_Template.csv'
-                : `Scale_Body_Finder_Character_Template_${gender}.csv`,
-            templateCsv(gender))
-        setErrors([])
-        setStatus({ tone: 'ok', text: 'Template downloaded. One row per character, measurements in millimetres.' })
-    }
-
     const downloadBodyTemplate = () => {
         saveCsv(BODY_TEMPLATE_FILENAME, BODY_TEMPLATE_CSV)
     }
@@ -93,30 +82,10 @@ const BatchPanel = ({ gender = DEFAULT_GENDER }) => {
             return
         }
 
-        const { jobs, errors: problems, fatal } = parseCharacterCsv(file.text, gender)
-
-        if (fatal || !jobs.length) {
-            setErrors(problems)
-            setStatus({
-                tone: 'bad',
-                text: fatal ? 'Nothing was processed.' : `Nothing could be read from ${file.name}.`,
-            })
-            return
-        }
-
-        const { rows, characters, resultRows } = runBatch(jobs, undefined, gender)
-        saveCsv(
-            gender === DEFAULT_GENDER
-                ? 'Scale_Body_Finder_Batch_Results.csv'
-                : `Scale_Body_Finder_Batch_Results_${gender}.csv`,
-            rowsToCsv(rows))
-        setErrors(problems)
-        setStatus({
-            tone: problems.length ? 'warn' : 'ok',
-            text: `${characters} character${characters === 1 ? '' : 's'} processed, ` +
-                  `${resultRows} result row${resultRows === 1 ? '' : 's'} downloaded.` +
-                  (problems.length ? ` ${problems.length} row${problems.length === 1 ? '' : 's'} skipped.` : ''),
-        })
+        const result = onLoadRoster ? onLoadRoster(file.text) : { ok: false, message: 'Nothing to load into.' }
+        setErrors(result.errors || [])
+        setStatus({ tone: result.ok ? (result.errors?.length ? 'warn' : 'ok') : 'bad', text: result.message })
+        if (result.ok) setTimeout(close, 1200)
     }
 
     const close = () => { setOpen(false); setStatus(null); setErrors([]); setDragging(false) }
@@ -126,7 +95,7 @@ const BatchPanel = ({ gender = DEFAULT_GENDER }) => {
         <>
             <View style={styles.pageRow}>
                 <ThemedButton onPress={() => setOpen(true)} style={styles.btn}>
-                    <ThemedText style={styles.btnText}>Upload Character Template</ThemedText>
+                    <ThemedText style={styles.btnText}>Load Saved Roster</ThemedText>
                 </ThemedButton>
                 <ThemedButton
                     onPress={downloadBodyTemplate}
@@ -142,7 +111,7 @@ const BatchPanel = ({ gender = DEFAULT_GENDER }) => {
                     <Pressable onPress={() => {}} style={{ width: '100%', maxWidth: 680 }}>
                         <ThemedCard style={styles.sheet}>
                             <View style={styles.titleRow}>
-                                    <ThemedText style={styles.h2}>Multiple characters at once</ThemedText>
+                                    <ThemedText style={styles.h2}>Load a saved roster</ThemedText>
                                     <Pressable onPress={close} hitSlop={10} accessibilityRole="button" accessibilityLabel="Close">
                                         <ThemedText style={[styles.close, { color: theme.muted }]}>✕</ThemedText>
                                     </Pressable>
@@ -150,12 +119,9 @@ const BatchPanel = ({ gender = DEFAULT_GENDER }) => {
 
                             <ScrollView contentContainerStyle={styles.sheetInner}>
                                 <ThemedText style={[styles.sub, { color: theme.muted }]}>
-                                    Upload a filled-in template and get a CSV back with the top ten bodies for
-                                    each character. Every row carries its own scale and priority, so one
-                                    character can be compared at 1:6 and the next at 1:5 3/4 in the same file.
-                                </ThemedText>
-                                <ThemedText style={[styles.sub, styles.warnNote, { color: theme.muted }]}>
-                                    Measurements must be in millimetres. A height of 158 will be rejected — it wants 1580.
+                                    Drop in a roster you saved earlier and the characters come back — their
+                                    measurements, scale and head sculpt with them. This replaces whatever is
+                                    on screen rather than adding to it.
                                 </ThemedText>
 
                                 <Spacer height={18} />
@@ -177,17 +143,6 @@ const BatchPanel = ({ gender = DEFAULT_GENDER }) => {
                                     </ThemedButton>
                                 </View>
 
-                                <Spacer height={16} />
-
-                                <ThemedText style={[styles.label, { color: theme.muted }]}>
-                                    Haven't got the template?
-                                </ThemedText>
-                                <ThemedButton
-                                    onPress={downloadCharacterTemplate}
-                                    style={[styles.btn, styles.alt, { backgroundColor: theme.uiBackground }]}
-                                >
-                                    <ThemedText style={styles.btnAltText}>Download Character Template</ThemedText>
-                                </ThemedButton>
 
                                 {status ? (
                                     <>

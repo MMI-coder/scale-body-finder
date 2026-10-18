@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import {
     Alert,
     Platform,
+    Pressable,
     ScrollView,
     StyleSheet,
     View,
@@ -19,9 +20,12 @@ import ThemedCard from '../Components/ThemedCard'
 import ThemedText from '../Components/ThemedText'
 import ThemedTextInput from '../Components/ThemedTextInput'
 import { Colors } from '../Constants/Colors'
-import { BODIES } from '../data/bodies'
+import { BODIES, bodyImage } from '../data/bodies'
 import { GLOSSARY } from '../data/glossary'
+import { BATCH_SUPPORTED, saveCsv } from '../utils/batchFile'
 import { exportResults } from '../utils/exportCsv'
+import { PRINT_SUPPORTED, printResults } from '../utils/printResults'
+import { rosterFromCsv, rosterToCsv } from '../utils/roster'
 import {
     DEFAULT_GENDER,
     DEFAULT_HEAD_SIZE,
@@ -33,6 +37,7 @@ import {
 } from '../utils/matching'
 import {
     DEFAULT_UNIT,
+    fmtDelta,
     DEFAULT_WORKING_SCALE,
     UNITS,
     WORKING_SCALES,
@@ -77,10 +82,35 @@ const SORT_OPTIONS = [
     { value: 'greatest', label: 'Greatest difference' },
 ]
 
+/**
+ * How many characters one round can hold.
+ *
+ * Matched to the scale tool. There are thirty-odd characters worth doing
+ * eventually, but not in one sitting, and a page of ten entries is already a
+ * lot to look at.
+ */
+const MAX_CHARACTERS = 10
+
+/** How many bodies reach the printed sheet, per character. */
+const PRINTED_RESULTS = 10
+
 const emptyValues = {
     height: '', bust: '', waist: '', hips: '',
     ...Object.fromEntries(PROPORTIONS.map((p) => [p.key, ''])),
 }
+
+let nextId = 1
+
+/** A fresh character. Scale and head default to the usual starting point. */
+const blankEntry = () => ({
+    id: nextId++,
+    name: '',
+    values: emptyValues,
+    priority: 'bust',
+    workingScale: DEFAULT_WORKING_SCALE,
+    headSize: DEFAULT_HEAD_SIZE,
+    sort: 'least',
+})
 
 /** Defined terms keep their capital in prose, so the page and the CSV agree. */
 const cap = (w) => (w ? w.charAt(0).toUpperCase() + w.slice(1) : w)
@@ -91,14 +121,127 @@ export default function Index() {
     const { width } = useWindowDimensions()
 
     const [gender, setGender] = useState(DEFAULT_GENDER)
-    const [headSize, setHeadSize] = useState(DEFAULT_HEAD_SIZE)
-    const [name, setName] = useState('')
     const [unit, setUnit] = useState(DEFAULT_UNIT)
-    const [values, setValues] = useState(emptyValues)
-    const [priority, setPriority] = useState('bust')
-    const [workingScale, setWorkingScale] = useState(DEFAULT_WORKING_SCALE)
-    const [sort, setSort] = useState('least')
     const [expanded, setExpanded] = useState({})
+
+    /**
+     * The roster.
+     *
+     * Everything that varies per character lives in an entry - including the
+     * scale and the head sculpt, because those are decisions about the
+     * character rather than about the session. A short character wants the
+     * small sculpt and may want a different scale than a tall one, and a round
+     * of ten should be able to say so.
+     *
+     * Units and catalogue stay outside: those are about how you like to work.
+     */
+    const [roster, setRoster] = useState([blankEntry()])
+    const [active, setActive] = useState(0)
+    const entry = roster[Math.min(active, roster.length - 1)] ?? blankEntry()
+
+    const patch = (fields) =>
+        setRoster((r) => r.map((e, i) => (i === active ? { ...e, ...fields } : e)))
+
+    // The form below is unchanged - it reads and writes the active entry
+    // through these, so adding a roster did not mean rewriting every field.
+    const { name, values, priority, workingScale, headSize, sort } = entry
+    const setName = (v) => patch({ name: v })
+    const setValues = (v) => patch({ values: typeof v === 'function' ? v(entry.values) : v })
+    const setPriority = (v) => patch({ priority: v })
+    const setWorkingScale = (v) => patch({ workingScale: v })
+    const setHeadSize = (v) => patch({ headSize: v })
+    const setSort = (v) => patch({ sort: v })
+
+    /**
+     * Every usable character in the roster, each compared on its own terms.
+     *
+     * Separate from the one on screen: the screen shows whoever is selected,
+     * with everything; the sheet shows all of them, top ten each.
+     */
+    const generate = () => {
+        const sheets = []
+        for (const e of roster) {
+            const mm = {}
+            for (const { key } of [...FIELDS, ...PROPORTIONS]) {
+                const n = parseFloat(e.values[key])
+                mm[key] = Number.isFinite(n) && n > 0 ? toMM(n, unit) : null
+            }
+            const c = { name: e.name.trim(), ...mm }
+            if (!needed.every((k) => c[k])) continue
+
+            const pri = PRIORITIES_BY_GENDER[gender].includes(e.priority)
+                ? e.priority
+                : PRIORITIES_BY_GENDER[gender][0]
+            const o = {
+                workingScale: e.workingScale, priority: pri, sort: e.sort,
+                count: null, gender, headSize: e.headSize, bodies: BODIES,
+            }
+            sheets.push({ character: c, opts: o, outcome: compareBodies(c, o), limit: PRINTED_RESULTS })
+        }
+
+        if (!sheets.length) {
+            const msg = `Nothing to print yet — fill in ${needed.join(', ')} for at least one character.`
+            if (Platform.OS === 'web') window.alert(msg)
+            else Alert.alert('Nothing to print', msg)
+            return
+        }
+
+        // The roster file comes out alongside, so the thing you just printed
+        // can be loaded back and adjusted rather than retyped.
+        saveRoster()
+
+        const res = printResults(sheets, {
+            unit,
+            mm: (v, u) => fmtMM(v, u),
+            delta: (v, u) => fmtDelta(v, u),
+            scaleName,
+            imageUrl: (file) => {
+                const src = bodyImage(file)
+                if (!src) return null
+                return typeof src === 'string' ? src : src?.uri ?? null
+            },
+        })
+        if (!res.ok && res.message) {
+            if (Platform.OS === 'web') window.alert(res.message)
+            else Alert.alert('Could not print', res.message)
+        }
+    }
+
+    const saveRoster = () => {
+        saveCsv('Scale_Body_Finder_Roster.csv', rosterToCsv(roster, unit, toMM))
+    }
+
+    const loadRoster = (text) => {
+        const { entries, errors } = rosterFromCsv(text, gender, fromMM, unit)
+        if (!entries.length) {
+            return { ok: false, message: errors[0] || 'Nothing could be read from that file.' }
+        }
+        setRoster(entries.slice(0, MAX_CHARACTERS).map((e) => ({ ...e, id: nextId++ })))
+        setActive(0)
+        setExpanded({})
+        const over = entries.length > MAX_CHARACTERS
+            ? ` The first ${MAX_CHARACTERS} were kept; the file had ${entries.length}.`
+            : ''
+        return {
+            ok: true,
+            message: `${Math.min(entries.length, MAX_CHARACTERS)} character${entries.length === 1 ? '' : 's'} loaded.` + over,
+            errors,
+        }
+    }
+
+    const addCharacter = () => {
+        if (roster.length >= MAX_CHARACTERS) return
+        setRoster((r) => [...r, blankEntry()])
+        setActive(roster.length)
+        setExpanded({})
+    }
+
+    const removeCharacter = (i) => {
+        if (roster.length === 1) { setRoster([blankEntry()]); setActive(0); setExpanded({}); return }
+        setRoster((r) => r.filter((_, j) => j !== i))
+        setActive((a) => (a >= i && a > 0 ? a - 1 : a))
+        setExpanded({})
+    }
 
     const columns = width >= 1250 ? 3 : width >= 850 ? 2 : 1
 
@@ -132,8 +275,8 @@ export default function Index() {
     const changeGender = (next) => {
         if (next === gender) return
         setGender(next)
-        setName('')
-        setValues(emptyValues)
+        setRoster([blankEntry()])
+        setActive(0)
         setExpanded({})
     }
 
@@ -144,16 +287,17 @@ export default function Index() {
     // stays put rather than silently changing size.
     const changeUnit = (next) => {
         if (next === unit) return
-        setValues((v) => {
-            const out = {}
-            for (const { key } of FIELDS) {
+        const convert = (v) => {
+            const out = { ...v }
+            for (const { key } of [...FIELDS, ...PROPORTIONS]) {
                 const n = parseFloat(v[key])
                 out[key] = Number.isFinite(n)
                     ? String(parseFloat(fromMM(toMM(n, unit), next).toFixed(4)))
                     : v[key]
             }
             return out
-        })
+        }
+        setRoster((r) => r.map((e) => ({ ...e, values: convert(e.values) })))
         setUnit(next)
     }
 
@@ -238,6 +382,69 @@ export default function Index() {
                             <ThemedText style={[styles.stepText, { color: theme.muted }]}>{line}</ThemedText>
                         </View>
                     ))}
+                </ThemedCard>
+
+                <Spacer height={20} />
+
+                {/* ---------------- the roster ---------------- */}
+                <ThemedCard>
+                    <ThemedText style={styles.controlName}>
+                        Characters ({roster.length}/{MAX_CHARACTERS})
+                    </ThemedText>
+                    <ThemedText style={[styles.label, { color: theme.muted }]}>
+                        Each one keeps its own measurements, scale and head sculpt. Pick one to
+                        edit it below.
+                    </ThemedText>
+                    <View style={styles.chipRow}>
+                        {roster.map((e, i) => {
+                            const on = i === active
+                            return (
+                                <Pressable
+                                    key={e.id}
+                                    onPress={() => { setActive(i); setExpanded({}) }}
+                                    accessibilityRole="button"
+                                    accessibilityState={{ selected: on }}
+                                    style={[
+                                        styles.chip,
+                                        { borderColor: on ? Colors.primary : theme.cardBorder },
+                                        on && { backgroundColor: Colors.primary },
+                                    ]}
+                                >
+                                    <ThemedText style={[styles.chipText, on && styles.chipTextOn]}>
+                                        {e.name.trim() || `Character ${i + 1}`}
+                                    </ThemedText>
+                                    <Pressable
+                                        onPress={() => removeCharacter(i)}
+                                        hitSlop={8}
+                                        accessibilityRole="button"
+                                        accessibilityLabel={`Remove ${e.name.trim() || 'character ' + (i + 1)}`}
+                                    >
+                                        <ThemedText style={[styles.chipX, on && styles.chipTextOn, { color: on ? '#fff' : theme.muted }]}>
+                                            ✕
+                                        </ThemedText>
+                                    </Pressable>
+                                </Pressable>
+                            )
+                        })}
+                        {BATCH_SUPPORTED && roster.some((e) => e.name.trim() || Object.values(e.values).some(Boolean)) ? (
+                            <Pressable
+                                onPress={saveRoster}
+                                accessibilityRole="button"
+                                style={[styles.chip, { borderColor: theme.cardBorder }]}
+                            >
+                                <ThemedText style={styles.chipText}>⤓ Save roster</ThemedText>
+                            </Pressable>
+                        ) : null}
+                        {roster.length < MAX_CHARACTERS ? (
+                            <Pressable
+                                onPress={addCharacter}
+                                accessibilityRole="button"
+                                style={[styles.chip, { borderColor: theme.cardBorder, borderStyle: 'dashed' }]}
+                            >
+                                <ThemedText style={styles.chipText}>+ Add character</ThemedText>
+                            </Pressable>
+                        ) : null}
+                    </View>
                 </ThemedCard>
 
                 <Spacer height={20} />
@@ -413,14 +620,36 @@ export default function Index() {
                         </View>
 
                         <Spacer height={20} />
-                        <ThemedButton onPress={onExport} style={styles.exportBtn}>
-                            <ThemedText style={styles.exportText}>Save results as CSV</ThemedText>
-                        </ThemedButton>
+                        <View style={styles.fieldRow}>
+                            <ThemedButton onPress={onExport} style={styles.exportBtn}>
+                                <ThemedText style={styles.exportText}>
+                                    Save {name.trim() || 'this character'} as CSV
+                                </ThemedText>
+                            </ThemedButton>
+                            {PRINT_SUPPORTED ? (
+                                <ThemedButton
+                                    onPress={generate}
+                                    style={[styles.exportBtn, { backgroundColor: theme.uiBackground }]}
+                                >
+                                    <ThemedText style={styles.btnAltText}>
+                                        Generate results for all {roster.length} character{roster.length === 1 ? '' : 's'}
+                                    </ThemedText>
+                                </ThemedButton>
+                            ) : null}
+                        </View>
+                        {PRINT_SUPPORTED ? (
+                            <ThemedText style={[styles.sub, { color: theme.muted }]}>
+                                Opens a printable sheet — top {PRINTED_RESULTS} bodies for each character
+                                you have filled in — and saves your roster alongside it, so you can load
+                                it back later rather than typing it again. Choose Save as PDF in the print
+                                dialog.
+                            </ThemedText>
+                        ) : null}
                     </>
                 )}
 
                 <Spacer height={30} />
-                <BatchPanel gender={gender} />
+                <BatchPanel gender={gender} onLoadRoster={loadRoster} />
 
                 {/* Outside the results branch on purpose - the glossary explains the
                     controls as much as the cards, so it has to be readable before
@@ -472,8 +701,14 @@ const styles = StyleSheet.create({
     measureField: { flexGrow: 1, flexBasis: 150, minWidth: 130 },
 
     scaleChips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-    chip: { marginVertical: 0, paddingVertical: 10, paddingHorizontal: 14, borderRadius: 8 },
+    chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4 },
+    chip: {
+        flexDirection: 'row', alignItems: 'center', gap: 10,
+        borderWidth: 1, borderRadius: 8, paddingVertical: 9, paddingHorizontal: 14,
+    },
     chipText: { fontSize: 14, fontWeight: '600' },
+    chipTextOn: { color: '#ffffff' },
+    chipX: { fontSize: 13, fontWeight: '700' },
 
     sixthRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 28 },
     sixthItem: { minWidth: 96 },
@@ -483,8 +718,9 @@ const styles = StyleSheet.create({
     grid: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -8, alignItems: 'flex-start' },
     gridItem: { paddingHorizontal: 8, paddingBottom: 16 },
 
-    exportBtn: { alignSelf: 'flex-start', paddingHorizontal: 26 },
+    exportBtn: { alignSelf: 'flex-start', paddingHorizontal: 26, marginVertical: 0 },
     exportText: { color: '#ffffff', fontWeight: '700', fontSize: 16 },
+    btnAltText: { fontWeight: '700', fontSize: 16 },
 
     glossItem: { marginBottom: 10 },
     glossTerm: { fontSize: 15, fontWeight: '700' },
