@@ -66,6 +66,10 @@ These are the ones a user meets on a data card or a control and can't guess.
 **Definition:** The actual scale your character fits into. This is a direct comparison of the measurements from the Scale Reference Selector to the real world measurements of the body being viewed. It is intended to help creators know how they should size the clothing, accessories, props, and/or environments for their character that
 may benefit from being made to the same perceived scale as the character itself.
 
+### Real World Equivalent
+*Currently:* sits under the Scale Reference Selector and follows it. Reads "1mm = 6.00mm in 1:1 scale" at 1:6. The plain divisor, so it is what you want with a ruler against something you are building. The unit follows the cm/mm toggle; the number does not change, because a ratio is a ratio.
+**Definition:**
+
 ### Scale Multiplier
 *Currently:* the `×0.16630` under Closest Scale — the same scale as a decimal. **Unlabelled on screen.**
 **Definition:** For easy use in scaling objects to use with your chosen body. To use, take your real world measurement and multiply by this number. Example: 89cm x 0.17191 = 15.31cm.

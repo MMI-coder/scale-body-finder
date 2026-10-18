@@ -106,6 +106,24 @@ export function scaleInRange(divisor) {
   return Number.isFinite(divisor) && divisor >= SCALE_MIN && divisor < SCALE_MAX
 }
 
+/**
+ * What one unit at the working scale is worth at full size.
+ *
+ * The plain divisor, which is what you want when you have a ruler against
+ * something you are building: at 1:6, a millimetre of prop is six millimetres
+ * of the real thing.
+ *
+ * Deliberately not derived from the rounded Scale Multiplier on the cards.
+ * Inverting a figure already rounded to five places turns 1:6 into 5.99, which
+ * is an artefact of the rounding rather than anything true about the scale.
+ *
+ * Unit-free on purpose: a ratio is a ratio, so the caller supplies the label
+ * and the same number serves millimetres and centimetres alike.
+ */
+export function realWorldEquivalent(divisor) {
+  return Number.isFinite(divisor) && divisor > 0 ? parseFloat(divisor.toFixed(2)) : null
+}
+
 /** True 1:6 multiplier. */
 export const SIXTH = 1 / 6
 

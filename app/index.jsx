@@ -43,6 +43,7 @@ import {
     WORKING_SCALES,
     fmtMM,
     fromMM,
+    realWorldEquivalent,
     scaleName,
     toMM,
 } from '../utils/scaleUtils'
@@ -543,6 +544,14 @@ export default function Index() {
                         width={190}
                     />
 
+                    <Spacer height={10} />
+                    <ThemedText style={[styles.label, { color: theme.muted, marginBottom: 0 }]}>
+                        Real World Equivalent
+                    </ThemedText>
+                    <ThemedText style={styles.equivalent}>
+                        1{unit} = {realWorldEquivalent(workingScale).toFixed(2)}{unit} in 1:1 scale
+                    </ThemedText>
+
                     <Spacer height={18} />
                     <ThemedText style={styles.controlName}>Head Sculpt</ThemedText>
                     <ThemedText style={[styles.label, { color: theme.muted }]}>
@@ -709,6 +718,8 @@ const styles = StyleSheet.create({
     chipText: { fontSize: 14, fontWeight: '600' },
     chipTextOn: { color: '#ffffff' },
     chipX: { fontSize: 13, fontWeight: '700' },
+
+    equivalent: { fontSize: 18, fontWeight: '700', fontVariant: ['tabular-nums'], marginTop: 2 },
 
     sixthRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 28 },
     sixthItem: { minWidth: 96 },
