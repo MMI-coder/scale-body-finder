@@ -120,6 +120,30 @@ Jointed body heights are static, and based on a standardized 3D printed head scu
 *Currently:* TPE, Silicone, or Plastic.
 **Definition:** The type of material the body is made of. TPE is the old standard of seamless bodies while Platinum Silicone is the new standard. Jointed bodies utilize hard plastics.
 
+### Scene
+*Currently:* the second page, beside the Body Finder. Everything that goes with a character - accessories, furniture, a whole room - scaled to one scale. Took over the Scale Conversion Tool's job.
+**Definition:**
+
+### Scene Scale
+*Currently:* the one scale everything on the Scene page is built to. Typed by hand (1:5 13/16, 1:5.8125 or 0.172), or copied from a body card with Use for Scene. Not limited to the 1:5-1:7 range the Body Finder compares at.
+**Definition:**
+
+### Use for Scene
+*Currently:* a button under Actual Body Scale on an open body card. Copies that scale into the Scene and makes the character the Focus Character. A copy, not a link - changing the priority afterwards moves the card's scale but not the scene's.
+**Definition:**
+
+### Focus Character
+*Currently:* the character a scene is built around - the one whose scale it is. Optional. Set by Use for Scene; marked "(focus)" in the Scene's character list, and names the saved file.
+**Definition:**
+
+### Group
+*Currently:* a named set of items on the Scene page - Kitchen, Weapons, Accessories. Up to ten items each, as many groups as needed.
+**Definition:**
+
+### Scaled Size
+*Currently:* an item's real height, width and depth at the Scene Scale. Shown in the cm/mm the app is set to, whatever unit the real size was typed in.
+**Definition:**
+
 ---
 
 # Part 2 — Probably self-explanatory
