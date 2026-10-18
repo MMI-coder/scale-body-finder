@@ -19,6 +19,7 @@ import ThemedButton from '../Components/ThemedButton'
 import ThemedCard from '../Components/ThemedCard'
 import ThemedText from '../Components/ThemedText'
 import ThemedTextInput from '../Components/ThemedTextInput'
+import { blankEntry, newId, useWorkspace } from '../Components/WorkspaceProvider'
 import { Colors } from '../Constants/Colors'
 import { BODIES, bodyImage } from '../data/bodies'
 import { GLOSSARY } from '../data/glossary'
@@ -27,8 +28,6 @@ import { exportResults } from '../utils/exportCsv'
 import { PRINT_SUPPORTED, printResults } from '../utils/printResults'
 import { rosterFromCsv, rosterToCsv } from '../utils/roster'
 import {
-    DEFAULT_GENDER,
-    DEFAULT_HEAD_SIZE,
     GENDERS,
     HEAD_SIZES,
     PRIORITIES_BY_GENDER,
@@ -36,9 +35,7 @@ import {
     compareBodies,
 } from '../utils/matching'
 import {
-    DEFAULT_UNIT,
     fmtDelta,
-    DEFAULT_WORKING_SCALE,
     UNITS,
     WORKING_SCALES,
     fmtMM,
@@ -95,24 +92,6 @@ const MAX_CHARACTERS = 10
 /** How many bodies reach the printed sheet, per character. */
 const PRINTED_RESULTS = 10
 
-const emptyValues = {
-    height: '', bust: '', waist: '', hips: '',
-    ...Object.fromEntries(PROPORTIONS.map((p) => [p.key, ''])),
-}
-
-let nextId = 1
-
-/** A fresh character. Scale and head default to the usual starting point. */
-const blankEntry = () => ({
-    id: nextId++,
-    name: '',
-    values: emptyValues,
-    priority: 'bust',
-    workingScale: DEFAULT_WORKING_SCALE,
-    headSize: DEFAULT_HEAD_SIZE,
-    sort: 'least',
-})
-
 /** Defined terms keep their capital in prose, so the page and the CSV agree. */
 const cap = (w) => (w ? w.charAt(0).toUpperCase() + w.slice(1) : w)
 
@@ -121,8 +100,7 @@ export default function Index() {
     const theme = Colors[colorScheme] ?? Colors.light
     const { width } = useWindowDimensions()
 
-    const [gender, setGender] = useState(DEFAULT_GENDER)
-    const [unit, setUnit] = useState(DEFAULT_UNIT)
+    const { gender, setGender, unit, setUnit, roster, setRoster, active, setActive } = useWorkspace()
     const [expanded, setExpanded] = useState({})
 
     /**
@@ -135,9 +113,10 @@ export default function Index() {
      * of ten should be able to say so.
      *
      * Units and catalogue stay outside: those are about how you like to work.
+     *
+     * Held in the WorkspaceProvider rather than here, so it survives a trip to
+     * the scene page and back.
      */
-    const [roster, setRoster] = useState([blankEntry()])
-    const [active, setActive] = useState(0)
     const entry = roster[Math.min(active, roster.length - 1)] ?? blankEntry()
 
     const patch = (fields) =>
@@ -217,7 +196,7 @@ export default function Index() {
         if (!entries.length) {
             return { ok: false, message: errors[0] || 'Nothing could be read from that file.' }
         }
-        setRoster(entries.slice(0, MAX_CHARACTERS).map((e) => ({ ...e, id: nextId++ })))
+        setRoster(entries.slice(0, MAX_CHARACTERS).map((e) => ({ ...e, id: newId() })))
         setActive(0)
         setExpanded({})
         const over = entries.length > MAX_CHARACTERS
