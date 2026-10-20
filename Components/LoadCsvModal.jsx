@@ -17,7 +17,7 @@ import ThemedText from './ThemedText'
  * Used to live inside the roster panel. The scene needed exactly the same
  * thing, so it came out rather than being copied.
  */
-const LoadCsvModal = ({ visible, onClose, title, blurb, onLoad }) => {
+const LoadCsvModal = ({ visible, onClose, title, blurb, onLoad, template }) => {
     const colorScheme = useColorScheme()
     const theme = Colors[colorScheme] ?? Colors.light
     const [status, setStatus] = useState(null)   // { tone, text }
@@ -98,6 +98,16 @@ const LoadCsvModal = ({ visible, onClose, title, blurb, onLoad }) => {
                         <ScrollView contentContainerStyle={styles.sheetInner}>
                             <ThemedText style={[styles.sub, { color: theme.muted }]}>{blurb}</ThemedText>
 
+                            {/* For a file you would rather write than save - the layout,
+                                ready to fill in. */}
+                            {template ? (
+                                <Pressable onPress={template.onPress} accessibilityRole="button" hitSlop={6}>
+                                    <ThemedText style={[styles.templateLink, { color: Colors.primary }]}>
+                                        ⤓ {template.label}
+                                    </ThemedText>
+                                </Pressable>
+                            ) : null}
+
                             <Spacer height={18} />
 
                             <View
@@ -156,6 +166,7 @@ const styles = StyleSheet.create({
     close: { fontSize: 20, fontWeight: '700', lineHeight: 24 },
 
     sub: { fontSize: 14, lineHeight: 20, marginTop: 6 },
+    templateLink: { fontSize: 14, fontWeight: '700', marginTop: 12 },
 
     drop: {
         borderWidth: 2, borderStyle: 'dashed', borderRadius: 10,

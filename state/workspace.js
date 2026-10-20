@@ -87,6 +87,19 @@ export function isFocus(scene, entry) {
     return !!want && entry.name.trim().toLowerCase() === want
 }
 
+/**
+ * Has the Body Finder been shown since the tab opened?
+ *
+ * A fresh load always starts on the Body Finder: a phone reopening /scene
+ * from an old tab, or a refresh while on the scene, would otherwise land on
+ * an empty scene page - empty because a fresh load has nothing in memory.
+ * Lives here for the same reason the rest does: it has to outlast whatever
+ * the router remounts.
+ */
+let finderShown = false
+export const markFinderShown = () => { finderShown = true }
+export const finderWasShown = () => finderShown
+
 // ---------------------------------------------------------------------------
 // The store
 // ---------------------------------------------------------------------------

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
     Alert,
     Platform,
@@ -20,7 +20,7 @@ import ThemedButton from '../Components/ThemedButton'
 import ThemedCard from '../Components/ThemedCard'
 import ThemedText from '../Components/ThemedText'
 import ThemedTextInput from '../Components/ThemedTextInput'
-import { blankEntry, isFocus, newId, useWorkspace } from '../state/workspace'
+import { blankEntry, isFocus, markFinderShown, newId, useWorkspace } from '../state/workspace'
 import { Colors } from '../Constants/Colors'
 import { BODIES, bodyImage } from '../data/bodies'
 import { GLOSSARY } from '../data/glossary'
@@ -106,6 +106,9 @@ export default function Index() {
         gender, setGender, unit, changeUnit, roster, setRoster, active, setActive, scene, setScene,
     } = useWorkspace()
     const [expanded, setExpanded] = useState({})
+    const [showGlossary, setShowGlossary] = useState(false)
+
+    useEffect(markFinderShown, [])
 
     /**
      * The roster.
@@ -669,10 +672,23 @@ export default function Index() {
                     controls as much as the cards, so it has to be readable before
                     anything has been entered. */}
                 <Spacer height={30} />
+                {/* Closed by default - it is long, and it is for looking things up,
+                    not for reading every visit. The (i) bubbles read the same
+                    definitions whether it is open or not. */}
                 <ThemedCard>
-                    <ThemedText style={styles.h2}>Scale Body Finder - Glossary</ThemedText>
-                    <Spacer height={10} />
-                    {GLOSSARY.map(({ term, definition }) => (
+                    <Pressable
+                        onPress={() => setShowGlossary((v) => !v)}
+                        accessibilityRole="button"
+                        accessibilityState={{ expanded: showGlossary }}
+                        style={styles.glossHead}
+                    >
+                        <ThemedText style={styles.h2}>Scale Body Finder - Glossary</ThemedText>
+                        <ThemedText style={[styles.glossToggle, { color: theme.muted }]}>
+                            {showGlossary ? 'Hide ▲' : 'Show ▼'}
+                        </ThemedText>
+                    </Pressable>
+                    {showGlossary ? <Spacer height={10} /> : null}
+                    {showGlossary && GLOSSARY.map(({ term, definition }) => (
                         <View key={term} style={styles.glossItem}>
                             <ThemedText style={styles.glossTerm}>{term}</ThemedText>
                             <ThemedText style={[styles.glossDef, { color: theme.muted }]}>
@@ -738,6 +754,8 @@ const styles = StyleSheet.create({
     exportText: { color: '#ffffff', fontWeight: '700', fontSize: 16 },
     btnAltText: { fontWeight: '700', fontSize: 16 },
 
+    glossHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' },
+    glossToggle: { fontSize: 14, fontWeight: '700' },
     glossItem: { marginBottom: 10 },
     glossTerm: { fontSize: 15, fontWeight: '700' },
     glossDef: { fontSize: 13, lineHeight: 19, marginTop: 2 },

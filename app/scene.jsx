@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Redirect } from 'expo-router'
 import { Pressable, ScrollView, StyleSheet, View, useColorScheme } from 'react-native'
 
 import LoadCsvModal from '../Components/LoadCsvModal'
@@ -9,7 +10,7 @@ import ThemedButton from '../Components/ThemedButton'
 import ThemedCard from '../Components/ThemedCard'
 import ThemedText from '../Components/ThemedText'
 import ThemedTextInput from '../Components/ThemedTextInput'
-import { blankGroup, blankItem, isFocus, newId, useWorkspace } from '../state/workspace'
+import { blankGroup, blankItem, finderWasShown, isFocus, newId, useWorkspace } from '../state/workspace'
 import { Colors } from '../Constants/Colors'
 import { BATCH_SUPPORTED, saveCsv } from '../utils/batchFile'
 import {
@@ -46,6 +47,12 @@ export default function Scene() {
     // scale tool used for Start Over: ten items should not vanish on a stray click.
     const [confirmRemove, setConfirmRemove] = useState(null)
     const [loading, setLoading] = useState(false)
+
+    // A fresh load starts on the Body Finder - see finderWasShown. Redirect
+    // replaces rather than pushes, so Back does not return to an empty scene,
+    // and it waits for the router to be ready - calling router.replace() from
+    // an effect on the very first render fails and leaves a blank page.
+    const cold = !finderWasShown()
 
     const divisor = parseScale(scene.scaleText)
     const typed = scene.scaleText.trim() !== ''
@@ -153,6 +160,8 @@ export default function Scene() {
         })
         setConfirmRemove(null)
     }
+
+    if (cold) return <Redirect href="/" />
 
     return (
         <ScrollView style={{ backgroundColor: theme.background }} contentContainerStyle={styles.scroll}>

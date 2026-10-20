@@ -41,7 +41,7 @@ const src = [
             MALE_CATALOGUE, HEAD_SIZES, DEFAULT_HEAD_SIZE, PROPORTIONS,
             toMM, fromMM, parseScale, describeScale, scaledMM, itemHasContent,
             MAX_ITEMS_PER_GROUP, sceneToCsv, sceneFromCsv, sceneFileName,
-            HEIGHT_ESTIMATE_NOTE }`,
+            HEIGHT_ESTIMATE_NOTE, rosterTemplateCsv, ROSTER_EXAMPLE_NAME }`,
 ].join('\n')
 
 const api = new Function('BODIES', 'console', src)(bodies, console)
@@ -598,6 +598,29 @@ const comma = api.rosterToCsv([withValues('Ayane, the ninja', { height: '1570', 
 check('a comma in a name is quoted', /"Ayane, the ninja"/.test(comma), true)
 check('  and comes back whole',
   api.rosterFromCsv(comma, 'Female', api.fromMM, 'mm').entries[0].name, 'Ayane, the ninja')
+
+console.log('\nRoster template: the example row')
+const tpl = api.rosterTemplateCsv()
+const tplRows = api.parseCsv(tpl)
+check('same columns the app saves', JSON.stringify(tplRows[0]), JSON.stringify(api.ROSTER_HEADERS))
+check('one example row', tplRows.length, 2)
+check('  every column filled in', tplRows[1].every(c => c !== ''), true)
+check('  its scale is one the app reads', api.parseScaleName(tplRows[1][api.ROSTER_HEADERS.indexOf('Scale')]), 5.8125)
+const tplAlone = api.rosterFromCsv(tpl, 'Female', api.fromMM, 'mm')
+check('the template on its own loads nobody', tplAlone.entries.length, 0)
+check('  and says why', /Only the example row/.test(tplAlone.errors.join(' ')), true)
+const filled = tpl + '\nAyane,1570,930,560,850,,,,,,,1:5 45/64,38,bust,least\nHonoka,1500,990,580,910,,,,,,,,,,'
+const fl = api.rosterFromCsv(filled, 'Female', api.fromMM, 'mm')
+check('left in, the example is skipped', fl.entries.map(e => e.name).join('|'), 'Ayane|Honoka')
+check('  without complaint', fl.errors.length, 0)
+check('any case still counts as the example',
+  api.rosterFromCsv(tpl.replace(api.ROSTER_EXAMPLE_NAME, api.ROSTER_EXAMPLE_NAME.toUpperCase()), 'Female', api.fromMM, 'mm').entries.length, 0)
+check('typed over, it is a character',
+  api.rosterFromCsv(tpl.replace(api.ROSTER_EXAMPLE_NAME, 'Kasumi'), 'Female', api.fromMM, 'mm').entries[0].name, 'Kasumi')
+check('a character merely called Example still loads',
+  api.rosterFromCsv(tpl.replace(api.ROSTER_EXAMPLE_NAME, 'Example'), 'Female', api.fromMM, 'mm').entries.length, 1)
+check('a roster the app saves never contains it',
+  api.rosterToCsv([withValues('Kasumi', { height: '1580', bust: '890', waist: '540', hips: '840' })], 'mm', api.toMM).includes(api.ROSTER_EXAMPLE_NAME), false)
 
 console.log('\nScene: reading a typed scale')
 check('the app\'s own name', api.parseScale('1:5 13/16'), 5.8125)

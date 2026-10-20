@@ -65,6 +65,41 @@ export function rosterToCsv(entries, unit, toMM) {
   return rows.map(toCsvRow).join('\n')
 }
 
+/**
+ * The example row's name, and the only thing that marks it.
+ *
+ * The template ships one filled-in row so the layout is obvious - a scale
+ * written 1:5 13/16, a priority written bust. That row is skipped on every
+ * upload, so leaving it in costs nothing. Type a real character over it and
+ * it stops being the example and loads like any other row.
+ *
+ * The app's own saved rosters never contain it.
+ */
+export const ROSTER_EXAMPLE_NAME = 'Example (ignored on upload)'
+
+const isExample = (name) => name.trim().toLowerCase() === ROSTER_EXAMPLE_NAME.toLowerCase()
+
+// Kasumi, at the scale she actually sits at on an S07C.
+const EXAMPLE = {
+  height: 1580, bust: 890, waist: 540, hips: 840,
+  breastHeight: 148.59, breastWidth: 127, breastDepth: 117,
+  waistWidth: 212, hipWidth: 326, shoulder: 351,
+}
+
+/**
+ * A blank roster to fill in by hand: the same columns the app saves, plus the
+ * example row. Built from ROSTER_HEADERS, so it cannot fall behind them the
+ * way the old hand-made character template did.
+ */
+export function rosterTemplateCsv() {
+  return [
+    ROSTER_HEADERS,
+    [ROSTER_EXAMPLE_NAME, ...MEASURES.map(k => EXAMPLE[k] ?? ''), '1:5 13/16', DEFAULT_HEAD_SIZE, 'bust', 'least'],
+  ].map(toCsvRow).join('\n')
+}
+
+export const ROSTER_TEMPLATE_FILENAME = 'Scale_Body_Finder_Roster_Template.csv'
+
 const near = (a, b) => Math.abs(a - b) < 1 / (SCALE_STEPS * 2)
 
 /**
@@ -89,8 +124,10 @@ export function rosterFromCsv(text, gender = 'Female', fromMM, unit = 'mm') {
   const priorities = PRIORITIES_BY_GENDER[gender] ?? PRIORITIES_BY_GENDER.Female
 
   const entries = []
+  let examples = 0
   rows.slice(1).forEach((r, i) => {
     const name = (r[at('Character Name')] || '').trim()
+    if (isExample(name)) { examples++; return }
     if (!name && MEASURES.every(k => !(r[at(`${LABEL[k]} (mm)`)] || '').trim())) return  // blank row
 
     const values = {}
@@ -125,6 +162,10 @@ export function rosterFromCsv(text, gender = 'Female', fromMM, unit = 'mm') {
     })
   })
 
-  if (!entries.length) errors.push('No characters in that file.')
+  if (!entries.length) {
+    errors.push(examples
+      ? 'Only the example row is in that file - add your characters on the rows below it.'
+      : 'No characters in that file.')
+  }
   return { entries, errors }
 }

@@ -4,6 +4,7 @@ import { Colors } from '../Constants/Colors'
 import { BODY_TEMPLATE_CSV, BODY_TEMPLATE_FILENAME } from '../data/bodyTemplate'
 import { BATCH_SUPPORTED, saveCsv } from '../utils/batchFile'
 import { DEFAULT_GENDER } from '../utils/matching'
+import { ROSTER_TEMPLATE_FILENAME, rosterTemplateCsv } from '../utils/roster'
 import LoadCsvModal from './LoadCsvModal'
 import ThemedButton from './ThemedButton'
 import ThemedText from './ThemedText'
@@ -48,8 +49,12 @@ const BatchPanel = ({ gender = DEFAULT_GENDER, onLoadRoster }) => {
                 visible={open}
                 onClose={() => setOpen(false)}
                 title="Load a saved roster"
-                blurb="Drop in a roster you saved earlier and the characters come back — their measurements, scale and head sculpt with them. This replaces whatever is on screen rather than adding to it."
+                blurb="Drop in a roster you saved earlier and the characters come back — their measurements, scale and head sculpt with them. This replaces whatever is on screen rather than adding to it. Writing one by hand? The template has every column, in millimetres, with an example row that is always skipped on upload."
                 onLoad={onLoadRoster}
+                template={{
+                    label: 'Download roster template',
+                    onPress: () => saveCsv(ROSTER_TEMPLATE_FILENAME, rosterTemplateCsv()),
+                }}
             />
         </>
     )
