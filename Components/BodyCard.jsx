@@ -3,6 +3,7 @@ import { Image, Modal, Pressable, StyleSheet, View, useColorScheme, useWindowDim
 import { Colors } from '../Constants/Colors'
 import { bodyImage } from '../data/bodies'
 import { define } from '../data/glossary'
+import { HEIGHT_ESTIMATE_NOTE } from '../utils/matching'
 import { fmtDelta, fmtMM } from '../utils/scaleUtils'
 import InfoBubble from './InfoBubble'
 import ThemedCard from './ThemedCard'
@@ -78,10 +79,11 @@ const BodyCard = ({ result, unit, expanded, onToggle, onUseForScene, inScene }) 
         ['Leg Inseam', body.inseam],
     ].filter(([, v]) => v != null)
 
+    // Every body height carries an asterisk - see HEIGHT_ESTIMATE_NOTE.
     const rangeText = heightRange
         ? heightRange.min === heightRange.max
-            ? `${fmtMM(heightRange.min, unit)}${unit}`
-            : `${fmtMM(heightRange.min, unit)}–${fmtMM(heightRange.max, unit)}${unit}`
+            ? `${fmtMM(heightRange.min, unit)}${unit}*`
+            : `${fmtMM(heightRange.min, unit)}–${fmtMM(heightRange.max, unit)}${unit}*`
         : '—'
 
     // A body whose range contains the target can simply be posed to it.
@@ -188,7 +190,9 @@ const BodyCard = ({ result, unit, expanded, onToggle, onUseForScene, inScene }) 
                                     <ThemedText style={[styles.td, styles.colName, isPriority && styles.priority]}>
                                         {labels[k]}
                                     </ThemedText>
-                                    <ThemedText style={styles.td}>{fmtMM(bodyVal, unit)}</ThemedText>
+                                    <ThemedText style={styles.td}>
+                                        {fmtMM(bodyVal, unit)}{k === 'height' && bodyVal != null ? '*' : ''}
+                                    </ThemedText>
                                     <ThemedText style={[styles.td, { color: theme.muted }]}>
                                         {fmtMM(scaled[k], unit)}
                                     </ThemedText>
@@ -198,6 +202,11 @@ const BodyCard = ({ result, unit, expanded, onToggle, onUseForScene, inScene }) 
                                 </View>
                             )
                         })}
+                        {heightUsed != null ? (
+                            <ThemedText style={[styles.footnote, { color: theme.muted }]}>
+                                * {HEIGHT_ESTIMATE_NOTE}
+                            </ThemedText>
+                        ) : null}
                     </View>
 
                     {proportions.length ? (
@@ -378,7 +387,8 @@ const styles = StyleSheet.create({
     heightPrimary: { fontSize: 18, fontWeight: '700', fontVariant: ['tabular-nums'] },
     headList: { marginTop: 4, gap: 2 },
     heightRow: { flexDirection: 'row', alignItems: 'baseline', gap: 10 },
-    heightHead: { fontSize: 12, width: 86 },
+    heightHead: { fontSize: 12 },
+    footnote: { fontSize: 12, marginTop: 8, lineHeight: 16 },
     heightAlt: { fontSize: 13, fontVariant: ['tabular-nums'] },
 
     extras: { flexDirection: 'row', flexWrap: 'wrap', gap: 16, borderTopWidth: 1, paddingTop: 12 },

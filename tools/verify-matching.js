@@ -40,7 +40,8 @@ const src = [
             exportFileName, PRIORITIES_BY_GENDER, heightRange,
             MALE_CATALOGUE, HEAD_SIZES, DEFAULT_HEAD_SIZE, PROPORTIONS,
             toMM, fromMM, parseScale, describeScale, scaledMM, itemHasContent,
-            MAX_ITEMS_PER_GROUP, sceneToCsv, sceneFromCsv, sceneFileName }`,
+            MAX_ITEMS_PER_GROUP, sceneToCsv, sceneFromCsv, sceneFileName,
+            HEIGHT_ESTIMATE_NOTE }`,
 ].join('\n')
 
 const api = new Function('BODIES', 'console', src)(bodies, console)
@@ -263,6 +264,7 @@ const glossaryTerms = [
 
 const STRUCTURAL = [
   'Scale Body Finder - results', 'Character', 'Character Measurements', 'Notes', 'Sort by',
+  'Height Note',
 ]
 // "Height - Body Measurement (mm)" is one cell of the group the glossary calls
 // "Body Measurements", so the singular maps back to the plural term.
@@ -294,7 +296,7 @@ const csvLabels = [...new Set(parseCsv(csv).flat())]
   // the character's own name, the measurement names used as inline keys, and
   // the sort summary sentence
   .filter(l => ![example.name, 'Bust', 'Waist', 'Hips', 'Height',
-                 'Least difference in Bust'].includes(l))
+                 'Least difference in Bust', api.HEIGHT_ESTIMATE_NOTE].includes(l))
 
 const unknown = csvLabels.filter(l => {
   const base = normalise(l)
@@ -393,6 +395,13 @@ const headerOf = rows => rows.find(r => r[0] === 'Manufacturer')
 const fh = headerOf(femaleCsvRows)
 
 check('Body Type is a column now', fh.includes('Body Type'), true)
+check('the export says which head sculpt, defaulting to 38mm',
+  JSON.stringify(femaleCsvRows.find(r => r[0] === 'Head Sculpt')), JSON.stringify(['Head Sculpt', '38mm']))
+check('  and the one chosen when there is one',
+  api.buildExportRows(HONOKA, { workingScale: 6, priority: 'bust', sort: 'least', gender: 'Female', headSize: 37.5 }, femaleOut)
+    .find(r => r[0] === 'Head Sculpt')[1], '37.5mm')
+check('the export says heights are estimates',
+  (femaleCsvRows.find(r => r[0] === 'Height Note') || [])[1], 'This is an estimated height, dependent on head sculpt used.')
 check('Bust Piece is always present on the female file', fh.includes('Bust Piece'), true)
 check('  Build is not - male only', fh.includes('Build'), false)
 check('the bust pair says Bust, not Chest',

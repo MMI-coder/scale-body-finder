@@ -45,13 +45,14 @@ export function printResults(sheets, fmt) {
         ${r.closest ? `<p class="scale">Actual Body Scale <strong>${esc(r.closest.name)}</strong> · ×${r.closest.multiplier.toFixed(5)}</p>` : ''}
         <table>
           <tr><th></th><th>Body</th><th>Character</th><th>Diff</th></tr>
-          ${row('Height', mm(r.heightUsed, unit), mm(r.scaled.height, unit), delta(r.deltas.height, unit))}
+          ${row('Height', r.heightUsed == null ? mm(r.heightUsed, unit) : mm(r.heightUsed, unit) + '*', mm(r.scaled.height, unit), delta(r.deltas.height, unit))}
           ${row('Bust', mm(r.bust ?? b.bust, unit), mm(r.scaled.bust, unit), delta(r.deltas.bust, unit), s.opts.priority === 'bust')}
           ${row('Waist', mm(b.waist, unit), mm(r.scaled.waist, unit), delta(r.deltas.waist, unit), s.opts.priority === 'waist')}
           ${row('Hips', mm(b.hips, unit), mm(r.scaled.hips, unit), delta(r.deltas.hips, unit), s.opts.priority === 'hips')}
           ${props.length ? `<tr class="group"><th colspan="4">Proportions</th></tr>` : ''}
           ${props.map((p) => row(p.label, mm(p.body, unit), mm(p.character, unit), p.diff == null ? '—' : delta(p.diff, unit))).join('')}
         </table>
+        ${r.heightUsed != null ? `<p class="foot">* ${esc(fmt.heightNote)}</p>` : ''}
         ${b.notes ? `<p class="notes">${esc(b.notes)}</p>` : ''}
       </div>
     </div>`
@@ -103,6 +104,7 @@ export function printResults(sheets, fmt) {
   tr.group th { text-align: left; color: #5a6672; font-weight: 600; padding-top: 2.5mm; }
   .muted { color: #5a6672; }
   .diff { font-variant-numeric: tabular-nums; font-weight: 600; }
+  .foot { font-size: 8pt; color: #5a6672; margin: 1.5mm 0 0; }
   .notes { font-size: 8.5pt; color: #5a6672; font-style: italic; margin: 2mm 0 0; }
   @page { margin: 0; }
 </style></head><body>${sections}</body></html>`

@@ -31,6 +31,7 @@ import { rosterFromCsv, rosterToCsv } from '../utils/roster'
 import {
     GENDERS,
     HEAD_SIZES,
+    HEIGHT_ESTIMATE_NOTE,
     PRIORITIES_BY_GENDER,
     PROPORTIONS,
     compareBodies,
@@ -178,6 +179,7 @@ export default function Index() {
             mm: (v, u) => fmtMM(v, u),
             delta: (v, u) => fmtDelta(v, u),
             scaleName,
+            heightNote: HEIGHT_ESTIMATE_NOTE,
             imageUrl: (file) => {
                 const src = bodyImage(file)
                 if (!src) return null

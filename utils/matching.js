@@ -87,6 +87,19 @@ export const BODY_TYPES = ['Seamless', 'Jointed']
  * sculpt, a tall one the large - so it lives next to the scale rather than
  * being inherited per body from whatever happened to be used when measuring.
  */
+/**
+ * What the asterisk on every body height means - on the card, the printed
+ * sheet and the export alike.
+ *
+ * The user's wording, and deliberately generic. A body's height is its neck
+ * peg plus a head, and the head is whatever gets fitted: the 13.5 / 14 /
+ * 14.5mm the app adds is an assumption about a 3D-printed sculpt, and the
+ * heights measured with a head on vary by 14-20mm across the catalogue
+ * depending on how each neck sits. Manufacturer heights are their own figure
+ * with their own head. Either way it is an estimate.
+ */
+export const HEIGHT_ESTIMATE_NOTE = 'This is an estimated height, dependent on head sculpt used.'
+
 export const HEAD_SIZES = [37.5, 38, 38.5]
 export const DEFAULT_HEAD_SIZE = 38
 
@@ -330,7 +343,7 @@ export function compareBodies(character, opts = {}) {
 
 /** Rows for the CSV export - mirrors what's on screen. */
 export function buildExportRows(character, opts, outcome) {
-  const { workingScale, priority, sort, gender = DEFAULT_GENDER } = opts
+  const { workingScale, priority, sort, gender = DEFAULT_GENDER, headSize = DEFAULT_HEAD_SIZE } = opts
   // The two files have different shapes because the two catalogues hold
   // different facts. Female carries Bust Piece, because a female export can now
   // contain modular WorldBox bodies alongside seamless ones. Male carries Build
@@ -350,6 +363,10 @@ export function buildExportRows(character, opts, outcome) {
     ['Scale Reference Selector', scaleName(workingScale)],
     ['Measurement Priority Field', cap(priority)],
     ['Sort by', `${cap(sort)} difference in ${cap(priority)}`],
+    // Every body height below depends on this. The numbers stay plain so the
+    // file still sorts and sums; the note says what they are.
+    ['Head Sculpt', `${headSize}mm`],
+    ['Height Note', HEIGHT_ESTIMATE_NOTE],
     [],
     ['Character Measurements (1:1)', 'Height', mm(character.height), 'Bust', mm(character.bust), 'Waist', mm(character.waist), 'Hips', mm(character.hips)],
     [`Character Measurements (${scaleName(workingScale)})`, 'Height', mm(s.height), 'Bust', mm(s.bust), 'Waist', mm(s.waist), 'Hips', mm(s.hips)],
