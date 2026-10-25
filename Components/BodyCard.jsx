@@ -42,7 +42,7 @@ export const HEIGHT_INFO =
  * to the full comparison. The image has its own control to pop out full size,
  * so tapping it doesn't fight with the expand.
  */
-const BodyCard = ({ result, unit, expanded, onToggle, onUseForScene, inScene }) => {
+const BodyCard = ({ result, unit, expanded, onToggle, onUseForScene, inScene, chosen, onChoose, chosenLabel }) => {
     const colorScheme = useColorScheme()
     const theme = Colors[colorScheme] ?? Colors.light
     const { width, height: winH } = useWindowDimensions()
@@ -90,7 +90,7 @@ const BodyCard = ({ result, unit, expanded, onToggle, onUseForScene, inScene }) 
     const heightMet = heightRange && deltas.height === 0
 
     return (
-        <ThemedCard style={styles.card}>
+        <ThemedCard style={[styles.card, chosen && { borderColor: Colors.primary, borderWidth: 2 }]}>
             <Pressable onPress={onToggle} accessibilityRole="button">
                 {/* Collapsed cards sit in a grid, so they get a fixed tile height -
                     otherwise a portrait shot next to a wide model-line shot makes
@@ -128,6 +128,12 @@ const BodyCard = ({ result, unit, expanded, onToggle, onUseForScene, inScene }) 
                                 {body.build}
                             </ThemedText>
                         ) : null}
+                        {/* Shown collapsed too, so the pick stands out in the grid. */}
+                        {chosen ? (
+                            <View style={[styles.chosenBadge, { backgroundColor: Colors.primary }]}>
+                                <ThemedText style={styles.chosenBadgeText}>✓ {chosenLabel}</ThemedText>
+                            </View>
+                        ) : null}
                     </View>
                     <ThemedText style={[styles.chevron, { color: theme.muted }]}>
                         {expanded ? '▲' : '▼'}
@@ -137,6 +143,26 @@ const BodyCard = ({ result, unit, expanded, onToggle, onUseForScene, inScene }) 
 
             {expanded ? (
                 <>
+                    {/* The buying decision. Separate from Use for scene on purpose:
+                        picking a body does not make it the scene's scale. Press
+                        again to un-choose. */}
+                    {onChoose ? (
+                        <Pressable
+                            onPress={onChoose}
+                            accessibilityRole="button"
+                            accessibilityState={{ selected: !!chosen }}
+                            style={[
+                                styles.chooseBtn,
+                                { borderColor: Colors.primary },
+                                chosen && { backgroundColor: Colors.primary },
+                            ]}
+                        >
+                            <ThemedText style={[styles.chooseBtnText, { color: chosen ? '#ffffff' : Colors.primary }]}>
+                                {chosen ? `✓ ${chosenLabel} - press to un-choose` : 'Use this body'}
+                            </ThemedText>
+                        </Pressable>
+                    ) : null}
+
                     <View style={[styles.scaleBox, { borderColor: theme.cardBorder }]}>
                         <InfoBubble
                             label="Actual Body Scale"
@@ -204,9 +230,17 @@ const BodyCard = ({ result, unit, expanded, onToggle, onUseForScene, inScene }) 
                                     <ThemedText style={[styles.td, { color: theme.muted }]}>
                                         {fmtMM(scaled[k], unit)}
                                     </ThemedText>
-                                    <ThemedText style={[styles.td, styles.diff]}>
-                                        {fmtDelta(delta, unit)}
-                                    </ThemedText>
+                                    {isPriority ? (
+                                        <View style={styles.pillCell}>
+                                            <View style={[styles.pill, { backgroundColor: Colors.primary }]}>
+                                                <ThemedText style={styles.pillText}>{fmtDelta(delta, unit)}</ThemedText>
+                                            </View>
+                                        </View>
+                                    ) : (
+                                        <ThemedText style={[styles.td, styles.diff]}>
+                                            {fmtDelta(delta, unit)}
+                                        </ThemedText>
+                                    )}
                                 </View>
                             )
                         })}
@@ -359,6 +393,14 @@ const styles = StyleSheet.create({
     pieceNote: { fontSize: 12, lineHeight: 17, marginTop: 8 },
 
     card: { padding: 16, gap: 14 },
+    chosenBadge: { alignSelf: 'flex-start', borderRadius: 999, paddingVertical: 4, paddingHorizontal: 12, marginTop: 8 },
+    chosenBadgeText: { color: '#ffffff', fontSize: 13, fontWeight: '700' },
+    chooseBtn: { borderWidth: 2, borderRadius: 8, paddingVertical: 10, alignItems: 'center' },
+    chooseBtnText: { fontSize: 15, fontWeight: '700' },
+    // The priority row's difference: the number the results are sorted on.
+    pillCell: { flex: 1, alignItems: 'flex-end', justifyContent: 'center' },
+    pill: { borderRadius: 999, paddingVertical: 3, paddingHorizontal: 10 },
+    pillText: { color: '#ffffff', fontSize: 16, fontWeight: '800', fontVariant: ['tabular-nums'] },
     imageTile: { width: '100%', borderRadius: 8, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' },
     imageTileCompact: { height: 300 },
     image: { width: '100%', height: '100%' },

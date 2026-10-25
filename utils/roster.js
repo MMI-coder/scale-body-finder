@@ -38,6 +38,7 @@ export const ROSTER_HEADERS = [
   'Head Sculpt (mm)',
   'Priority',
   'Sort',
+  'Chosen Body',
 ]
 
 /**
@@ -60,6 +61,7 @@ export function rosterToCsv(entries, unit, toMM) {
       e.headSize,
       e.priority,
       e.sort,
+      e.chosenBody || '',
     ])
   }
   return rows.map(toCsvRow).join('\n')
@@ -95,7 +97,7 @@ const EXAMPLE = {
 export function rosterTemplateCsv() {
   return [
     ROSTER_HEADERS,
-    [ROSTER_EXAMPLE_NAME, ...MEASURES.map(k => EXAMPLE[k] ?? ''), '1:5 13/16', DEFAULT_HEAD_SIZE, 'bust', 'least'],
+    [ROSTER_EXAMPLE_NAME, ...MEASURES.map(k => EXAMPLE[k] ?? ''), '1:5 13/16', DEFAULT_HEAD_SIZE, 'bust', 'least', 'S07C'],
   ].map(toCsvRow).join('\n')
 }
 
@@ -160,6 +162,9 @@ export function rosterFromCsv(text, gender = 'Female', fromMM, unit = 'mm') {
       headSize: head,
       priority,
       sort: sortRaw === 'greatest' ? 'greatest' : 'least',
+      // As written. Whether the catalogue has it is the caller's to check -
+      // this file knows nothing about bodies.
+      chosenBody: (r[at('Chosen Body')] || '').trim() || null,
     })
   })
 

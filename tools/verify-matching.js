@@ -741,6 +741,22 @@ check('named for the focus', api.sceneFileName('Kasumi'), 'Kasumi_Scene.csv')
 check('punctuation made safe', api.sceneFileName('Ayane, the ninja'), 'Ayane_the_ninja_Scene.csv')
 check('no focus, plain', api.sceneFileName(null), 'Scene.csv')
 
+console.log('\nChosen body')
+const picked = { ...withValues('Kasumi', { height: '1580', bust: '890', waist: '540', hips: '850' }), chosenBody: 'S07C' }
+const pickedCsv = api.rosterToCsv([picked, withValues('Honoka', { height: '1500', bust: '990', waist: '580', hips: '910' })], 'mm', api.toMM)
+const pickedBack = api.rosterFromCsv(pickedCsv, 'Female', api.fromMM, 'mm').entries
+check('the roster file carries it', pickedBack[0].chosenBody, 'S07C')
+check('  and a character without one stays without', pickedBack[1].chosenBody, null)
+const oldFile = pickedCsv.split('\n').map(l => l.split(',').slice(0, -1).join(',')).join('\n')
+check('a roster saved before the column existed still loads', api.rosterFromCsv(oldFile, 'Female', api.fromMM, 'mm').entries.length, 2)
+check('  with nothing chosen', api.rosterFromCsv(oldFile, 'Female', api.fromMM, 'mm').entries[0].chosenBody, null)
+check('the template\'s example has one', api.parseCsv(api.rosterTemplateCsv())[1].slice(-1)[0], 'S07C')
+check('the results export says which',
+  (api.buildExportRows(HONOKA, { workingScale: 6, priority: 'bust', sort: 'least', gender: 'Female', chosenBody: 'S20A' }, femaleOut)
+    .find(r => r[0] === 'Chosen Body') || [])[1], 'S20A')
+check('  and is blank when none is',
+  (femaleCsvRows.find(r => r[0] === 'Chosen Body') || [])[1], '')
+
 console.log('\nCharacter list')
 const cast = loadCharacters()
 check('loads with no problems', cast.errors.join(' | '), '')

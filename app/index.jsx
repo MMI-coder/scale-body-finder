@@ -164,7 +164,10 @@ export default function Index() {
                 workingScale: e.workingScale, priority: pri, sort: e.sort,
                 count: null, gender, headSize: e.headSize, bodies: BODIES,
             }
-            sheets.push({ character: c, opts: o, outcome: compareBodies(c, o), limit: PRINTED_RESULTS })
+            sheets.push({
+                character: c, opts: o, outcome: compareBodies(c, o), limit: PRINTED_RESULTS,
+                chosen: e.chosenBody, chosenName: e.chosenBody ? bodyName(e.chosenBody) : null,
+            })
         }
 
         if (!sheets.length) {
@@ -204,6 +207,15 @@ export default function Index() {
         const { entries, errors } = rosterFromCsv(text, gender, fromMM, unit)
         if (!entries.length) {
             return { ok: false, message: errors[0] || 'Nothing could be read from that file.' }
+        }
+        // A chosen body the catalogue doesn't have is dropped and named, not kept
+        // as an invisible pick nothing can show.
+        const known = (code) => BODIES.some((b) => b.code === code && b.gender === gender)
+        for (const e of entries) {
+            if (e.chosenBody && !known(e.chosenBody)) {
+                errors.push(`${e.name || 'Unnamed'}: chosen body "${e.chosenBody}" isn't in the catalogue - left unchosen.`)
+                e.chosenBody = null
+            }
         }
         setRoster(entries.slice(0, MAX_CHARACTERS).map((e) => ({ ...e, id: newId() })))
         setActive(0)
@@ -287,7 +299,8 @@ export default function Index() {
         for (const key of Object.keys(values)) {
             filled[key] = c[key] == null ? '' : String(parseFloat(fromMM(c[key], unit).toFixed(4)))
         }
-        patch({ name: c.name, values: filled })
+        const same = c.name.toLowerCase() === name.trim().toLowerCase()
+        patch({ name: c.name, values: filled, chosenBody: same ? entry.chosenBody : null })
         setExpanded({})
     }
     // Shows the list's name while the slot is still called that; anything typed
@@ -305,7 +318,15 @@ export default function Index() {
     }, [values, unit, name])
 
     const ready = needed.every((k) => character[k])
-    const opts = { workingScale, priority: activePriority, sort, count: null, gender, headSize, bodies: BODIES }
+    const opts = {
+        workingScale, priority: activePriority, sort, count: null, gender, headSize, bodies: BODIES,
+        chosenBody: entry.chosenBody,
+    }
+
+    // "Use this body": one per character, press again to un-choose.
+    const chooseBody = (code) => patch({ chosenBody: entry.chosenBody === code ? null : code })
+    const chosenLabel = `${name.trim() || 'This character'}'s body`
+    const bodyName = (code) => BODIES.find((b) => b.code === code)?.name ?? code
     const outcome = useMemo(
         () => (ready ? compareBodies(character, opts) : null),
         [character, workingScale, activePriority, sort, gender, headSize, ready]
@@ -443,6 +464,11 @@ export default function Index() {
                                 >
                                     <ThemedText style={[styles.chipText, on && styles.chipTextOn]}>
                                         {e.name.trim() || `Character ${i + 1}`}
+                                        {e.chosenBody ? (
+                                            <ThemedText style={[styles.chipBody, { color: on ? '#ffffff' : Colors.primary }]}>
+                                                {'  ·  '}{bodyName(e.chosenBody)}
+                                            </ThemedText>
+                                        ) : null}
                                     </ThemedText>
                                     <Pressable
                                         onPress={() => removeCharacter(i)}
@@ -667,6 +693,9 @@ export default function Index() {
                                         onToggle={() => toggleCard(r.body.code)}
                                         onUseForScene={() => chooseForScene(r)}
                                         inScene={isSceneScale(r)}
+                                        chosen={entry.chosenBody === r.body.code}
+                                        onChoose={() => chooseBody(r.body.code)}
+                                        chosenLabel={chosenLabel}
                                     />
                                 </View>
                             ))}
@@ -775,6 +804,7 @@ const styles = StyleSheet.create({
     chipText: { fontSize: 14, fontWeight: '600' },
     chipTextOn: { color: '#ffffff' },
     chipX: { fontSize: 13, fontWeight: '700' },
+    chipBody: { fontSize: 13, fontWeight: '700' },
 
     equivalent: { fontSize: 18, fontWeight: '700', fontVariant: ['tabular-nums'], marginTop: 2 },
 
