@@ -38,6 +38,33 @@ export const HEIGHT_INFO =
     'the body.'
 
 /**
+ * One number in a body-versus-character row.
+ *
+ * Whichever of the pair is larger sits in a pill, so you can see at a glance
+ * which way each measurement goes without reading the sign on the difference.
+ * Compared as displayed: two numbers that show the same - Bust 160 and 160 -
+ * are a tie, and a tie gets no pill on either side.
+ */
+const Num = ({ mm, other, unit, suffix = '', muted, theme }) => {
+    const shown = fmtMM(mm, unit)
+    const larger = mm != null && other != null && shown !== fmtMM(other, unit) && mm > other
+    if (!larger) {
+        return (
+            <ThemedText style={[styles.td, muted && { color: theme.muted }]}>
+                {shown}{mm != null ? suffix : ''}
+            </ThemedText>
+        )
+    }
+    return (
+        <View style={styles.pillCell}>
+            <View style={[styles.pill, { backgroundColor: Colors.primary }]}>
+                <ThemedText style={styles.pillText}>{shown}{suffix}</ThemedText>
+            </View>
+        </View>
+    )
+}
+
+/**
  * One body. Compact by default - image, name, manufacturer - and expands on tap
  * to the full comparison. The image has its own control to pop out full size,
  * so tapping it doesn't fight with the expand.
@@ -224,23 +251,12 @@ const BodyCard = ({ result, unit, expanded, onToggle, onUseForScene, inScene, ch
                                     <ThemedText style={[styles.td, styles.colName, isPriority && styles.priority]}>
                                         {labels[k]}
                                     </ThemedText>
-                                    <ThemedText style={styles.td}>
-                                        {fmtMM(bodyVal, unit)}{k === 'height' && bodyVal != null ? '*' : ''}
+                                    <Num mm={bodyVal} other={scaled[k]} unit={unit} theme={theme}
+                                        suffix={k === 'height' ? '*' : ''} />
+                                    <Num mm={scaled[k]} other={bodyVal} unit={unit} theme={theme} muted />
+                                    <ThemedText style={[styles.td, styles.diff]}>
+                                        {fmtDelta(delta, unit)}
                                     </ThemedText>
-                                    <ThemedText style={[styles.td, { color: theme.muted }]}>
-                                        {fmtMM(scaled[k], unit)}
-                                    </ThemedText>
-                                    {isPriority ? (
-                                        <View style={styles.pillCell}>
-                                            <View style={[styles.pill, { backgroundColor: Colors.primary }]}>
-                                                <ThemedText style={styles.pillText}>{fmtDelta(delta, unit)}</ThemedText>
-                                            </View>
-                                        </View>
-                                    ) : (
-                                        <ThemedText style={[styles.td, styles.diff]}>
-                                            {fmtDelta(delta, unit)}
-                                        </ThemedText>
-                                    )}
                                 </View>
                             )
                         })}
@@ -259,10 +275,8 @@ const BodyCard = ({ result, unit, expanded, onToggle, onUseForScene, inScene, ch
                             {proportions.map((p) => (
                                 <View key={p.key} style={[styles.tr, { borderColor: theme.cardBorder }]}>
                                     <ThemedText style={[styles.td, styles.colName]}>{p.label}</ThemedText>
-                                    <ThemedText style={styles.td}>{fmtMM(p.body, unit)}</ThemedText>
-                                    <ThemedText style={[styles.td, { color: theme.muted }]}>
-                                        {fmtMM(p.character, unit)}
-                                    </ThemedText>
+                                    <Num mm={p.body} other={p.character} unit={unit} theme={theme} />
+                                    <Num mm={p.character} other={p.body} unit={unit} theme={theme} muted />
                                     <ThemedText style={[styles.td, styles.diff]}>
                                         {p.diff == null ? '—' : fmtDelta(p.diff, unit)}
                                     </ThemedText>
@@ -397,7 +411,7 @@ const styles = StyleSheet.create({
     chosenBadgeText: { color: '#ffffff', fontSize: 13, fontWeight: '700' },
     chooseBtn: { borderWidth: 2, borderRadius: 8, paddingVertical: 10, alignItems: 'center' },
     chooseBtnText: { fontSize: 15, fontWeight: '700' },
-    // The priority row's difference: the number the results are sorted on.
+    // The larger of body and character, per row - see Num.
     pillCell: { flex: 1, alignItems: 'flex-end', justifyContent: 'center' },
     pill: { borderRadius: 999, paddingVertical: 3, paddingHorizontal: 10 },
     pillText: { color: '#ffffff', fontSize: 16, fontWeight: '800', fontVariant: ['tabular-nums'] },
