@@ -4,7 +4,7 @@ import { Colors } from '../Constants/Colors'
 import { bodyImage } from '../data/bodies'
 import { define } from '../data/glossary'
 import { HEIGHT_ESTIMATE_NOTE } from '../utils/matching'
-import { fmtDelta, fmtMM } from '../utils/scaleUtils'
+import { fmtDelta, fmtMM, realWorldEquivalent } from '../utils/scaleUtils'
 import InfoBubble from './InfoBubble'
 import ThemedCard from './ThemedCard'
 import ThemedText from './ThemedText'
@@ -149,6 +149,14 @@ const BodyCard = ({ result, unit, expanded, onToggle, onUseForScene, inScene }) 
                         {closest ? (
                             <ThemedText style={[styles.scaleLabel, { color: theme.muted }]}>
                                 Scale Multiplier ×{closest.multiplier.toFixed(5)}
+                            </ThemedText>
+                        ) : null}
+                        {/* The same readout as under the Scale Reference Selector, at this
+                            body's own scale - the one named above, which is what gets
+                            built to. */}
+                        {closest ? (
+                            <ThemedText style={[styles.scaleLabel, { color: theme.muted, marginTop: 2 }]}>
+                                Real World Equivalent: 1{unit} = {realWorldEquivalent(closest.snapped).toFixed(2)}{unit} in 1:1 scale
                             </ThemedText>
                         ) : null}
                         {/* Copies the scale as named above - the 1/64 name, which is
