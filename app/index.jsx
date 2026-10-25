@@ -23,6 +23,7 @@ import ThemedTextInput from '../Components/ThemedTextInput'
 import { blankEntry, isFocus, markFinderShown, newId, useWorkspace } from '../state/workspace'
 import { Colors } from '../Constants/Colors'
 import { BODIES, bodyImage } from '../data/bodies'
+import { CHARACTERS } from '../data/characters'
 import { GLOSSARY } from '../data/glossary'
 import { BATCH_SUPPORTED, saveCsv } from '../utils/batchFile'
 import { exportResults } from '../utils/exportCsv'
@@ -269,6 +270,29 @@ export default function Index() {
     }
 
     const setField = (key, text) => setValues((v) => ({ ...v, [key]: text }))
+
+    /**
+     * "Choose a character": fill this slot from the built-in list.
+     *
+     * Name and the ten measurements, in whichever unit is showing - and nothing
+     * else. Scale, head sculpt, priority and sort are left exactly where they
+     * were: the list says what a character is at 1:1, not how to look at her.
+     * A measurement the list does not have is cleared rather than left over from
+     * whoever was in the slot before. Every box stays editable afterwards.
+     */
+    const pickCharacter = (pick) => {
+        const c = CHARACTERS.find((x) => x.name === pick)
+        if (!c) return
+        const filled = {}
+        for (const key of Object.keys(values)) {
+            filled[key] = c[key] == null ? '' : String(parseFloat(fromMM(c[key], unit).toFixed(4)))
+        }
+        patch({ name: c.name, values: filled })
+        setExpanded({})
+    }
+    // Shows the list's name while the slot is still called that; anything typed
+    // by hand reads as your own character.
+    const listed = CHARACTERS.find((c) => c.name.toLowerCase() === name.trim().toLowerCase())
     const toggleCard = (code) => setExpanded((e) => ({ ...e, [code]: !e[code] }))
 
     const character = useMemo(() => {
@@ -379,7 +403,7 @@ export default function Index() {
                             'Your results will be displayed below. Click on a card to view more details.',
                         ]
                         : [
-                            "Start by entering your character's name and their real world measurements for height, bust, waist, and hips (in either cm or mm) in the fields below.",
+                            "Start by choosing a character from the list, or by entering your own character's name and their real world measurements for height, bust, waist, and hips (in either cm or mm) in the fields below.",
                             'Next, choose which measurement field is most important to you and your project: Height, Bust, Waist, or Hips.',
                             'Your results will be displayed below. Click on a card to view more details.',
                         ]
@@ -459,6 +483,18 @@ export default function Index() {
                 {/* ---------------- input ---------------- */}
                 <ThemedCard>
                     <View style={styles.fieldRow}>
+                        {gender === 'Female' && CHARACTERS.length ? (
+                            <View>
+                                <ThemedText style={[styles.label, { color: theme.muted }]}>Choose a character</ThemedText>
+                                <Dropdown
+                                    options={CHARACTERS.map((c) => ({ value: c.name, label: c.name }))}
+                                    value={listed ? listed.name : null}
+                                    onChange={pickCharacter}
+                                    placeholder="Your own"
+                                    width={200}
+                                />
+                            </View>
+                        ) : null}
                         <View style={styles.nameField}>
                             <ThemedText style={[styles.label, { color: theme.muted }]}>Character</ThemedText>
                             <ThemedTextInput

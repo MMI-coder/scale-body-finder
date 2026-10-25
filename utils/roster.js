@@ -79,9 +79,10 @@ export const ROSTER_EXAMPLE_NAME = 'Example (ignored on upload)'
 
 const isExample = (name) => name.trim().toLowerCase() === ROSTER_EXAMPLE_NAME.toLowerCase()
 
-// Kasumi, at the scale she actually sits at on an S07C.
+// Kasumi, at the scale she actually sits at on an S07C. The same numbers as
+// her row in data/characters.csv - tools/verify-matching.js holds them to it.
 const EXAMPLE = {
-  height: 1580, bust: 890, waist: 540, hips: 840,
+  height: 1580, bust: 890, waist: 540, hips: 850,
   breastHeight: 148.59, breastWidth: 127, breastDepth: 117,
   waistWidth: 212, hipWidth: 326, shoulder: 351,
 }

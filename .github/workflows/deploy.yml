@@ -49,10 +49,10 @@ jobs:
       # Say so loudly rather than let the repo and the live site disagree.
       - name: Fail if the committed data was stale
         run: |
-          if ! git diff --quiet -- data/bodies.js data/glossary.js; then
+          if ! git diff --quiet -- data/bodies.js data/characters.js data/glossary.js; then
             echo "::error::Generated data is out of date with its source."
             echo "Run 'npm run data' and commit the result."
-            git diff --stat -- data/bodies.js data/glossary.js
+            git diff --stat -- data/bodies.js data/characters.js data/glossary.js
             exit 1
           fi
           echo "Generated data is up to date."

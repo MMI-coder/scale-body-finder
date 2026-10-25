@@ -16,6 +16,7 @@
 const fs = require('fs')
 const path = require('path')
 const { loadBodies, parseCsv, BUILDS } = require('./build-body-data')
+const { loadCharacters, COLUMNS: CHARACTER_COLUMNS, REQUIRED: CHARACTER_REQUIRED } = require('./build-character-data')
 
 const ROOT = path.join(__dirname, '..')
 
@@ -739,6 +740,27 @@ console.log('\nScene file: its name')
 check('named for the focus', api.sceneFileName('Kasumi'), 'Kasumi_Scene.csv')
 check('punctuation made safe', api.sceneFileName('Ayane, the ninja'), 'Ayane_the_ninja_Scene.csv')
 check('no focus, plain', api.sceneFileName(null), 'Scene.csv')
+
+console.log('\nCharacter list')
+const cast = loadCharacters()
+check('loads with no problems', cast.errors.join(' | '), '')
+check('26 characters', cast.characters.length, 26)
+check('sorted by name', cast.characters.map(c => c.name).join(),
+  [...cast.characters].map(c => c.name).sort((a, b) => a.localeCompare(b)).join())
+check('its proportion columns are the form\'s proportions',
+  Object.values(CHARACTER_COLUMNS).filter(k => !Object.values(CHARACTER_REQUIRED).includes(k)).join(),
+  api.PROPORTIONS.map(p => p.key).join())
+check('a character carries measurements and nothing else - no scale, head, priority or sort',
+  [...new Set(cast.characters.flatMap(Object.keys))].sort().join(),
+  ['name', 'height', 'bust', 'waist', 'hips', ...api.PROPORTIONS.map(p => p.key)].sort().join())
+check('every character gets results',
+  cast.characters.filter(c => !api.compareBodies(c, { workingScale: 6, priority: 'bust', sort: 'least', gender: 'Female' }).results.length).map(c => c.name).join(), '')
+const kasumiRow = cast.characters.find(c => c.name === 'Kasumi')
+const exampleRow = api.parseCsv(api.rosterTemplateCsv())[1]
+check('the roster template\'s example is Kasumi as the list has her',
+  exampleRow.slice(1, 1 + 10).map(Number).join(),
+  ['height', 'bust', 'waist', 'hips', ...api.PROPORTIONS.map(p => p.key)].map(k => kasumiRow[k]).join())
+check('Nozomi loads without proportions', cast.characters.find(c => c.name === 'Nozomi').breastHeight, null)
 
 console.log(failures === 0 ? '\nAll checks passed.\n' : `\n${failures} CHECK(S) FAILED.\n`)
 process.exitCode = failures === 0 ? 0 : 1
