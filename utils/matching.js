@@ -343,7 +343,7 @@ export function compareBodies(character, opts = {}) {
 
 /** Rows for the CSV export - mirrors what's on screen. */
 export function buildExportRows(character, opts, outcome) {
-  const { workingScale, priority, sort, gender = DEFAULT_GENDER, headSize = DEFAULT_HEAD_SIZE, chosenBody = null } = opts
+  const { workingScale, priority, sort, gender = DEFAULT_GENDER, headSize = DEFAULT_HEAD_SIZE, plannedBody = null } = opts
   // The two files have different shapes because the two catalogues hold
   // different facts. Female carries Bust Piece, because a female export can now
   // contain modular WorldBox bodies alongside seamless ones. Male carries Build
@@ -366,7 +366,7 @@ export function buildExportRows(character, opts, outcome) {
     // Every body height below depends on this. The numbers stay plain so the
     // file still sorts and sums; the note says what they are.
     ['Head Sculpt', `${headSize}mm`],
-    ['Chosen Body', chosenBody || ''],
+    ['Planned Body', plannedBody || ''],
     ['Height Note', HEIGHT_ESTIMATE_NOTE],
     [],
     ['Character Measurements (1:1)', 'Height', mm(character.height), 'Bust', mm(character.bust), 'Waist', mm(character.waist), 'Hips', mm(character.hips)],

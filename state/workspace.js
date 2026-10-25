@@ -39,9 +39,10 @@ export const blankEntry = () => ({
     workingScale: DEFAULT_WORKING_SCALE,
     headSize: DEFAULT_HEAD_SIZE,
     sort: 'least',
-    // The body picked for this character with "Use this body" - its code, or
-    // null. A note of the decision, not a filter: the results never move for it.
-    chosenBody: null,
+    // The body this character is planned for - "Plan to buy" on its card. Its
+    // code, or null. A note of the decision, not a filter: the results never
+    // move for it.
+    plannedBody: null,
 })
 
 /** A fresh scene item. Takes the unit it is given - see addItem on the scene page. */

@@ -38,7 +38,7 @@ export const ROSTER_HEADERS = [
   'Head Sculpt (mm)',
   'Priority',
   'Sort',
-  'Chosen Body',
+  'Planned Body',
 ]
 
 /**
@@ -61,7 +61,7 @@ export function rosterToCsv(entries, unit, toMM) {
       e.headSize,
       e.priority,
       e.sort,
-      e.chosenBody || '',
+      e.plannedBody || '',
     ])
   }
   return rows.map(toCsvRow).join('\n')
@@ -163,8 +163,9 @@ export function rosterFromCsv(text, gender = 'Female', fromMM, unit = 'mm') {
       priority,
       sort: sortRaw === 'greatest' ? 'greatest' : 'least',
       // As written. Whether the catalogue has it is the caller's to check -
-      // this file knows nothing about bodies.
-      chosenBody: (r[at('Chosen Body')] || '').trim() || null,
+      // this file knows nothing about bodies. Rosters saved before the rename
+      // call the column Chosen Body, and still load.
+      plannedBody: (r[at('Planned Body') >= 0 ? at('Planned Body') : at('Chosen Body')] || '').trim() || null,
     })
   })
 

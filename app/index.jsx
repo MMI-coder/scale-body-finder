@@ -166,7 +166,7 @@ export default function Index() {
             }
             sheets.push({
                 character: c, opts: o, outcome: compareBodies(c, o), limit: PRINTED_RESULTS,
-                chosen: e.chosenBody, chosenName: e.chosenBody ? bodyName(e.chosenBody) : null,
+                planned: e.plannedBody, plannedName: e.plannedBody ? bodyName(e.plannedBody) : null,
             })
         }
 
@@ -208,13 +208,13 @@ export default function Index() {
         if (!entries.length) {
             return { ok: false, message: errors[0] || 'Nothing could be read from that file.' }
         }
-        // A chosen body the catalogue doesn't have is dropped and named, not kept
-        // as an invisible pick nothing can show.
+        // A planned body the catalogue doesn't have is dropped and named, not
+        // kept as an invisible plan nothing can show.
         const known = (code) => BODIES.some((b) => b.code === code && b.gender === gender)
         for (const e of entries) {
-            if (e.chosenBody && !known(e.chosenBody)) {
-                errors.push(`${e.name || 'Unnamed'}: chosen body "${e.chosenBody}" isn't in the catalogue - left unchosen.`)
-                e.chosenBody = null
+            if (e.plannedBody && !known(e.plannedBody)) {
+                errors.push(`${e.name || 'Unnamed'}: planned body "${e.plannedBody}" isn't in the catalogue - left unplanned.`)
+                e.plannedBody = null
             }
         }
         setRoster(entries.slice(0, MAX_CHARACTERS).map((e) => ({ ...e, id: newId() })))
@@ -300,7 +300,7 @@ export default function Index() {
             filled[key] = c[key] == null ? '' : String(parseFloat(fromMM(c[key], unit).toFixed(4)))
         }
         const same = c.name.toLowerCase() === name.trim().toLowerCase()
-        patch({ name: c.name, values: filled, chosenBody: same ? entry.chosenBody : null })
+        patch({ name: c.name, values: filled, plannedBody: same ? entry.plannedBody : null })
         setExpanded({})
     }
     // Shows the list's name while the slot is still called that; anything typed
@@ -320,12 +320,12 @@ export default function Index() {
     const ready = needed.every((k) => character[k])
     const opts = {
         workingScale, priority: activePriority, sort, count: null, gender, headSize, bodies: BODIES,
-        chosenBody: entry.chosenBody,
+        plannedBody: entry.plannedBody,
     }
 
-    // "Use this body": one per character, press again to un-choose.
-    const chooseBody = (code) => patch({ chosenBody: entry.chosenBody === code ? null : code })
-    const chosenLabel = `${name.trim() || 'This character'}'s body`
+    // "Plan to buy": one body per character, press again to cancel.
+    const planBody = (code) => patch({ plannedBody: entry.plannedBody === code ? null : code })
+    const plannedLabel = `Planned for ${name.trim() || 'this character'}`
     const bodyName = (code) => BODIES.find((b) => b.code === code)?.name ?? code
     const outcome = useMemo(
         () => (ready ? compareBodies(character, opts) : null),
@@ -464,9 +464,9 @@ export default function Index() {
                                 >
                                     <ThemedText style={[styles.chipText, on && styles.chipTextOn]}>
                                         {e.name.trim() || `Character ${i + 1}`}
-                                        {e.chosenBody ? (
+                                        {e.plannedBody ? (
                                             <ThemedText style={[styles.chipBody, { color: on ? '#ffffff' : Colors.primary }]}>
-                                                {'  ·  '}{bodyName(e.chosenBody)}
+                                                {'  ·  '}{bodyName(e.plannedBody)}
                                             </ThemedText>
                                         ) : null}
                                     </ThemedText>
@@ -693,9 +693,9 @@ export default function Index() {
                                         onToggle={() => toggleCard(r.body.code)}
                                         onUseForScene={() => chooseForScene(r)}
                                         inScene={isSceneScale(r)}
-                                        chosen={entry.chosenBody === r.body.code}
-                                        onChoose={() => chooseBody(r.body.code)}
-                                        chosenLabel={chosenLabel}
+                                        planned={entry.plannedBody === r.body.code}
+                                        onPlan={() => planBody(r.body.code)}
+                                        plannedLabel={plannedLabel}
                                     />
                                 </View>
                             ))}

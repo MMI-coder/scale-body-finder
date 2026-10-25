@@ -140,8 +140,8 @@ Jointed body heights are static, and based on a standardized 3D printed head scu
 *Currently:* a named set of items on the Scene page - Kitchen, Weapons, Accessories. Up to ten items each, as many groups as needed.
 **Definition:**
 
-### Chosen Body
-*Currently:* the body picked for a character with "Use this body" on its card. One per character, press again to un-choose. Marked on the card (even collapsed), on the character's roster chip, on the printed sheet and in the results CSV, and saved in the roster file. Highlights only - it never changes the order of the results. Separate from Use for Scene.
+### Planned Body
+*Currently:* the body a character is planned for - "Plan to buy" on its card, which then reads "Planned for Kasumi". One per character, press again to cancel. Marked on the card (even collapsed), on the character's roster chip, on the printed sheet and in the results CSV, and saved in the roster file. Highlights only - it never changes the order of the results. Separate from Use for Scene.
 **Definition:**
 
 ### Scaled Size

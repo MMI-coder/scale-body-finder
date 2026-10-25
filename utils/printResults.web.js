@@ -33,15 +33,15 @@ export function printResults(sheets, fmt) {
 
   const cards = (s) => s.outcome.results.slice(0, s.limit).map((r, i) => {
     const b = r.body
-    const isChosen = s.chosen && s.chosen === b.code
+    const isPlanned = s.planned && s.planned === b.code
     const img = imageUrl(b.image)
     const props = (r.proportions || []).filter((p) => p.body != null)
     return `
-    <div class="card${isChosen ? ' chosen' : ''}">
+    <div class="card${isPlanned ? ' planned' : ''}">
       <div class="rank">${i + 1}</div>
       ${img ? `<img src="${esc(img)}" alt="">` : ''}
       <div class="body">
-        <h3>${esc(b.name || b.code)}${isChosen ? ' <span class="pick">✓ Chosen</span>' : ''}</h3>
+        <h3>${esc(b.name || b.code)}${isPlanned ? ' <span class="pick">✓ Planned</span>' : ''}</h3>
         <p class="meta">${esc([b.manufacturer, b.material, b.bodyType].filter(Boolean).join(' · '))}</p>
         ${r.closest ? `<p class="scale">Actual Body Scale <strong>${esc(r.closest.name)}</strong> · ×${r.closest.multiplier.toFixed(5)}</p>` : ''}
         <table>
@@ -70,8 +70,8 @@ export function printResults(sheets, fmt) {
         sorted by ${esc(cap(s.opts.sort))} difference in ${esc(cap(s.opts.priority))} ·
         top ${s.limit} of ${s.outcome.results.length}
       </p>
-      ${s.chosen ? `<p class="sub"><strong>Chosen body: ${esc(s.chosenName || s.chosen)}</strong>${
-        s.outcome.results.slice(0, s.limit).some((r) => r.body.code === s.chosen) ? '' : ' (not in the top ' + s.limit + ' below)'
+      ${s.planned ? `<p class="sub"><strong>Planned body: ${esc(s.plannedName || s.planned)}</strong>${
+        s.outcome.results.slice(0, s.limit).some((r) => r.body.code === s.planned) ? '' : ' (not in the top ' + s.limit + ' below)'
       }</p>` : ''}
       <p class="sub">
         Character at 1:1 — Height ${esc(mm(c.height, unit))}${esc(unit)},
@@ -94,7 +94,7 @@ export function printResults(sheets, fmt) {
   .sub { margin: 0 0 1mm; color: #5a6672; font-size: 9pt; }
   .card { display: flex; gap: 6mm; align-items: flex-start; break-inside: avoid;
           border-top: 1px solid #d6dde3; padding: 5mm 0; }
-  .card.chosen { border-left: 3px solid #4A90C4; padding-left: 3mm; }
+  .card.planned { border-left: 3px solid #4A90C4; padding-left: 3mm; }
   .pick { font-size: 9pt; font-weight: 700; color: #ffffff; background: #4A90C4; border-radius: 99px; padding: 0.5mm 2.5mm; margin-left: 2mm; vertical-align: middle; }
   .rank { font-size: 14pt; font-weight: 800; color: #8a97a2; width: 8mm; flex: none; }
   .card img { width: 38mm; flex: none; object-fit: contain; }

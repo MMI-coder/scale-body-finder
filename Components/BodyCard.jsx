@@ -69,7 +69,7 @@ const Num = ({ mm, other, unit, suffix = '', muted, theme }) => {
  * to the full comparison. The image has its own control to pop out full size,
  * so tapping it doesn't fight with the expand.
  */
-const BodyCard = ({ result, unit, expanded, onToggle, onUseForScene, inScene, chosen, onChoose, chosenLabel }) => {
+const BodyCard = ({ result, unit, expanded, onToggle, onUseForScene, inScene, planned, onPlan, plannedLabel }) => {
     const colorScheme = useColorScheme()
     const theme = Colors[colorScheme] ?? Colors.light
     const { width, height: winH } = useWindowDimensions()
@@ -117,7 +117,7 @@ const BodyCard = ({ result, unit, expanded, onToggle, onUseForScene, inScene, ch
     const heightMet = heightRange && deltas.height === 0
 
     return (
-        <ThemedCard style={[styles.card, chosen && { borderColor: Colors.primary, borderWidth: 2 }]}>
+        <ThemedCard style={[styles.card, planned && { borderColor: Colors.primary, borderWidth: 2 }]}>
             <Pressable onPress={onToggle} accessibilityRole="button">
                 {/* Collapsed cards sit in a grid, so they get a fixed tile height -
                     otherwise a portrait shot next to a wide model-line shot makes
@@ -156,9 +156,9 @@ const BodyCard = ({ result, unit, expanded, onToggle, onUseForScene, inScene, ch
                             </ThemedText>
                         ) : null}
                         {/* Shown collapsed too, so the pick stands out in the grid. */}
-                        {chosen ? (
-                            <View style={[styles.chosenBadge, { backgroundColor: Colors.primary }]}>
-                                <ThemedText style={styles.chosenBadgeText}>✓ {chosenLabel}</ThemedText>
+                        {planned ? (
+                            <View style={[styles.plannedBadge, { backgroundColor: Colors.primary }]}>
+                                <ThemedText style={styles.plannedBadgeText}>✓ {plannedLabel}</ThemedText>
                             </View>
                         ) : null}
                     </View>
@@ -171,21 +171,21 @@ const BodyCard = ({ result, unit, expanded, onToggle, onUseForScene, inScene, ch
             {expanded ? (
                 <>
                     {/* The buying decision. Separate from Use for scene on purpose:
-                        picking a body does not make it the scene's scale. Press
-                        again to un-choose. */}
-                    {onChoose ? (
+                        planning to buy a body does not make it the scene's scale.
+                        Press again to cancel. */}
+                    {onPlan ? (
                         <Pressable
-                            onPress={onChoose}
+                            onPress={onPlan}
                             accessibilityRole="button"
-                            accessibilityState={{ selected: !!chosen }}
+                            accessibilityState={{ selected: !!planned }}
                             style={[
-                                styles.chooseBtn,
+                                styles.planBtn,
                                 { borderColor: Colors.primary },
-                                chosen && { backgroundColor: Colors.primary },
+                                planned && { backgroundColor: Colors.primary },
                             ]}
                         >
-                            <ThemedText style={[styles.chooseBtnText, { color: chosen ? '#ffffff' : Colors.primary }]}>
-                                {chosen ? `✓ ${chosenLabel} - press to un-choose` : 'Use this body'}
+                            <ThemedText style={[styles.planBtnText, { color: planned ? '#ffffff' : Colors.primary }]}>
+                                {planned ? `✓ ${plannedLabel} - press to cancel` : 'Plan to buy'}
                             </ThemedText>
                         </Pressable>
                     ) : null}
@@ -407,10 +407,10 @@ const styles = StyleSheet.create({
     pieceNote: { fontSize: 12, lineHeight: 17, marginTop: 8 },
 
     card: { padding: 16, gap: 14 },
-    chosenBadge: { alignSelf: 'flex-start', borderRadius: 999, paddingVertical: 4, paddingHorizontal: 12, marginTop: 8 },
-    chosenBadgeText: { color: '#ffffff', fontSize: 13, fontWeight: '700' },
-    chooseBtn: { borderWidth: 2, borderRadius: 8, paddingVertical: 10, alignItems: 'center' },
-    chooseBtnText: { fontSize: 15, fontWeight: '700' },
+    plannedBadge: { alignSelf: 'flex-start', borderRadius: 999, paddingVertical: 4, paddingHorizontal: 12, marginTop: 8 },
+    plannedBadgeText: { color: '#ffffff', fontSize: 13, fontWeight: '700' },
+    planBtn: { borderWidth: 2, borderRadius: 8, paddingVertical: 10, alignItems: 'center' },
+    planBtnText: { fontSize: 15, fontWeight: '700' },
     // The larger of body and character, per row - see Num.
     pillCell: { flex: 1, alignItems: 'flex-end', justifyContent: 'center' },
     pill: { borderRadius: 999, paddingVertical: 3, paddingHorizontal: 10 },
