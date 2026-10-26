@@ -92,6 +92,21 @@ const SORT_OPTIONS = [
  */
 const MAX_CHARACTERS = 10
 
+/**
+ * Who the product images belong to - built from the catalogue, so a new
+ * manufacturer is credited the moment their first body goes in. The hand-written
+ * list this replaced had fallen three makers behind.
+ */
+const CREDIT = (() => {
+    const all = [...new Set(BODIES.map((b) => b.manufacturer).filter(Boolean))]
+    const makers = all.filter((m) => m !== 'Generic').map((m) => (m === 'TBLeague' ? 'TBLeague (Phicen)' : m))
+    const sellers = all.includes('Generic') ? ', and the sellers of the generic bodies' : ''
+    const list = makers.length > 1
+        ? `${makers.slice(0, -1).join(', ')} and ${makers[makers.length - 1]}`
+        : makers.join('')
+    return `Product images are manufacturer and seller material — ${list}${sellers} — used for identification and comparison; all rights remain with them.`
+})()
+
 /** How many bodies reach the printed sheet, per character. */
 const PRINTED_RESULTS = 10
 
@@ -765,9 +780,7 @@ export default function Index() {
 
                 <Spacer height={30} />
                 <ThemedText style={[styles.credit, { color: theme.muted }]}>
-                    Product images are manufacturer material — TBLeague (Phicen), VeryCool, Novan Studio,
-                    Longshan, 86Toys and WorldBox — used for identification and comparison; all rights remain
-                    with them.
+                    {CREDIT}
                 </ThemedText>
                 <Spacer height={40} />
             </View>
