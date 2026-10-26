@@ -47,7 +47,14 @@ const HINTS = {
   'Underbust (mm)': 'Optional - shown on the card only',
   'Waist (mm)': 'Female: REQUIRED, body is dropped without it. Male: optional',
   'Hips (mm)': 'Female: REQUIRED, body is dropped without it. Male: optional',
-  'Shoulder Width (mm)': 'Optional - shown on the card only',
+  // The six proportions: flat, front-on measurements of shape. Same wording as
+  // the proportions worksheet, so the two templates describe them alike.
+  'Breast Height (mm)': 'Optional, proportion - bottom of the breast up to where it meets the chest',
+  'Breast Width (mm)': 'Optional, proportion - one breast across, not both',
+  'Breast Depth (mm)': 'Optional, proportion - the breast itself, NOT through to the back',
+  'Waist Width (mm)': 'Optional, proportion - across the waist at its narrowest',
+  'Hip Width (mm)': 'Optional, proportion - across the hips at their widest',
+  'Shoulder Width (mm)': 'Optional, proportion - straight across the shoulders',
   'Arm Length (mm)': 'Optional - shown on the card only',
   'Leg Inseam (mm)': 'Optional - shown on the card only',
   'Feet': 'Attached or Removable',
