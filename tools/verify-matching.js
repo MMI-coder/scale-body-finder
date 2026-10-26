@@ -162,9 +162,29 @@ check('  low end is the minimum given', mfr.min, 306)
 check('  high end is their figure', mfr.max, 310)
 check('  and it is still labelled as theirs', byCode['SR-AD01'].heightSource, 'manufacturer')
 
-const noMin = api.heightRange(byCode['86-TS01-A'])
-check('no minimum given means no span', noMin.min === noMin.max, true)
-check('  pinned to the one figure', noMin.max, 280)
+// A manufacturer peg with no manufacturer head: peg plus the same allowance the
+// measured bodies get, on the one published (tallest) figure.
+console.log('\nManufacturer peg, no manufacturer head: peg + 14, by sculpt')
+const fromPeg = (code, head) => { const r = api.heightRange(byCode[code], head); return r.min === r.max ? r.max : `${r.min}-${r.max}` }
+check('86-TS01-A, 265 peg, 38mm sculpt', fromPeg('86-TS01-A', 38), 279)
+check('  37.5mm', fromPeg('86-TS01-A', 37.5), 278.5)
+check('  38.5mm', fromPeg('86-TS01-A', 38.5), 279.5)
+check('  no sculpt chosen means 38mm', fromPeg('86-TS01-A'), 279)
+check('YM611, 287 peg', fromPeg('YM611', 38), 301)
+check('VCD-01, 260 peg - its own peg now, not the S07C range', fromPeg('VCD-01', 38), 274)
+check('  labelled as from the manufacturer peg', byCode['VCD-01'].pegSource, 'manufacturer')
+check('a measured body is untouched - S07C', fromPeg('S07C', 38), '274-280')
+check('a manufacturer head is untouched - SR-CD01', fromPeg('SR-CD01', 38), '279-283')
+check('  and DT06', fromPeg('DT06', 38), '290-295')
+check('  and the sculpt does not move them', fromPeg('SR-CD01', 37.5), '279-283')
+check('every body has a height', bodies.filter(b => api.heightRange(b, 38) == null).map(b => b.code).join(), '')
+const bodiesCsv = fs.readFileSync(path.join(ROOT, 'data', 'bodies.csv'), 'utf8')
+const stray = loadBodies(bodiesCsv.replace('YM611,Silicone,Female,Seamless,,N/A,N/A,287,N/A,N/A,N/A,', 'YM611,Silicone,Female,Seamless,,N/A,N/A,287,N/A,N/A,300,'))
+check('a typed height without a manufacturer head stops the build',
+  stray.problems.some(p => /YM611: has a Height with Head but Head Used isn't Manufacturer/.test(p)), true)
+const noFig = loadBodies(bodiesCsv.replace('86Toys,86-TS01-A,86-TS01-A,Silicone,Female,Seamless,,N/A,N/A,265,N/A,', '86Toys,86-TS01-A,86-TS01-A,Silicone,Female,Seamless,,N/A,N/A,265,Manufacturer,'))
+check('a manufacturer head with no figure stops the build',
+  noFig.problems.some(p => /86-TS01-A: Head Used is Manufacturer but there is no Height/.test(p)), true)
 
 // TrickyMan publish a range outright, with no measuring involved.
 const tm = api.heightRange(byCode['DT06'])
@@ -193,10 +213,16 @@ for (const priority of api.PRIORITIES) {
 }
 
 console.log('\nBodies with no height drop out of Height priority only')
-const noHeightCodes = bodies.filter(b => b.heightSource == null).map(b => b.code)
-console.log('    no height data: ' + (noHeightCodes.join(', ') || '(none)'))
-const byHeight = api.compareBodies(example, { workingScale: 6, priority: 'height', sort: 'greatest', bodies })
-const byBust = api.compareBodies(example, { workingScale: 6, priority: 'bust', sort: 'greatest', bodies })
+// Since every body without a manufacturer head now gets peg + 14, the real
+// catalogue has none without a height. A stand-in keeps the rule tested for
+// the day one arrives with no peg at all.
+check('the catalogue has no body without a height', bodies.filter(b => b.heightSource == null).length, 0)
+const noHeightBody = { ...byCode['YM611'], code: 'TEST-NO-HEIGHT', name: 'TEST-NO-HEIGHT',
+  heightsByHead: null, heightSource: null, headSize: null, pegMfr: null, manufacturerHeight: null, heightSpan: null }
+const withGap = [...bodies, noHeightBody]
+const noHeightCodes = ['TEST-NO-HEIGHT']
+const byHeight = api.compareBodies(example, { workingScale: 6, priority: 'height', sort: 'greatest', bodies: withGap })
+const byBust = api.compareBodies(example, { workingScale: 6, priority: 'bust', sort: 'greatest', bodies: withGap })
 check('excluded under Height', byHeight.results.filter(r => noHeightCodes.includes(r.body.code)).length, 0)
 check('  and the reason is given', byHeight.excluded.some(e => /no height measurement/.test(e.reason)), true)
 check('still present under Bust', byBust.results.filter(r => noHeightCodes.includes(r.body.code)).length,

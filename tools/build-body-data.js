@@ -222,24 +222,6 @@ function parseHeadSize(text) {
   return m ? Number(m[1]) : null
 }
 
-/**
- * Bodies with no height of their own that borrow another body's range.
- *
- * VCD-01/02/06/07 publish a 260mm neck peg and nothing else. That is exactly
- * the S07C's measured minimum, so the S07C's range stands in for them. It is an
- * estimate and is labelled as one everywhere it appears.
- *
- * Add a body here only when its published peg genuinely matches the reference's
- * measured minimum - otherwise the estimate is just a guess wearing a number.
- */
-const HEIGHT_ESTIMATED_FROM = {
-  'VCD-01': 'S07C',
-  'VCD-02': 'S07C',
-  'VCD-06': 'S07C',
-  'VCD-07': 'S07C',
-  'VCD-08': 'S07C',
-}
-
 const blank = v => v == null || v.trim() === '' || v.trim().toUpperCase() === 'N/A'
 const str = v => (blank(v) ? null : v.trim())
 const num = v => {
@@ -249,8 +231,8 @@ const num = v => {
 }
 
 // --- read ------------------------------------------------------------------
-function loadBodies() {
-const rows = parseCsv(fs.readFileSync(CSV, 'utf8'))
+function loadBodies(text = fs.readFileSync(CSV, 'utf8')) {
+const rows = parseCsv(text)
 const header = rows[0].map(h => h.trim())
 const col = name => {
   const i = header.indexOf(name)
@@ -329,14 +311,16 @@ rows.slice(1).forEach((r, i) => {
   }
 
   // --- height -------------------------------------------------------------
-  // Three cases, and the app says which is which rather than presenting them
-  // as equally solid:
-  //   measured      - owner measured it with one of the custom head sculpts,
-  //                   so all three head options can be derived
-  //   manufacturer  - a figure taken with the maker's own head rather than one
-  //                   of the custom sculpts, so nothing can be derived per head
-  //                   size. It may still carry a real range: see below
-  //   estimated     - borrowed from a reference body, see HEIGHT_ESTIMATED_FROM
+  // One rule, set by the user on 2026-10-25: every body's height is its neck
+  // peg plus the head allowance - 13.5 / 14 / 14.5mm for the 37.5 / 38 / 38.5mm
+  // sculpts - EXCEPT a body shipped with the manufacturer's own head, which
+  // keeps the figure they published with it. Three cases:
+  //   measured      - the owner measured the peg (Head Used names the sculpt
+  //                   they used), so the height is a range: hip travel
+  //   derived       - only the manufacturer's peg is known. Same allowance, on
+  //                   one number: the published peg is the tallest setting
+  //   manufacturer  - Head Used reads Manufacturer; their figure, untouched
+  // Every one of them carries the estimate asterisk on screen.
   if (body.gender === 'Male') {
     body.headSize = null
     body.heightsByHead = null
@@ -371,9 +355,12 @@ rows.slice(1).forEach((r, i) => {
     if (body.heightsByHead == null) {
       problems.push(`${code}: names a ${body.headSize}mm sculpt but has no measured neck peg to derive from`)
     }
-  } else if (body.heightMax != null) {
+  } else if (/^manufacturer$/i.test(body.head || '')) {
     body.heightSource = 'manufacturer'
     body.heightsByHead = null
+    if (body.heightMax == null) {
+      problems.push(`${code}: Head Used is Manufacturer but there is no Height with Head (max) - their figure is the height`)
+    }
     // A minimum that is filled in is a real figure - measured, or published.
     // Leave the cell blank rather than guessing at one, because anything here
     // is taken at face value and becomes a range the body can be posed across.
@@ -387,6 +374,18 @@ rows.slice(1).forEach((r, i) => {
     } else {
       body.manufacturerHeight = body.heightMax
     }
+  } else if (body.heightMin != null || body.heightMax != null) {
+    // A height typed in with no manufacturer head can only be a slip: without
+    // their head, height always comes from the peg. This is how 86-TS01-A
+    // carried a stray 280 for two months.
+    problems.push(`${code}: has a Height with Head but Head Used isn't Manufacturer - heights come from the neck peg; clear them, or set Head Used to Manufacturer if it really is their figure`)
+  } else if (body.pegMfr != null) {
+    body.heightSource = 'derived'
+    body.pegSource = 'manufacturer'
+    // The allowance is worked out for the 38mm sculpt, so that is the one this
+    // falls back to when no sculpt has been chosen.
+    body.headSize = 38
+    body.heightsByHead = heightsByHead(body.pegMfr, body.pegMfr)
   } else {
     body.heightSource = null
     body.heightsByHead = null
@@ -500,26 +499,6 @@ rows.slice(1).forEach((r, i) => {
   }
   bodies.length = 0
   bodies.push(...grouped)
-
-  // Second pass: bodies that borrow a reference body's height range.
-  for (const [code, refCode] of Object.entries(HEIGHT_ESTIMATED_FROM)) {
-    const body = bodies.find(b => b.code === code)
-    if (!body) { problems.push(`height estimate names unknown body ${code}`); continue }
-    const ref = bodies.find(b => b.code === refCode)
-    if (!ref || !ref.heightsByHead) {
-      problems.push(`${code}: reference body ${refCode} has no height range to borrow`)
-      continue
-    }
-    if (body.heightSource === 'measured') {
-      problems.push(`${code}: has its own measurements, remove it from HEIGHT_ESTIMATED_FROM`)
-      continue
-    }
-    body.heightSource = 'estimated'
-    body.heightEstimatedFrom = refCode
-    body.headSize = ref.headSize
-    body.heightsByHead = JSON.parse(JSON.stringify(ref.heightsByHead))
-    body.manufacturerHeight = null
-  }
 
   // A body with no height is incomplete, not broken. It still matches on
   // bust/waist/hips, shows a dash where its height would be, and drops out of

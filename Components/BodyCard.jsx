@@ -348,7 +348,7 @@ const BodyCard = ({ result, unit, expanded, onToggle, onUseForScene, inScene, pl
                         <ThemedText style={styles.heightPrimary}>{rangeText}</ThemedText>
                         <ThemedText style={[styles.heightHead, { color: theme.muted }]}>
                             {body.heightsByHead
-                                ? `neck peg plus the ${result.headSize}mm sculpt`
+                                ? `${body.pegSource === 'manufacturer' ? "manufacturer's " : ''}neck peg plus the ${result.headSize}mm sculpt`
                                 : "the manufacturer's own figure, with their head"}
                         </ThemedText>
                     </View>

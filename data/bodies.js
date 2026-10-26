@@ -878,25 +878,24 @@ export const BODIES = [
     "image": "VeryCool VCD-01.jpg",
     "notes": null,
     "headSize": 38,
-    "heightSource": "estimated",
+    "heightSource": "derived",
+    "pegSource": "manufacturer",
     "heightsByHead": {
       "38": {
         "min": 274,
-        "max": 280
+        "max": 274
       },
       "37.5": {
         "min": 273.5,
-        "max": 279.5
+        "max": 273.5
       },
       "38.5": {
         "min": 274.5,
-        "max": 280.5
+        "max": 274.5
       }
     },
     "imageW": 1500,
-    "imageH": 2304,
-    "heightEstimatedFrom": "S07C",
-    "manufacturerHeight": null
+    "imageH": 2304
   },
   {
     "code": "VCD-02",
@@ -929,25 +928,24 @@ export const BODIES = [
     "image": "VeryCool VCD-02.jpg",
     "notes": null,
     "headSize": 38,
-    "heightSource": "estimated",
+    "heightSource": "derived",
+    "pegSource": "manufacturer",
     "heightsByHead": {
       "38": {
         "min": 274,
-        "max": 280
+        "max": 274
       },
       "37.5": {
         "min": 273.5,
-        "max": 279.5
+        "max": 273.5
       },
       "38.5": {
         "min": 274.5,
-        "max": 280.5
+        "max": 274.5
       }
     },
     "imageW": 1500,
-    "imageH": 2304,
-    "heightEstimatedFrom": "S07C",
-    "manufacturerHeight": null
+    "imageH": 2304
   },
   {
     "code": "VCD-03",
@@ -1078,25 +1076,24 @@ export const BODIES = [
     "image": "VeryCool VCD-06.jpg",
     "notes": "This is an attached foot version of the VCD-07",
     "headSize": 38,
-    "heightSource": "estimated",
+    "heightSource": "derived",
+    "pegSource": "manufacturer",
     "heightsByHead": {
       "38": {
         "min": 274,
-        "max": 280
+        "max": 274
       },
       "37.5": {
         "min": 273.5,
-        "max": 279.5
+        "max": 273.5
       },
       "38.5": {
         "min": 274.5,
-        "max": 280.5
+        "max": 274.5
       }
     },
     "imageW": 1134,
-    "imageH": 1701,
-    "heightEstimatedFrom": "S07C",
-    "manufacturerHeight": null
+    "imageH": 1701
   },
   {
     "code": "VCD-07",
@@ -1129,25 +1126,24 @@ export const BODIES = [
     "image": "VeryCool VCD-07.jpg",
     "notes": "This is a detachable foot version of the VCD-06",
     "headSize": 38,
-    "heightSource": "estimated",
+    "heightSource": "derived",
+    "pegSource": "manufacturer",
     "heightsByHead": {
       "38": {
         "min": 274,
-        "max": 280
+        "max": 274
       },
       "37.5": {
         "min": 273.5,
-        "max": 279.5
+        "max": 273.5
       },
       "38.5": {
         "min": 274.5,
-        "max": 280.5
+        "max": 274.5
       }
     },
     "imageW": 2998,
-    "imageH": 2233,
-    "heightEstimatedFrom": "S07C",
-    "manufacturerHeight": null
+    "imageH": 2233
   },
   {
     "code": "VCD-08",
@@ -1180,25 +1176,24 @@ export const BODIES = [
     "image": "VeryCool VCD-08.jpg",
     "notes": null,
     "headSize": 38,
-    "heightSource": "estimated",
+    "heightSource": "derived",
+    "pegSource": "manufacturer",
     "heightsByHead": {
       "38": {
         "min": 274,
-        "max": 280
+        "max": 274
       },
       "37.5": {
         "min": 273.5,
-        "max": 279.5
+        "max": 273.5
       },
       "38.5": {
         "min": 274.5,
-        "max": 280.5
+        "max": 274.5
       }
     },
     "imageW": 2910,
-    "imageH": 2160,
-    "heightEstimatedFrom": "S07C",
-    "manufacturerHeight": null
+    "imageH": 2160
   },
   {
     "code": "LSJS-TS01",
@@ -1230,9 +1225,23 @@ export const BODIES = [
     "feet": "Removable",
     "image": "Longshan LSJS-TS01.jpg",
     "notes": "Longshan's own product image is labelled LSJS-ST01; the product code is LSJS-TS01.",
-    "headSize": null,
-    "heightSource": null,
-    "heightsByHead": null,
+    "headSize": 38,
+    "heightSource": "derived",
+    "pegSource": "manufacturer",
+    "heightsByHead": {
+      "38": {
+        "min": 284,
+        "max": 284
+      },
+      "37.5": {
+        "min": 283.5,
+        "max": 283.5
+      },
+      "38.5": {
+        "min": 284.5,
+        "max": 284.5
+      }
+    },
     "imageW": 1500,
     "imageH": 1500
   },
@@ -1250,7 +1259,7 @@ export const BODIES = [
     "pegMfr": 265,
     "head": null,
     "heightMin": null,
-    "heightMax": 280,
+    "heightMax": null,
     "bust": 124,
     "underbust": null,
     "waist": 84,
@@ -1266,10 +1275,23 @@ export const BODIES = [
     "feet": "Removable",
     "image": "86Toys 86-TS01-A.jpg",
     "notes": null,
-    "headSize": null,
-    "heightSource": "manufacturer",
-    "heightsByHead": null,
-    "manufacturerHeight": 280,
+    "headSize": 38,
+    "heightSource": "derived",
+    "pegSource": "manufacturer",
+    "heightsByHead": {
+      "38": {
+        "min": 279,
+        "max": 279
+      },
+      "37.5": {
+        "min": 278.5,
+        "max": 278.5
+      },
+      "38.5": {
+        "min": 279.5,
+        "max": 279.5
+      }
+    },
     "imageW": 1500,
     "imageH": 1500
   },
@@ -1670,9 +1692,23 @@ export const BODIES = [
     "feet": "Attached",
     "image": "VeryCool VCD-09.jpg",
     "notes": null,
-    "headSize": null,
-    "heightSource": null,
-    "heightsByHead": null,
+    "headSize": 38,
+    "heightSource": "derived",
+    "pegSource": "manufacturer",
+    "heightsByHead": {
+      "38": {
+        "min": 294,
+        "max": 294
+      },
+      "37.5": {
+        "min": 293.5,
+        "max": 293.5
+      },
+      "38.5": {
+        "min": 294.5,
+        "max": 294.5
+      }
+    },
     "imageW": 1080,
     "imageH": 1521
   },
@@ -1706,9 +1742,23 @@ export const BODIES = [
     "feet": "Removable",
     "image": "YM501.jpg",
     "notes": "Generic branded, non-platinum silicone bodies most easily found on Amazon, eBay or AliExpress. Cheaper build quality overall compared to TBL/VeryCool.",
-    "headSize": null,
-    "heightSource": null,
-    "heightsByHead": null,
+    "headSize": 38,
+    "heightSource": "derived",
+    "pegSource": "manufacturer",
+    "heightsByHead": {
+      "38": {
+        "min": 284,
+        "max": 284
+      },
+      "37.5": {
+        "min": 283.5,
+        "max": 283.5
+      },
+      "38.5": {
+        "min": 284.5,
+        "max": 284.5
+      }
+    },
     "imageW": 900,
     "imageH": 1350
   },
@@ -1742,9 +1792,23 @@ export const BODIES = [
     "feet": "Removable",
     "image": "YM502.jpg",
     "notes": "Generic branded, non-platinum silicone bodies most easily found on Amazon, eBay or AliExpress. Cheaper build quality overall compared to TBL/VeryCool.",
-    "headSize": null,
-    "heightSource": null,
-    "heightsByHead": null,
+    "headSize": 38,
+    "heightSource": "derived",
+    "pegSource": "manufacturer",
+    "heightsByHead": {
+      "38": {
+        "min": 279,
+        "max": 279
+      },
+      "37.5": {
+        "min": 278.5,
+        "max": 278.5
+      },
+      "38.5": {
+        "min": 279.5,
+        "max": 279.5
+      }
+    },
     "imageW": 1200,
     "imageH": 1200
   },
@@ -1778,9 +1842,23 @@ export const BODIES = [
     "feet": "Removable",
     "image": "YM503.jpg",
     "notes": "Generic branded, non-platinum silicone bodies most easily found on Amazon, eBay or AliExpress. Cheaper build quality overall compared to TBL/VeryCool.",
-    "headSize": null,
-    "heightSource": null,
-    "heightsByHead": null,
+    "headSize": 38,
+    "heightSource": "derived",
+    "pegSource": "manufacturer",
+    "heightsByHead": {
+      "38": {
+        "min": 288,
+        "max": 288
+      },
+      "37.5": {
+        "min": 287.5,
+        "max": 287.5
+      },
+      "38.5": {
+        "min": 288.5,
+        "max": 288.5
+      }
+    },
     "imageW": 1001,
     "imageH": 1001
   },
@@ -1814,9 +1892,23 @@ export const BODIES = [
     "feet": "Removable",
     "image": "YM505.jpg",
     "notes": "Generic branded, non-platinum silicone bodies most easily found on Amazon, eBay or AliExpress. Cheaper build quality overall compared to TBL/VeryCool.",
-    "headSize": null,
-    "heightSource": null,
-    "heightsByHead": null,
+    "headSize": 38,
+    "heightSource": "derived",
+    "pegSource": "manufacturer",
+    "heightsByHead": {
+      "38": {
+        "min": 287,
+        "max": 287
+      },
+      "37.5": {
+        "min": 286.5,
+        "max": 286.5
+      },
+      "38.5": {
+        "min": 287.5,
+        "max": 287.5
+      }
+    },
     "imageW": 900,
     "imageH": 1350
   },
@@ -1850,9 +1942,23 @@ export const BODIES = [
     "feet": "Removable",
     "image": "YM507.jpg",
     "notes": "Generic branded, non-platinum silicone bodies most easily found on Amazon, eBay or AliExpress. Cheaper build quality overall compared to TBL/VeryCool. YM507 has been measured by hand to be a 150mm bust.",
-    "headSize": null,
-    "heightSource": null,
-    "heightsByHead": null,
+    "headSize": 38,
+    "heightSource": "derived",
+    "pegSource": "manufacturer",
+    "heightsByHead": {
+      "38": {
+        "min": 289,
+        "max": 289
+      },
+      "37.5": {
+        "min": 288.5,
+        "max": 288.5
+      },
+      "38.5": {
+        "min": 289.5,
+        "max": 289.5
+      }
+    },
     "imageW": 1001,
     "imageH": 1001
   },
@@ -1886,9 +1992,23 @@ export const BODIES = [
     "feet": "Removable",
     "image": "YM508.jpg",
     "notes": "Generic branded, non-platinum silicone bodies most easily found on Amazon, eBay or AliExpress. Cheaper build quality overall compared to TBL/VeryCool.",
-    "headSize": null,
-    "heightSource": null,
-    "heightsByHead": null,
+    "headSize": 38,
+    "heightSource": "derived",
+    "pegSource": "manufacturer",
+    "heightsByHead": {
+      "38": {
+        "min": 289,
+        "max": 289
+      },
+      "37.5": {
+        "min": 288.5,
+        "max": 288.5
+      },
+      "38.5": {
+        "min": 289.5,
+        "max": 289.5
+      }
+    },
     "imageW": 1200,
     "imageH": 1200
   },
@@ -1922,9 +2042,23 @@ export const BODIES = [
     "feet": "Removable",
     "image": "YM611.jpg",
     "notes": "Generic branded, non-platinum silicone bodies most easily found on Amazon, eBay or AliExpress. Cheaper build quality overall compared to TBL/VeryCool.",
-    "headSize": null,
-    "heightSource": null,
-    "heightsByHead": null,
+    "headSize": 38,
+    "heightSource": "derived",
+    "pegSource": "manufacturer",
+    "heightsByHead": {
+      "38": {
+        "min": 301,
+        "max": 301
+      },
+      "37.5": {
+        "min": 300.5,
+        "max": 300.5
+      },
+      "38.5": {
+        "min": 301.5,
+        "max": 301.5
+      }
+    },
     "imageW": 900,
     "imageH": 1350
   }
