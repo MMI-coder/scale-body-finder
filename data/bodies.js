@@ -39,6 +39,7 @@ const IMAGES = {
   "TBLeague SR-BD01.jpg": require("../images/TBLeague SR-BD01.jpg"),
   "TBLeague SR-CD01.jpg": require("../images/TBLeague SR-CD01.jpg"),
   "TBLeague SR-DD01.jpg": require("../images/TBLeague SR-DD01.jpg"),
+  "TBLeague SR-ED01.jpg": require("../images/TBLeague SR-ED01.jpg"),
   "TBLeague TB-DF01.jpg": require("../images/TBLeague TB-DF01.jpg"),
   "TrickyMan DT02.jpg": require("../images/TrickyMan DT02.jpg"),
   "TrickyMan DT06.jpg": require("../images/TrickyMan DT06.jpg"),
@@ -2061,6 +2062,56 @@ export const BODIES = [
     },
     "imageW": 900,
     "imageH": 1350
+  },
+  {
+    "code": "SR-ED01",
+    "name": "SR-ED01",
+    "manufacturer": "TBLeague",
+    "material": "Silicone",
+    "gender": "Female",
+    "bodyType": "Seamless",
+    "build": null,
+    "bustPiece": null,
+    "pegMin": null,
+    "pegMax": null,
+    "pegMfr": 257,
+    "head": null,
+    "heightMin": null,
+    "heightMax": null,
+    "bust": 129,
+    "underbust": null,
+    "waist": 83,
+    "hips": 148,
+    "breastHeight": 17,
+    "breastWidth": 20,
+    "breastDepth": null,
+    "waistWidth": 31,
+    "hipWidth": 57,
+    "shoulder": 48,
+    "arm": null,
+    "inseam": null,
+    "feet": "Removable",
+    "image": "TBLeague SR-ED01.jpg",
+    "notes": null,
+    "headSize": 38,
+    "heightSource": "derived",
+    "pegSource": "manufacturer",
+    "heightsByHead": {
+      "38": {
+        "min": 271,
+        "max": 271
+      },
+      "37.5": {
+        "min": 270.5,
+        "max": 270.5
+      },
+      "38.5": {
+        "min": 271.5,
+        "max": 271.5
+      }
+    },
+    "imageW": 1200,
+    "imageH": 1600
   }
 ]
 
