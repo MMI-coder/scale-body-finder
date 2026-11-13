@@ -176,6 +176,24 @@ export function realWorldEquivalent(divisor) {
   return Number.isFinite(divisor) && divisor > 0 ? parseFloat(divisor.toFixed(2)) : null
 }
 
+/**
+ * How much bigger or smaller a model at one scale is than the same thing at
+ * another, as a percentage of the second. Positive is larger.
+ *
+ * The same arithmetic as the scale-percentage skill: a smaller divisor is a
+ * bigger model, so 1:5 13/16 against 1:6 is 6 / 5.8125 - 1 = +3.23%.
+ *
+ * On a body card, `divisor` is the body's Actual Body Scale and `against` is
+ * the scale chosen in the Scale Reference Selector. Actual Body Scale comes
+ * from the priority measurement, so this is that row's difference as a
+ * percentage - the same fact the card already shows, in a form that reads at a
+ * glance and compares across cards.
+ */
+export function scalePercentDifference(divisor, against) {
+  if (!Number.isFinite(divisor) || !Number.isFinite(against) || divisor <= 0 || against <= 0) return null
+  return (against / divisor - 1) * 100
+}
+
 /** True 1:6 multiplier. */
 export const SIXTH = 1 / 6
 

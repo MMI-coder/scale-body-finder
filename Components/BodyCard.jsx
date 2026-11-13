@@ -4,7 +4,7 @@ import { Colors } from '../Constants/Colors'
 import { bodyImage } from '../data/bodies'
 import { define } from '../data/glossary'
 import { HEIGHT_ESTIMATE_NOTE } from '../utils/matching'
-import { fmtDelta, fmtMM, realWorldEquivalent } from '../utils/scaleUtils'
+import { fmtDelta, fmtMM, realWorldEquivalent, scaleName, scalePercentDifference } from '../utils/scaleUtils'
 import InfoBubble from './InfoBubble'
 import ThemedCard from './ThemedCard'
 import ThemedText from './ThemedText'
@@ -36,6 +36,18 @@ export const HEIGHT_INFO =
     'standardized head sculpt. This measurement is an estimate and will fluctuate depending on ' +
     'the actual sculpt used, shoes/accessories, and the natural adjustments that can be made to ' +
     'the body.'
+
+/**
+ * "3.23% larger than your chosen 1:6" - this body's Actual Body Scale against
+ * the Scale Reference Selector. A rounded zero is the same scale, not 0.00%.
+ */
+const versusChosen = (bodyDivisor, chosen) => {
+    const pct = scalePercentDifference(bodyDivisor, chosen)
+    if (pct == null) return ''
+    const shown = Math.abs(pct).toFixed(2)
+    if (shown === '0.00') return `Same as your chosen ${scaleName(chosen)}`
+    return `${shown}% ${pct > 0 ? 'larger' : 'smaller'} than your chosen ${scaleName(chosen)}`
+}
 
 /**
  * One number in a body-versus-character row.
@@ -210,6 +222,13 @@ const BodyCard = ({ result, unit, expanded, onToggle, onUseForScene, inScene, pl
                         {closest ? (
                             <ThemedText style={[styles.scaleLabel, { color: theme.muted, marginTop: 2 }]}>
                                 Real World Equivalent: 1{unit} = {realWorldEquivalent(closest.snapped).toFixed(2)}{unit} in 1:1 scale
+                            </ThemedText>
+                        ) : null}
+                        {/* This body's scale against the one you chose: both as named, so
+                            the percentage agrees with the two scale names on screen. */}
+                        {closest ? (
+                            <ThemedText style={[styles.scaleCompare, { color: theme.text }]}>
+                                {versusChosen(closest.snapped, result.workingScale)}
                             </ThemedText>
                         ) : null}
                         {/* Copies the scale as named above - the 1/64 name, which is
@@ -434,6 +453,7 @@ const styles = StyleSheet.create({
     scaleBox: { borderWidth: 1, borderRadius: 8, paddingVertical: 12, paddingHorizontal: 12, alignItems: 'center' },
     scaleLabel: { fontSize: 12 },
     scaleValue: { fontSize: 24, fontWeight: '800', marginVertical: 4 },
+    scaleCompare: { fontSize: 13, fontWeight: '700', marginTop: 4 },
     sceneBtn: { marginTop: 10, borderWidth: 1, borderRadius: 8, paddingVertical: 8, paddingHorizontal: 16 },
     sceneBtnText: { fontSize: 14, fontWeight: '700' },
 

@@ -42,7 +42,7 @@ const src = [
             MALE_CATALOGUE, HEAD_SIZES, DEFAULT_HEAD_SIZE, PROPORTIONS,
             toMM, fromMM, parseScale, describeScale, scaledMM, itemHasContent,
             MAX_ITEMS_PER_GROUP, sceneToCsv, sceneFromCsv, sceneFileName,
-            HEIGHT_ESTIMATE_NOTE, rosterTemplateCsv, ROSTER_EXAMPLE_NAME }`,
+            HEIGHT_ESTIMATE_NOTE, rosterTemplateCsv, ROSTER_EXAMPLE_NAME, scalePercentDifference }`,
 ].join('\n')
 
 const api = new Function('BODIES', 'console', src)(bodies, console)
@@ -785,6 +785,21 @@ check('the results export says which',
     .find(r => r[0] === 'Planned Body') || [])[1], 'S20A')
 check('  and is blank when none is',
   (femaleCsvRows.find(r => r[0] === 'Planned Body') || [])[1], '')
+
+console.log('\nBody scale against the chosen scale')
+const pctOf = (a, b) => r2(api.scalePercentDifference(a, b))
+check('S07C at 1:5 13/16 against 1:6 is 3.23% larger', pctOf(5.8125, 6), 3.23)
+check('1:6 1/4 against 1:6 is smaller', pctOf(6.25, 6), -4)
+check('the skill\'s example: 1:5 53/64 against 1:5 13/16, 0.268% smaller',
+  Math.round(api.scalePercentDifference(5 + 53 / 64, 5.8125) * 1000) / 1000, -0.268)
+check('the same scale is zero', api.scalePercentDifference(6, 6), 0)
+check('no scale, no figure', api.scalePercentDifference(null, 6), null)
+const s07cPct = (() => {
+  const out = api.compareBodies(example, { workingScale: 6, priority: 'bust', sort: 'least', bodies })
+  const r = out.results.find(x => x.body.code === 'S07C')
+  return { viaScale: r2(api.scalePercentDifference(r.closest.divisor, 6)), viaBust: r2((r.deltas.bust / r.scaled.bust) * 100) }
+})()
+check('it is the priority row\'s difference as a percentage', s07cPct.viaScale, s07cPct.viaBust)
 
 console.log('\nCharacter list')
 const cast = loadCharacters()
